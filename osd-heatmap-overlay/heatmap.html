@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>heatmap-viewer</title>
+        <script src="openseadragon/openseadragon.min.js"></script>       
+		<script src="heatmap.min.js"></script>
+        <script src="openseadragon-heatmapjs-overlay.js"></script>
+        
+    </head>
+    <body>
+        The heatmaps are painted by <a href="https://www.patrick-wied.at/static/heatmapjs/">Heatmap.js</a> on top of an
+        <a href="https://openseadragon.github.io/">OpenSeadragon</a> windows by use of the the plugin
+        <a href="https://github.com/choikyusu/openseadragonHeatmapjsOverlay">OpenSeadragonHeatmapjsOverlay</a>
+        <br/>
+        <br/>
+        <div id="osd" style="width: 1000px; height:800px;"></div>
+        <script>                
+
+		paint_heatmap = function(){
+			heatmap = new HeatmapOverlay(viewer,
+					  {
+						backgroundColor: 'rgba(0,0,0,0)',
+						// the maximum opacity (the value with the highest intensity will have it)
+						maxOpacity: 0.5,
+						// minimum opacity. any value > 0 will produce no transparent gradient transition
+						minOpacity: 0.05
+					  }
+					  );
+					  // now generate some random data
+						var points = [];
+						var max = 0;
+						var width = 10000;
+						var height = 10000;
+						var len = 300;
+
+						while (len--) {
+						  var val = Math.floor(Math.random()*100);
+						  // now also with custom radius
+						  var radius = Math.floor(Math.random()*70);
+
+						  max = Math.max(max, val);
+						  var point = {
+							x: Math.floor(Math.random()*width),
+							y: Math.floor(Math.random()*height),
+							value: val,
+							// radius configuration on point basis
+							radius: radius
+						  };
+						  points.push(point);
+						}
+						// heatmap data format
+						var data = {
+						  max: max,
+						  data: points
+						};
+					heatmap.setData(data);
+		}
+			window.onload = function() {
+				this.viewer = OpenSeadragon({
+					id: "osd",
+					prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
+					debugMode:  false,
+					visibilityRatio: 1.0,
+					constrainDuringPan: true,
+					showNavigator: true,
+					zoomPerScroll: 1.8,
+					showRotationControl: true,
+				});
+				this.viewer.addTiledImage({
+					tileSource: "https://openseadragon.github.io/example-images/highsmith/highsmith.dzi",
+					x: 0,
+					y: 0,
+					success: paint_heatmap
+				});
+	};
+
+					</script>
+    </body>
+</html>
