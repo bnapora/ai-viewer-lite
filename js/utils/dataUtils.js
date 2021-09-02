@@ -20,7 +20,7 @@ dataUtils = {
     _barcodesByAmount: [],
     _maximumAmountInLowerRes: 5000,
     _nameAndLetters: { drawGeneName: false, drawGeneLetters: false },
-    _drawOptions: { randomColorForMarker: false }
+    _drawOptions: { randomColorForMarker: true }
     //_minimumAmountToDisplay: 500,
     //_subsamplingRate: 100,
 }
@@ -52,8 +52,7 @@ dataUtils.processISSRawData = function () {
     if (ISSColor)
         var colorSelector = ISSColor.options[ISSColor.selectedIndex].value;
     else
-
-    var colorSelector = "null";
+        var colorSelector = "null";
     
     if (colorSelector && colorSelector != "null"){
         markerUtils._uniqueColor = true;
@@ -301,6 +300,7 @@ dataUtils.readCSV = function (thecsv) {
             dataUtils.showMenuCSV();
         }
     );
+    // console.log('D3 Request-CSV', request)
 }
     
     /** 

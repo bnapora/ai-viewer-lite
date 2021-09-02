@@ -20,13 +20,15 @@ markerUtils = {
     _drawPaths: true,
     _globalMarkerSize: 1,
     _showSizeColumn: false,
-    _uniqueColor:false, //if this and selector are true, it will try to find a color unique to each spot
-    _uniqueColorSelector:null, //is a string of the type "[float,float,float]" that gets converted to a string "rgb(uint8,uint8,uint8)"
+    _uniqueColor:true, //if this and selector are true, it will try to find a color unique to each spot
+    _uniqueColorSelector:[50.0,61.0,255.0], //is a string of the type "[float,float,float]" that gets converted to a string "rgb(uint8,uint8,uint8)"
     _startCullingAt: 9000,
     _checkBoxes: {},
     _d3Symbols: [d3.symbolCross, d3.symbolDiamond, d3.symbolSquare, d3.symbolTriangle, d3.symbolStar, d3.symbolWye, d3.symbolCircle],
     _d3SymbolStrings: ["Cross", "Diamond", "Square", "Triangle", "Star", "Wye", "Circle"],
-    _colorsperkey:null
+    _colorsperkey:null,
+    _d3SymbolRand: false,  //Assign random d3 symbol to each class
+    _d3SymbolDefault: 2 //Default= square; uses indices of d3 shapes; TODO modify to a constant
 }
 
 /** 
@@ -457,11 +459,25 @@ markerUtils.markerUI = function (barObject,options) {
         colorinput.value = "#ffffff";
         colorinput.value = thecolor;
     }
+    // //Original Shape selector UI render
+    // var shape = HTMLElementUtils.createElement({ type: "td" });
+    // var shapeParams = { random: true, id: barObject.key + "-shape-" + op, "options": markerUtils._d3SymbolStrings };
+    // var shapeinput = HTMLElementUtils.selectTypeDropDown(shapeParams);
+    // if (shapeParams.random) { var rnd = Math.floor(Math.random() * (markerUtils._d3SymbolStrings.length-1)) + 0; shapeinput.selectedIndex = rnd; }
+    // shape.appendChild(shapeinput);
+    // row.appendChild(shape);
 
+    // Modified Shape selector UI render (changes: random=false; )
     var shape = HTMLElementUtils.createElement({ type: "td" });
-    var shapeParams = { random: true, id: barObject.key + "-shape-" + op, "options": markerUtils._d3SymbolStrings };
+    var shapeParams = { random: markerUtils._d3SymbolRand, id: barObject.key + "-shape-" + op, "options": markerUtils._d3SymbolStrings };
     var shapeinput = HTMLElementUtils.selectTypeDropDown(shapeParams);
-    if (shapeParams.random) { var rnd = Math.floor(Math.random() * (markerUtils._d3SymbolStrings.length-1)) + 0; shapeinput.selectedIndex = rnd; }
+    if (shapeParams.random) { 
+        var rnd = Math.floor(Math.random() * (markerUtils._d3SymbolStrings.length-1)) + 0; 
+        shapeinput.selectedIndex = rnd; 
+    }else{
+        shapeinput.selectedIndex = markerUtils._d3SymbolDefault //Default square
+    }
+
     shape.appendChild(shapeinput);
     row.appendChild(shape);
 

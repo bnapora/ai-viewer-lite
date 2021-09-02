@@ -14,7 +14,11 @@
     _scrollDelay: 900,
     fixed_file: "",
     mpp:0,
-    slideFilename:"Main"
+    slideFilename:"Main",
+    exact_image_id: "1",
+    tileproviderURL: "http://127.0.0.1:8000",
+    ExactUID: "bnapora",
+    ExactPWD: "bnapora"
 }
 
 /** 
@@ -169,12 +173,14 @@ tmapp.init = function () {
     }
 } //finish init
 
+// //initialize exact_image_id from template (Use only when deployed in Exact application)
+// tmapp.exact_image_id = exact_image_id;
 /**
  * Options for the fixed and moving OSD 
  * all options are described here https://openseadragon.github.io/docs/OpenSeadragon.html#.Options */
 tmapp.options_osd = {
     id: "ISS_viewer",
-    prefixUrl: "openseadragon/images/",
+    prefixUrl: "http://127.0.0.1:8000/static/images/",
     // prefixUrl: "js/openseadragon/images/",
     navigatorSizeRatio: 1,
     wrapHorizontal: false,
@@ -190,4 +196,13 @@ tmapp.options_osd = {
     visibilityRatio: 1,
     showNavigationControl: true,
     maxImageCacheCount:500,
+ 
+    // // //Exact Tileprovider
+    // loadTilesWithAjax: true,  //appears to load a little faster; necessary for api/v1 call
+    // // tileSources:     "http://127.0.0.1:8000/images/image/61/1/1/tile/",  
+    // tileSources: tmapp.tileproviderURL + "/api/v1/images/images/" + tmapp.exact_image_id + "/1/1/tile/",
+    // ajaxHeaders: {
+    //     "Authorization": "Basic " + btoa(tmapp.ExactUID + ":" + tmapp.ExactPWD),
+    //     // "Accept": "*/*",
+    // }
 }

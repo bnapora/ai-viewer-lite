@@ -14,7 +14,7 @@ glUtils = {
     _viewportRect: [0, 0, 1, 1],
     _markerScale: 1.0,
     _markerScalarRange: [0.0, 1.0],
-    _markerOpacity: 1.0,
+    _markerOpacity: 0.5,    //Modified from 1.0 to 0.5 to display center of anno
     _useColorFromMarker: false,
     _colorscaleName: "null",
     _colorscaleData: [],
@@ -22,6 +22,7 @@ glUtils = {
     _barcodeToKey: {},
     _options: {antialias: false},
     _showColorbar: true,
+    _path_markershapes_img: "misc/markershapes.png",
 }
 
 
@@ -50,7 +51,8 @@ glUtils._markersVS = `
     vec3 hex_to_rgb(float v)
     {
         // Extract RGB color from 24-bit hex color stored in float
-        return mod(floor(v / vec3(65536.0, 256.0, 1.0) + 0.5), 256.0) / 255.0;
+        v = clamp(v, 0.0, 16777215.0);
+        return floor(mod((v + 0.49) / vec3(65536.0, 256.0, 1.0), 256.0)) / 255.0;
     }
 
     void main()
@@ -604,7 +606,7 @@ glUtils.init = function() {
     this._buffers["CPMarkers"] = this._createDummyMarkerBuffer(gl, this._numCPMarkers);
     this._textures["colorLUT"] = this._createColorLUTTexture(gl);
     this._textures["colorscale"] = this._createColorScaleTexture(gl);
-    this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, "misc/markershapes.png");
+    this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, glUtils._path_markershapes_img);
 
     this._createColorbarCanvas();  // The colorbar is drawn separately in a 2D-canvas
 
