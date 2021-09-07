@@ -459,13 +459,6 @@ markerUtils.markerUI = function (barObject,options) {
         colorinput.value = "#ffffff";
         colorinput.value = thecolor;
     }
-    // //Original Shape selector UI render
-    // var shape = HTMLElementUtils.createElement({ type: "td" });
-    // var shapeParams = { random: true, id: barObject.key + "-shape-" + op, "options": markerUtils._d3SymbolStrings };
-    // var shapeinput = HTMLElementUtils.selectTypeDropDown(shapeParams);
-    // if (shapeParams.random) { var rnd = Math.floor(Math.random() * (markerUtils._d3SymbolStrings.length-1)) + 0; shapeinput.selectedIndex = rnd; }
-    // shape.appendChild(shapeinput);
-    // row.appendChild(shape);
 
     // Modified Shape selector UI render (changes: random=false; )
     var shape = HTMLElementUtils.createElement({ type: "td" });
@@ -521,13 +514,13 @@ markerUtils.markerUIAll = function (options) {
     row.appendChild(check);
 
     if(options.drawGeneLetters){
-        var lettersrow = HTMLElementUtils.createElement({ type: "td", innerHTML:  "<label style='cursor:pointer' for='AllMarkers-checkbox-" + op + "'>All Barcodes</label>",
+        var lettersrow = HTMLElementUtils.createElement({ type: "td", innerHTML:  "<label style='cursor:pointer' for='AllMarkers-checkbox-" + op + "'>All Codes</label>",
             extraAttributes: { "title": "All Barcodes", "data-title":"All Barcodes" } });
         row.appendChild(lettersrow);
     }
 
     if(options.drawGeneName){
-        var name = HTMLElementUtils.createElement({ type: "td", innerHTML:  "<label style='cursor:pointer' for='AllMarkers-checkbox-" + op + "'>All Genes</label>",
+        var name = HTMLElementUtils.createElement({ type: "td", innerHTML:  "<label style='cursor:pointer' for='AllMarkers-checkbox-" + op + "'>All Classes</label>",
             extraAttributes: { "title": "All Genes", "data-title":"All Genes" } });
         row.appendChild(name);
     }
@@ -578,11 +571,11 @@ markerUtils.printBarcodeUIs = function (options) {
 
     if(dataUtils._nameAndLetters.drawGeneName){
         options.drawGeneName=true;
-        headers.unshift("Gene");
+        headers.unshift("Name");
     }
     if(dataUtils._nameAndLetters.drawGeneLetters){
         options.drawGeneLetters=true;
-        headers.unshift("Barcode");
+        headers.unshift("Code");
     }
     headers.unshift("");
 

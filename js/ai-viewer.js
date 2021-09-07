@@ -16,7 +16,7 @@
     mpp:0,
     slideFilename:"Main",
     exact_image_id: "1",
-    tileproviderURL: "http://127.0.0.1:5501",
+    tileproviderURL: "http://127.0.0.1:8000",
     ExactUID: "bnapora",
     ExactPWD: "bnapora"
 }
@@ -180,6 +180,7 @@ tmapp.init = function () {
  * all options are described here https://openseadragon.github.io/docs/OpenSeadragon.html#.Options */
 tmapp.options_osd = {
     id: "ISS_viewer",
+    // prefixUrl: "http://127.0.0.1:8000/static/images/",
     prefixUrl: "openseadragon/images/",
     navigatorSizeRatio: 1,
     wrapHorizontal: false,

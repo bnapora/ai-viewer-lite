@@ -169,6 +169,11 @@ dataUtils.showMenuCSV = function(){
             node.appendChild(option);
         });
     });
+    //set default value of Code & Name & Key (Requires csv or json to have Code & Name column in column 1 & 2)
+    ISSBarcodeInput.selectedIndex = 1;
+    ISSNanmeInput.selectedIndex = 2;
+    ISSKey.selectedIndex = 1;
+
     var panel = document.getElementById(op + "_csv_headers");
     panel.style = "";
     //search for defaults if any, "barcode" used to be called "letters"
