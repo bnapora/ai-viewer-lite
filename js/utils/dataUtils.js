@@ -143,7 +143,7 @@ dataUtils.setExpectedCSV = function(expectedCSV){
 }
 
 /** 
-* Show the menu do select the CSV headers that contain the information to display*/
+* Show the menu to select the CSV headers that contain the information to display*/
 dataUtils.showMenuCSV = function(){
     var op = tmapp["object_prefix"];
     var csvheaders = Object.keys(dataUtils[op + "_rawdata"][0]);

@@ -5,6 +5,7 @@
     <title>Gestalt AI Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta charset="utf-8"/>
+
     <script src="js/d3.v4.min.js"></script>
     <script src="js/d3-scale-chromatic.v0.3.min.js"></script>
     <script src="js/jquery-3.5.1.min.js"></script>
@@ -13,7 +14,7 @@
     <link rel="stylesheet" href="css/sidebar-collapsible.css">    
     <link rel="stylesheet" href="css/style-collapsible.css">    
     <link rel="stylesheet" href="css/annotorious.min.css">
-    <link rel="stylesheet" href="css/tm-icon-style.css">
+    <link rel="stylesheet" href="css/tm-icon-style.css"> 
     <script src="js/bootstrap.4.0.0.bundle.min.js" ></script>
     <script src="js/openseadragon.2.4.2.min.js"></script>
     <script src="js/caman.min.js"></script>
@@ -26,6 +27,7 @@
     <script src="js/openseadragon-annotorious.min.js"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/@recogito/annotorious-toolbar@latest/dist/annotorious-toolbar.min.js"></script> -->
     <script src="js/annotorious-toolbar.min.js"></script>
+
     <script src="js/utils/interfaceUtils.js"></script>
     <script src="js/utils/dataUtils.js"></script>
     <script src="js/utils/CPDataUtils.js"></script>
@@ -37,7 +39,7 @@
     <script src="js/utils/filterUtils.js"></script>
     <script src="js/utils/geometryUtils.js"></script>
     <script src="js/utils/glUtils.js"></script>
-    <script src="js/ai-viewer.js"></script>    
+    <script src="js/ai-viewer.js"></script>   
 </head>
 
 <body style="background-color:#f7f7f7;">
@@ -136,7 +138,7 @@
                                         <div class="row" >
                                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                                                 <div id="ISS_input_csv" style="margin-bottom: 5px;">
-                                                    <label id="label_ISS_csv" for="ISS_csv">Import WSI Annotations:</label>
+                                                    <label id="label_ISS_csv" for="ISS_csv">Import Annotations from CSV:</label>
                                                     <input class="form-control-file form-control form-control-sm" type="file" id="ISS_csv" name="ISS_csv"
                                                         accept=".csv,.tsv,.txt">
                                                     <script type="text/javascript">
@@ -148,10 +150,11 @@
                                                                     reader.onloadend = function (evt) {
                                                                         var dataUrl = evt.target.result;
                                                                         dataUtils.readCSV(dataUrl);
+                                                                        // dataUtils.processISSRawData();
                                                                     };
                                                                     reader.readAsDataURL(file);
                                                                 }
-                                                            });
+                                                            });                                                        
                                                     </script>
                                                 </div>
                                             </div>
@@ -162,8 +165,7 @@
                                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                                                 <div class="row">
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-                                                        <label for="ISS_barcode_header">Barcode
-                                                            column</label>
+                                                        <label for="ISS_barcode_header">Code:</label>
                                                     </div>
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                                         <select class="custom-select"
@@ -174,7 +176,7 @@
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-                                                        <label for="ISS_name_header">Name column</label>
+                                                        <label for="ISS_name_header">Name:</label>
                                                     </div>
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                                         <select class="custom-select" id="ISS_name_header">
@@ -184,7 +186,7 @@
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-                                                        <label for="ISS_X_header">X column</label>
+                                                        <label for="ISS_X_header">X Pos:</label>
                                                     </div>
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                                         <select class="custom-select" id="ISS_X_header">
@@ -194,7 +196,7 @@
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-                                                        <label for="ISS_Y_header">Y column</label>
+                                                        <label for="ISS_Y_header">Y Pos:</label>
                                                     </div>
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                                         <select class="custom-select" id="ISS_Y_header">
@@ -208,7 +210,7 @@
                                                     </div>
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                                         <select class="custom-select" id="ISS_key_header">
-                                                            <option value="letters">Barcode</option>
+                                                            <option value="letters">Code</option>
                                                             <option value="gene_name">Name</option>
                                                         </select>
                                                     </div>
@@ -230,7 +232,7 @@
                                                     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
                                                         <button id="ISS_bringmarkers_btn"
                                                             class="btn btn-primary" type="button">
-                                                            Load markers</button>
+                                                            Load Annotations</button>
                                                     </div>
                                                 </div>
                                             </div>
