@@ -1,0 +1,25 @@
+{
+  "name": "ai-viewer-lite",
+  "version": "0.0.1",
+  "description": "ai-viewer-lite",
+  "private": true,
+  "browser": "gsAIViewer-DZI.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "lite-server -c lite-server-config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bnapora/ai-viewer-lite.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/bnapora/ai-viewer-lite/issues"
+  },
+  "homepage": "https://www.gestaltdiagnostics.com/",
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  },
+  "dependencies": {}
+}
