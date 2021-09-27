@@ -3,3 +3,5 @@
 /CCMCT_1018715d369dd0df2fc0_DZI_files
 /CCMCT_1018715d369dd0df2fc0_files
 CCMCT_1018715d369dd0df2fc0_DZI.dzi
+node_modules/**
+osd-magnifier/node_modules/**

@@ -21,7 +21,7 @@
     ExactPWD: "bnapora"
 }
 
-/** 
+/**
  * Get all the buttons from the interface and assign all the functions associated to them */
 tmapp.registerActions = function () {
     tmapp["object_prefix"] = tmapp.options_osd.id.split("_")[0];
@@ -55,7 +55,7 @@ tmapp.registerActions = function () {
  * Cell Profiler data it can be "CP".
  * If there are images to be displayed on top of the main image, they are stored in the layers object and, if there are layers
  * it will create the buttons to display them in the settings panel.
- * The SVG overlays for the viewer are also initialized here 
+ * The SVG overlays for the viewer are also initialized here
  * @summary After setting up the tmapp object, initialize it*/
 tmapp.init = function () {
     //This prefix will be called by all other utilities in js/utils
@@ -77,14 +77,14 @@ tmapp.init = function () {
 
                           //main node
     overlayUtils._d3nodes[op + "_svgnode"] = d3.select(tmapp[svgovname].node());
-    
+
     //overlay for marker data                                             //main node
     overlayUtils._d3nodes[op + "_markers_svgnode"] = overlayUtils._d3nodes[op + "_svgnode"].append("g")
         .attr("id", op + "_markers_svgnode");
     //overlay for region data                                              //main node
     overlayUtils._d3nodes[op + "_regions_svgnode"] = overlayUtils._d3nodes[op + "_svgnode"].append("g")
         .attr("id", op + "_regions_svgnode");
-    //overlay for CP data   
+    //overlay for CP data
     var cpop="CP";                                   //main node;
     overlayUtils._d3nodes[cpop+"_svgnode"] = overlayUtils._d3nodes[op + "_svgnode"].append("g")
         .attr("id", cpop+"_svgnode");
@@ -100,7 +100,7 @@ tmapp.init = function () {
         }
     };
 
-    //delay the scroll and the panning options so that there is a bit more time to calcualte which 
+    //delay the scroll and the panning options so that there is a bit more time to calcualte which
     //markers to plot and where and how many
     var isScrolling;
     var scroll_handler = function (event) {
@@ -119,14 +119,16 @@ tmapp.init = function () {
     }
 
 
-    //OSD handlers are not registered manually they have to be registered
-    //using MouseTracker OSD objects 
-    var ISS_mouse_tracker = new OpenSeadragon.MouseTracker({
-        //element: this.fixed_svgov.node().parentNode, 
-        element: tmapp[vname].canvas,
-        clickHandler: click_handler,
-        scrollHandler: scroll_handler
-    }).setTracking(true);
+    // //OSD handlers are not registered manually they have to be registered
+    // //using MouseTracker OSD objects
+    // var ISS_mouse_tracker = new OpenSeadragon.MouseTracker({
+    //     //element: this.fixed_svgov.node().parentNode,
+    //     element: tmapp[vname].canvas,
+    //     clickHandler: click_handler,
+    //     scrollHandler: scroll_handler
+    // }).setTracking(true);
+    tmapp[vname].addHandler('canvas-click', click_handler);
+    tmapp[vname].addHandler('canvas-scroll', scroll_handler);
 
     elt = document.getElementById("ISS_globalmarkersize");
     if (elt) {
@@ -163,7 +165,7 @@ tmapp.init = function () {
 
     // });
 
-    //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");}); 
+    //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");});
     filterUtils.initFilters();
     if (window.hasOwnProperty("glUtils")) {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
@@ -176,7 +178,7 @@ tmapp.init = function () {
 // //initialize exact_image_id from template (Use only when deployed in Exact application)
 // tmapp.exact_image_id = exact_image_id;
 /**
- * Options for the fixed and moving OSD 
+ * Options for the fixed and moving OSD
  * all options are described here https://openseadragon.github.io/docs/OpenSeadragon.html#.Options */
 tmapp.options_osd = {
     id: "ISS_viewer",
@@ -196,10 +198,10 @@ tmapp.options_osd = {
     visibilityRatio: 1,
     showNavigationControl: true,
     maxImageCacheCount:500,
- 
+
     // // //Exact Tileprovider
     // loadTilesWithAjax: true,  //appears to load a little faster; necessary for api/v1 call
-    // // tileSources:     "http://127.0.0.1:8000/images/image/61/1/1/tile/",  
+    // // tileSources:     "http://127.0.0.1:8000/images/image/61/1/1/tile/",
     // tileSources: tmapp.tileproviderURL + "/api/v1/images/images/" + tmapp.exact_image_id + "/1/1/tile/",
     // ajaxHeaders: {
     //     "Authorization": "Basic " + btoa(tmapp.ExactUID + ":" + tmapp.ExactPWD),
