@@ -18,40 +18,40 @@ To run a debugging session in Visual Studio Code, the following .vscode/launch.j
 
 ```javascript
 {
-	// Use IntelliSense to learn about possible attributes.
-	// Hover to view descriptions of existing attributes.
-	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-	"version": "0.2.0",
-	"configurations": [
-	  {
-		  "name": "Launch Site - Microsoft Edge",
-		  "type": "edge",
-		  "request": "launch",
-		  "url": "http://localhost:3000",
-		  "webRoot": "${workspaceFolder}"
-	  },
-	  {
-		  "name": "Launch Site - Chrome",
-		  "type": "chrome",
-		  "request": "launch",
-		  "url": "http://localhost:3000",
-		  "webRoot": "${workspaceFolder}"
-	  },
-	  {
-		  "name": "Launch Site - Firefox",
-		  "type": "firefox",
-		  "request": "launch",
-		  "reAttach": true,
-		  "url": "http://localhost:3000",
-		  "webRoot": "${workspaceFolder}",
-		  "pathMappings": [
-			  {
-				  "url": "http://localhost:3000",
-				  "path": "${webRoot}/"
-			  }
-		  ]
-	  }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Site - Microsoft Edge",
+      "type": "edge",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch Site - Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch Site - Firefox",
+      "type": "firefox",
+      "request": "launch",
+      "reAttach": true,
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}",
+      "pathMappings": [
+        {
+          "url": "http://localhost:3000",
+          "path": "${webRoot}/"
+        }
+      ]
+    }
+  ]
 }
 ```
 
