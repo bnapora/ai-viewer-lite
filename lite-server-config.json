@@ -1,8 +1,0 @@
-{
-	"port": 3000,
-	"files": ["./**/*.{html,css,js}"],
-	"server": {
-		"baseDir": ".",
-		"index": "/gsAIViewer-DZI.html"
-	}
-}
