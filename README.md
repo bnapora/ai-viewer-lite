@@ -1,4 +1,8 @@
-# ai-viewer-lite
+# ai-viewer-lite  
+
+## Download & Format Test WSI
+
+1. Follow instructions in setup_WSI_DZI.md to download test image to project directory.
 
 ## First Time Setup
 
