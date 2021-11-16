@@ -2,8 +2,16 @@
     overflow-x: hidden;
  }
 
+.page-content__row {
+  display: flex;
+ }
+
 #sidebar-wrapper {
+  flex-basis: 500px;
+  flex: 1 0 auto;
+  margin-right: -30rem;
   min-height: 100vh;
+  padding-right: 10px;
   -webkit-transition: margin .25s ease-out;
   -moz-transition: margin .25s ease-out;
   -o-transition: margin .25s ease-out;
@@ -20,6 +28,8 @@
 }
 
 #page-content-wrapper {
+  flex-basis: 100vw;
+  flex: 0 1 auto;
   min-width: 100vw;
 }
 
@@ -38,7 +48,6 @@
   }
 
   #wrapper.toggled #sidebar-wrapper {
-    margin-right: 0rem;
-    margin-left: -10rem;
+    margin-right: -30rem;
   }
 }

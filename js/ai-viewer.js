@@ -135,11 +135,6 @@ tmapp.init = function () {
         tmapp[vname].addControl(elt,{anchor: OpenSeadragon.ControlAnchor.TOP_RIGHT});
         elt.style.display="None";
     }
-    elt2 = document.getElementById("ISS_magnifier");
-    if (elt2) {
-        tmapp[vname].addControl(elt2,{anchor: OpenSeadragon.ControlAnchor.BOTTOM_RIGHT});
-        elt2.style.display="block";
-    }
 
     if (tmapp.mpp != 0) {
         tmapp[vname].scalebar({
@@ -154,16 +149,16 @@ tmapp.init = function () {
         });
     }
 
-    // tmapp[vname].magnifier({
-    //     sizeRatio:              0.4, // size relative to parent viewer
-    //     magnifierRotate:        true, // rotate with parent viewer (does not work yet)
-    //     minZoomLevel:           1,
-    //     defaultZoomLevel: 6,
-    //     minZoomImageRatio: 3.0,
-    //     keyboardShortcut:       'm', // to toggle magnifier visibility
-    //     debugMode: false,
+    tmapp[vname].magnifier({
+        sizeRatio:              0.4, // size relative to parent viewer
+        magnifierRotate:        true, // rotate with parent viewer (does not work yet)
+        minZoomLevel:           1,
+        defaultZoomLevel: 6,
+        minZoomImageRatio: 3.0,
+        keyboardShortcut:       'm', // to toggle magnifier visibility
+        debugMode: false,
 
-    // });
+    });
 
     //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");});
     filterUtils.initFilters();
