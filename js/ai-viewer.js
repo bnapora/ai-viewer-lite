@@ -21,6 +21,33 @@
     ExactPWD: "bnapora"
 }
 
+tmapp.options_magnifier= {
+    id: "ISS_magnifier",
+    prefixUrl: "openseadragon/images/",
+    navigatorSizeRatio: 1,
+    wrapHorizontal: false,
+    showNavigator: false,
+    animationTime: 0.0,
+    blendTime: 0,
+    minZoomImageRatio: 1,
+    maxZoomPixelRatio: 10,
+    zoomPerClick: 1.0,
+    constrainDuringPan: true,
+    visibilityRatio: 1,
+    showNavigationControl: false,
+    maxImageCacheCount:500
+}
+
+tmapp.setupMagnifier = function(prefix, mainViewer) {
+    var mname = prefix + "_magnifier";
+    var magnifier = OpenSeadragon(tmapp.options_magnifier);
+
+    magnifier.viewport.zoomTo(mainViewer.viewport.getZoom());
+    magnifier.viewport.panTo(mainViewer.viewport.getCenter());
+
+    tmapp[mname] = magnifier;
+}
+
 /**
  * Get all the buttons from the interface and assign all the functions associated to them */
 tmapp.registerActions = function () {
@@ -66,6 +93,8 @@ tmapp.init = function () {
     tmapp[vname] = OpenSeadragon(tmapp.options_osd);
     //pixelate because we need the exact values of pixels
     tmapp[vname].addHandler("tile-drawn", OSDViewerUtils.pixelateAtMaximumZoomHandler);
+
+    tmapp.setupMagnifier(op, tmapp[vname]);
 
     if(!tmapp.layers){
         tmapp.layers = [];
