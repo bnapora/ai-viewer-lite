@@ -149,17 +149,6 @@ tmapp.init = function () {
         });
     }
 
-    tmapp[vname].magnifier({
-        sizeRatio:              0.4, // size relative to parent viewer
-        magnifierRotate:        true, // rotate with parent viewer (does not work yet)
-        minZoomLevel:           1,
-        defaultZoomLevel: 6,
-        minZoomImageRatio: 3.0,
-        keyboardShortcut:       'm', // to toggle magnifier visibility
-        debugMode: false,
-
-    });
-
     //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");});
     filterUtils.initFilters();
     if (window.hasOwnProperty("glUtils")) {

@@ -9,7 +9,7 @@
 #sidebar-wrapper {
   flex-basis: 500px;
   flex: 1 0 auto;
-  margin-right: -30rem;
+  margin-right: -100rem;
   min-height: 100vh;
   padding-right: 10px;
   -webkit-transition: margin .25s ease-out;
@@ -48,6 +48,6 @@
   }
 
   #wrapper.toggled #sidebar-wrapper {
-    margin-right: -30rem;
+    margin-right: -100rem;
   }
 }
