@@ -49,7 +49,7 @@ tmapp.setupMagnifier = function(prefix, mainViewer) {
     var magnifier = OpenSeadragon(tmapp.options_magnifier);
 
     var syncHandler = function() {
-        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() + 20);
+        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() + 20); // todo: this number will be configurable
         magnifier.viewport.panTo(mainViewer.viewport.getCenter());
     }
 
