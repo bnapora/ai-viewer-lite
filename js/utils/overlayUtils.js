@@ -178,6 +178,7 @@ overlayUtils.addLayer = function(layerName, tileSource, i) {
         tileSource: tmapp._url_suffix + tileSource,
         opacity: opacity,
         success: function(i) {
+            // todo: do we want this?
             layer0X = tmapp[mname].world.getItemAt(0).getContentSize().x;
             layerNX = tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).getContentSize().x;
             tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).setWidth(layerNX/layer0X);
@@ -198,6 +199,8 @@ overlayUtils.setItemOpacity = function(item, opacity) {
         return;
     }
     tmapp[op + "_viewer"].world.getItemAt(item).setOpacity(opacity);
+    tmapp[op + "_magnifier"].world.getItemAt(item).setOpacity(opacity);
+
 }
 
 overlayUtils.areAllFullyLoaded = function () {

@@ -349,12 +349,20 @@ filterUtils.getFilterFunction = function(filterName) {
             items: tmapp[op + "_viewer"].world.getItemAt(layer),
             processors: processors
         });
+        filters.push({
+            items: tmapp[op + "_magnifier"].world.getItemAt(layer),
+            processors: processors
+        });
     };
     tmapp[op + "_viewer"].setFilterOptions({
         filters: filters
     });
+    tmapp[op + "_magnifier"].setFilterOptions({
+        filters: filters
+    })
     for ( var i = 0; i < tmapp[op + "_viewer"].world._items.length; i++ ) {
         tmapp[op + "_viewer"].world._items[i].tilesMatrix={};
+        tmapp[op + "_magnifier"].world._items[i].tilesMatrix={};
     }
 }
 
@@ -431,8 +439,11 @@ filterUtils.setCompositeOperation = function(compositeOperation) {
     var filterCompositeMode = document.getElementById("filterCompositeMode");
     filterCompositeMode.value = compositeOperation;
     tmapp[op + "_viewer"].compositeOperation = compositeOperation;
+    tmapp[op + "_magnifier"].compositeOperation = compositeOperation;
     for (i = 0; i < tmapp[op + "_viewer"].world.getItemCount(); i++) {
         tmapp[op + "_viewer"].world.getItemAt(i).setCompositeOperation(compositeOperation);
+        tmapp[op + "_magnifier"].world.getItemAt(i).setCompositeOperation(compositeOperation);
+
     }
     filterUtils._compositeMode = compositeOperation;
 }
