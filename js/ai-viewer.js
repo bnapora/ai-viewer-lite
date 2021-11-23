@@ -21,6 +21,44 @@
     ExactPWD: "bnapora"
 }
 
+tmapp.options_magnifier= {
+    id: "ISS_magnifier",
+    prefixUrl: "openseadragon/images/",
+    navigatorSizeRatio: 1,
+    showNavigator: false,
+    animationTime: 0.0,
+    blendTime: 0,
+    minZoomImageRatio: 1,
+    maxZoomPixelRatio: 10,
+    zoomPerClick: 0,
+    constrainDuringPan: true,
+    visibilityRatio: 1,
+    showNavigationControl: false,
+    maxImageCacheCount:500,
+    debug: true,
+    immediateRender: true,
+    preload: true,
+    panHorizontal: false,
+    panVertical: false,
+    mouseNavEnabled: false
+}
+
+
+tmapp.setupMagnifier = function(prefix, mainViewer) {
+    var mname = prefix + "_magnifier";
+    var magnifier = OpenSeadragon(tmapp.options_magnifier);
+
+    var syncHandler = function() {
+        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() + 20); // todo: this number will be configurable
+        magnifier.viewport.panTo(mainViewer.viewport.getCenter());
+    }
+
+    mainViewer.addHandler('zoom', syncHandler);
+    mainViewer.addHandler('pan', syncHandler);
+
+    tmapp[mname] = magnifier;
+}
+
 /**
  * Get all the buttons from the interface and assign all the functions associated to them */
 tmapp.registerActions = function () {
@@ -66,6 +104,8 @@ tmapp.init = function () {
     tmapp[vname] = OpenSeadragon(tmapp.options_osd);
     //pixelate because we need the exact values of pixels
     tmapp[vname].addHandler("tile-drawn", OSDViewerUtils.pixelateAtMaximumZoomHandler);
+
+    tmapp.setupMagnifier(op, tmapp[vname]);
 
     if(!tmapp.layers){
         tmapp.layers = [];
@@ -135,11 +175,6 @@ tmapp.init = function () {
         tmapp[vname].addControl(elt,{anchor: OpenSeadragon.ControlAnchor.TOP_RIGHT});
         elt.style.display="None";
     }
-    elt2 = document.getElementById("ISS_magnifier");
-    if (elt2) {
-        tmapp[vname].addControl(elt2,{anchor: OpenSeadragon.ControlAnchor.BOTTOM_RIGHT});
-        elt2.style.display="block";
-    }
 
     if (tmapp.mpp != 0) {
         tmapp[vname].scalebar({
@@ -153,17 +188,6 @@ tmapp.init = function () {
             sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.METRIC_LENGTH
         });
     }
-
-    // tmapp[vname].magnifier({
-    //     sizeRatio:              0.4, // size relative to parent viewer
-    //     magnifierRotate:        true, // rotate with parent viewer (does not work yet)
-    //     minZoomLevel:           1,
-    //     defaultZoomLevel: 6,
-    //     minZoomImageRatio: 3.0,
-    //     keyboardShortcut:       'm', // to toggle magnifier visibility
-    //     debugMode: false,
-
-    // });
 
     //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");});
     filterUtils.initFilters();
