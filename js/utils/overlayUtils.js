@@ -158,6 +158,7 @@ overlayUtils.addLayerFromSelect = function() {
 overlayUtils.addLayer = function(layerName, tileSource, i) {
     var op = tmapp["object_prefix"];
     var vname = op + "_viewer";
+    var mname = op + "_magnifier";
     var opacity = 1.0;
     if (i >= 0) {
         opacity = 0.0;
@@ -167,10 +168,20 @@ overlayUtils.addLayer = function(layerName, tileSource, i) {
         tileSource: tmapp._url_suffix + tileSource,
         opacity: opacity,
         success: function(i) {
-            layer0X = tmapp[op + "_viewer"].world.getItemAt(0).getContentSize().x;
-            layerNX = tmapp[op + "_viewer"].world.getItemAt(tmapp[op + "_viewer"].world.getItemCount()-1).getContentSize().x;
-            tmapp[op + "_viewer"].world.getItemAt(tmapp[op + "_viewer"].world.getItemCount()-1).setWidth(layerNX/layer0X);
-        } 
+            layer0X = tmapp[vname].world.getItemAt(0).getContentSize().x;
+            layerNX = tmapp[vname].world.getItemAt(tmapp[vname].world.getItemCount()-1).getContentSize().x;
+            tmapp[vname].world.getItemAt(tmapp[vname].world.getItemCount()-1).setWidth(layerNX/layer0X);
+        }
+    });
+    tmapp[mname].addTiledImage({
+        index: i + 1,
+        tileSource: tmapp._url_suffix + tileSource,
+        opacity: opacity,
+        success: function(i) {
+            layer0X = tmapp[mname].world.getItemAt(0).getContentSize().x;
+            layerNX = tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).getContentSize().x;
+            tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).setWidth(layerNX/layer0X);
+        }
     });
 }
 

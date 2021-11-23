@@ -25,25 +25,36 @@ tmapp.options_magnifier= {
     id: "ISS_magnifier",
     prefixUrl: "openseadragon/images/",
     navigatorSizeRatio: 1,
-    wrapHorizontal: false,
     showNavigator: false,
     animationTime: 0.0,
     blendTime: 0,
     minZoomImageRatio: 1,
     maxZoomPixelRatio: 10,
-    zoomPerClick: 1.0,
+    zoomPerClick: 0,
     constrainDuringPan: true,
     visibilityRatio: 1,
     showNavigationControl: false,
-    maxImageCacheCount:500
+    maxImageCacheCount:500,
+    debug: true,
+    immediateRender: true,
+    preload: true,
+    panHorizontal: false,
+    panVertical: false,
+    mouseNavEnabled: false
 }
+
 
 tmapp.setupMagnifier = function(prefix, mainViewer) {
     var mname = prefix + "_magnifier";
     var magnifier = OpenSeadragon(tmapp.options_magnifier);
 
-    magnifier.viewport.zoomTo(mainViewer.viewport.getZoom());
-    magnifier.viewport.panTo(mainViewer.viewport.getCenter());
+    var syncHandler = function() {
+        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() + 20);
+        magnifier.viewport.panTo(mainViewer.viewport.getCenter());
+    }
+
+    mainViewer.addHandler('zoom', syncHandler);
+    mainViewer.addHandler('pan', syncHandler);
 
     tmapp[mname] = magnifier;
 }
