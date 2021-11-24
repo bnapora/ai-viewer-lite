@@ -330,7 +330,12 @@ filterUtils.getFilterFunction = function(filterName) {
 	caman.Store.put = function() {};
 
     var op = tmapp["object_prefix"];
-    if (!tmapp[op + "_viewer"].world || !tmapp[op + "_viewer"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1)) {
+    if (
+        !tmapp[op + "_viewer"].world ||
+        !tmapp[op + "_viewer"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1) ||
+        !tmapp[op + "_magnifier"].world ||
+        !tmapp[op + "_magnifier"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1)
+    ) {
         setTimeout(function() {
             if (calledItems == filterUtils._filterItems)
                 filterUtils.applyFilterItems(calledItems);
@@ -338,6 +343,7 @@ filterUtils.getFilterFunction = function(filterName) {
         return;
     }
     filters = [];
+    magnifierFilters = [];
     for (const layer in filterUtils._filterItems) {
         processors = [];
         for(var filterIndex=0;filterIndex<filterUtils._filterItems[layer].length;filterIndex++) {
@@ -349,7 +355,7 @@ filterUtils.getFilterFunction = function(filterName) {
             items: tmapp[op + "_viewer"].world.getItemAt(layer),
             processors: processors
         });
-        filters.push({
+        magnifierFilters.push({
             items: tmapp[op + "_magnifier"].world.getItemAt(layer),
             processors: processors
         });
@@ -358,7 +364,7 @@ filterUtils.getFilterFunction = function(filterName) {
         filters: filters
     });
     tmapp[op + "_magnifier"].setFilterOptions({
-        filters: filters
+        filters: magnifierFilters
     })
     for ( var i = 0; i < tmapp[op + "_viewer"].world._items.length; i++ ) {
         tmapp[op + "_viewer"].world._items[i].tilesMatrix={};
@@ -430,7 +436,11 @@ filterUtils.getFilterItems = function() {
 
 filterUtils.setCompositeOperation = function(compositeOperation) {
     var op = tmapp["object_prefix"];
-    if (!tmapp[op + "_viewer"].world || !tmapp[op + "_viewer"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1)) {
+    if (        !tmapp[op + "_viewer"].world ||
+        !tmapp[op + "_viewer"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1) ||
+        !tmapp[op + "_magnifier"].world ||
+        !tmapp[op + "_magnifier"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1)
+    ) {
         setTimeout(function() {
             filterUtils.setCompositeOperation(compositeOperation);
         }, 100);
