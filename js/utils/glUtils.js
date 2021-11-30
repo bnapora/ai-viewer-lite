@@ -32,6 +32,7 @@ class glUtils {
         this._barcodeToKey = {};
         this._options = {antialias: false};
         this._showColorbar = true;
+        this._path_markershapes_img = "misc/markershapes.png"
 
         const osd = this.viewer.element.getElementsByClassName("openseadragon-canvas")[0];
 
@@ -48,7 +49,7 @@ class glUtils {
         this._buffers["CPMarkers"] = this._createDummyMarkerBuffer(gl, this._numCPMarkers);
         this._textures["colorLUT"] = this._createColorLUTTexture(gl);
         this._textures["colorscale"] = this._createColorScaleTexture(gl);
-        this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, "misc/markershapes.png");
+        this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, this._path_markershapes_img);
 
         this._createColorbarCanvas();  // The colorbar is drawn separately in a 2D-canvas
 
@@ -516,7 +517,6 @@ glUtils.prototype._createMarkerWebGLCanvas = function() {
 
 glUtils.prototype._loadTextureFromImageURL = function(gl, src) {
     const texture = gl.createTexture();
-    console.log(gl.TEXTURE_2D, texture)
     const image = new Image();
     image.onload = function() {
         gl.bindTexture(gl.TEXTURE_2D, texture);
