@@ -38,7 +38,7 @@ class glUtils {
 
         this._canvas = this.viewer.element.getElementsByClassName("gl_canvas")[0];
         if (!this._canvas) this._canvas = this._createMarkerWebGLCanvas();
-        const gl = this._canvas.getContext("webgl", glUtils._options);
+        const gl = this._canvas.getContext("webgl", this._options);
 
         // Place marker canvas under the OSD canvas. Doing this also enables proper
         // compositing with the minimap and other OSD elements.
@@ -245,7 +245,8 @@ glUtils.prototype.loadMarkers = function() {
 
     const bytedata = new Float32Array(positions);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["barcodeMarkers"]);
+    var foo = gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["barcodeMarkers"]);
+    console.log(foo)
     gl.bufferData(gl.ARRAY_BUFFER, bytedata, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
@@ -540,7 +541,7 @@ glUtils.prototype.clearNavigatorArea = function() {}
 glUtils.prototype.draw = function() {
     if (!this._initialized) return;
 
-    const gl = this._canvas.getContext("webgl", glUtils._options);
+    const gl = this._canvas.getContext("webgl", this._options);
 
     const bounds = tmapp["ISS_viewer"].viewport.getBounds();
     this._viewportRect = [bounds.x, bounds.y, bounds.width, bounds.height];
