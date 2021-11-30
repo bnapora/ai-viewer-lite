@@ -27,7 +27,8 @@ tmapp.options_magnifier= {
     showNavigator: false,
     animationTime: 0.0,
     blendTime: 0,
-    minZoomLevel: 10,
+    minZoomLevel: 1,
+    minZoomImageRatio: 1.0,
     zoomPerClick: 0,
     constrainDuringPan: true,
     visibilityRatio: 1,
@@ -42,12 +43,15 @@ tmapp.options_magnifier= {
 
 tmapp.setupMagnifier = function(prefix, mainViewer) {
     var mname = prefix + "_magnifier";
+    tmapp.options_magnifier['defaultZoomLevel'] = mainViewer.viewport.getZoom() * 4;
+    tmapp.options_magnifier['minPixelRatio'] = mainViewer.minPixelRatio;
+
     var magnifier = OpenSeadragon(tmapp.options_magnifier);
 
     tmapp[mname] = magnifier;
 
     var syncHandler = function() {
-        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() + 20); // todo: this number will be configurable
+        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() * 4); // todo: this number will be configurable
         magnifier.viewport.panTo(mainViewer.viewport.getCenter());
     }
 

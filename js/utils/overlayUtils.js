@@ -163,6 +163,7 @@ overlayUtils.addLayer = function(layerName, tileSource, i) {
     if (i >= 0) {
         opacity = 0.0;
     }
+
     tmapp[vname].addTiledImage({
         index: i + 1,
         tileSource: tmapp._url_suffix + tileSource,
@@ -178,10 +179,9 @@ overlayUtils.addLayer = function(layerName, tileSource, i) {
         tileSource: tmapp._url_suffix + tileSource,
         opacity: opacity,
         success: function(i) {
-            // // todo: do we want this?
-            // layer0X = tmapp[mname].world.getItemAt(0).getContentSize().x;
-            // layerNX = tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).getContentSize().x;
-            // tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).setWidth(layerNX/layer0X);
+            layer0X = tmapp[mname].world.getItemAt(0).getContentSize().x;
+            layerNX = tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).getContentSize().x;
+            tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).setWidth(layerNX/layer0X);
         }
     });
 }
