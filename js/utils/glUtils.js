@@ -3,30 +3,76 @@
 * @author Fredrik Nysjo
 * @see {@link glUtils}
 */
-glUtils = {
-    _initialized: false,
-    _programs: {},
-    _buffers: {},
-    _textures: {},
-    _numBarcodePoints: 0,
-    _numCPPoints: 0,
-    _imageSize: [1, 1],
-    _viewportRect: [0, 0, 1, 1],
-    _markerScale: 1.0,
-    _markerScalarRange: [0.0, 1.0],
-    _markerOpacity: 0.5,    //Modified from 1.0 to 0.5 to display center of anno
-    _useColorFromMarker: false,
-    _colorscaleName: "null",
-    _colorscaleData: [],
-    _barcodeToLUTIndex: {},
-    _barcodeToKey: {},
-    _options: {antialias: false},
-    _showColorbar: true,
-    _path_markershapes_img: "misc/markershapes.png",
-}
 
+class glUtils {
+    resize() {
+        const gl = this._canvas.getContext("webgl", this._options);
 
-glUtils._markersVS = `
+        const newSize = this.viewer.viewport.containerSize;
+        gl.canvas.width = newSize.x;
+        gl.canvas.height = newSize.y;
+    }
+    constructor(osdViewer) {
+        this.viewer = osdViewer;
+        this._initialized = false;
+        this._programs =  {};
+        this._buffers = {};
+        this._textures = {};
+        this._numBarcodePoints = 0;
+        this._numCPPoints = 0;
+        this._imageSize = [1, 1];
+        this._viewportRect = [0, 0, 1, 1];
+        this._markerScale = 1.0;
+        this._markerScalarRange = [0.0, 1.0];
+        this._markerOpacity = 0.5;    //Modified from 1.0 to 0.5 to display center of anno
+        this._useColorFromMarker = false;
+        this._colorscaleName = "null";``
+        this._colorscaleData = [];
+        this._barcodeToLUTIndex = {};
+        this._barcodeToKey = {};
+        this._options = {antialias: false};
+        this._showColorbar = true;
+
+        const osd = this.viewer.element.getElementsByClassName("openseadragon-canvas")[0];
+
+        this._canvas = this.viewer.element.getElementsByClassName("gl_canvas")[0];
+        if (!this._canvas) this._canvas = this._createMarkerWebGLCanvas();
+        const gl = this._canvas.getContext("webgl", glUtils._options);
+
+        // Place marker canvas under the OSD canvas. Doing this also enables proper
+        // compositing with the minimap and other OSD elements.
+        osd.appendChild(this._canvas);
+
+        this._programs["markers"] = this._loadShaderProgram(gl, this._markersVS, this._markersFS);
+        this._buffers["barcodeMarkers"] = this._createDummyMarkerBuffer(gl, this._numBarcodePoints);
+        this._buffers["CPMarkers"] = this._createDummyMarkerBuffer(gl, this._numCPMarkers);
+        this._textures["colorLUT"] = this._createColorLUTTexture(gl);
+        this._textures["colorscale"] = this._createColorScaleTexture(gl);
+        this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, "misc/markershapes.png");
+
+        this._createColorbarCanvas();  // The colorbar is drawn separately in a 2D-canvas
+
+        this.updateMarkerScale();
+        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.updateMarkerScale);
+        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.draw);
+        document.getElementById("ISS_markers").addEventListener("change", this.updateLUTTextures);
+        document.getElementById("ISS_markers").addEventListener("change", this.draw);
+
+        tmapp["hideSVGMarkers"] = true;
+        osdViewer.removeHandler('resize', this.resizeAndDraw);
+        osdViewer.addHandler('resize', this.resizeAndDraw);
+        osdViewer.removeHandler('open', this.draw);
+        osdViewer.addHandler('open', this.draw);
+        osdViewer.removeHandler('viewport-change', this.draw);
+        osdViewer.addHandler('viewport-change', this.draw);
+
+        this._initialized = true;
+        this.resize();  // Force initial resize to OSD canvas size
+        return this;
+    }
+};
+
+glUtils.prototype._markersVS = `
     uniform vec2 u_imageSize;
     uniform vec4 u_viewportRect;
     uniform mat2 u_viewportTransform;
@@ -88,7 +134,7 @@ glUtils._markersVS = `
 `;
 
 
-glUtils._markersFS = `
+glUtils.prototype._markersFS = `
     precision mediump float;
 
     uniform sampler2D u_shapeAtlas;
@@ -115,7 +161,7 @@ glUtils._markersFS = `
 `;
 
 
-glUtils._loadShaderProgram = function(gl, vertSource, fragSource) {
+glUtils.prototype._loadShaderProgram = function(gl, vertSource, fragSource) {
     const vertShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertShader, vertSource);
     gl.compileShader(vertShader);
@@ -146,7 +192,7 @@ glUtils._loadShaderProgram = function(gl, vertSource, fragSource) {
 }
 
 
-glUtils._createDummyMarkerBuffer = function(gl, numPoints) {
+glUtils.prototype._createDummyMarkerBuffer = function(gl, numPoints) {
     const positions = [];
     for (let i = 0; i < numPoints; ++i) {
         positions[4 * i + 0] = Math.random();  // X-coord
@@ -167,19 +213,21 @@ glUtils._createDummyMarkerBuffer = function(gl, numPoints) {
 
 
 // Load barcode markers loaded from CSV file into vertex buffer
-glUtils.loadMarkers = function() {
+glUtils.prototype.loadMarkers = function() {
     if (!this._initialized) return;
-    const gl = this._canvas.getContext("webgl", glUtils._options);
+    const gl = this._canvas.getContext("webgl", this._options);
 
     const markerData = dataUtils["ISS_processeddata"];
     const numPoints = markerData.length;
     const keyName = document.getElementById("ISS_key_header").value;
+
+    // todo: these need to work with the magnifier too
     const imageWidth = OSDViewerUtils.getImageWidth();
     const imageHeight = OSDViewerUtils.getImageHeight();
 
     // If new marker data was loaded, we need to assign each barcode an index
     // that we can use with the LUT textures for color, visibility, etc.
-    glUtils._updateBarcodeToLUTIndexDict(markerData, keyName);
+    this._updateBarcodeToLUTIndexDict(markerData, keyName);
 
     const colorPropertyName = markerUtils._uniqueColorSelector;
     const useColorFromMarker = markerUtils._uniqueColor && (colorPropertyName in markerData[0]);
@@ -190,27 +238,27 @@ glUtils.loadMarkers = function() {
         if (useColorFromMarker) hexColor = markerData[i][colorPropertyName];
         positions[4 * i + 0] = markerData[i].global_X_pos / imageWidth;
         positions[4 * i + 1] = markerData[i].global_Y_pos / imageHeight;
-        positions[4 * i + 2] = glUtils._barcodeToLUTIndex[markerData[i].letters] / 4095.0;
+        positions[4 * i + 2] = this._barcodeToLUTIndex[markerData[i].letters] / 4095.0;
         positions[4 * i + 3] = Number("0x" + hexColor.substring(1,7));
     }
 
     const bytedata = new Float32Array(positions);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, glUtils._buffers["barcodeMarkers"]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["barcodeMarkers"]);
     gl.bufferData(gl.ARRAY_BUFFER, bytedata, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    glUtils._numBarcodePoints = numPoints;
-    glUtils._useColorFromMarker = useColorFromMarker;
-    glUtils.updateLUTTextures();
+    this._numBarcodePoints = numPoints;
+    this._useColorFromMarker = useColorFromMarker;
+    this.updateLUTTextures();
 }
 
 
 // Load cell morphology markers loaded from CSV file into vertex buffer
-glUtils.loadCPMarkers = function() {
+glUtils.prototype.loadCPMarkers = function() {
     if (!this._initialized) return;
 
-    const gl = this._canvas.getContext("webgl", glUtils._options);
+    const gl = this._canvas.getContext("webgl", this._options);
 
     const markerData = CPDataUtils["CP_rawdata"];
     const numPoints = markerData.length;
@@ -238,20 +286,20 @@ glUtils.loadCPMarkers = function() {
 
     const bytedata = new Float32Array(positions);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, glUtils._buffers["CPMarkers"]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["CPMarkers"]);
     gl.bufferData(gl.ARRAY_BUFFER, bytedata, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    glUtils._numCPPoints = numPoints;
-    glUtils._markerScalarRange = scalarRange;
-    glUtils._colorscaleName = colorscaleName;
-    glUtils._updateColorScaleTexture(gl, glUtils._textures["colorscale"]);
-    glUtils._updateColorbarCanvas(colorscaleName, glUtils._colorscaleData, propertyName, scalarRange);
-    glUtils.draw();  // Force redraw
+    this._numCPPoints = numPoints;
+    this._markerScalarRange = scalarRange;
+    this._colorscaleName = colorscaleName;
+    this._updateColorScaleTexture(gl, this._textures["colorscale"]);
+    this._updateColorbarCanvas(colorscaleName, this._colorscaleData, propertyName, scalarRange);
+    this.draw();  // Force redraw
 }
 
 
-glUtils._updateBarcodeToLUTIndexDict = function(markerData, keyName) {
+glUtils.prototype._updateBarcodeToLUTIndexDict = function(markerData, keyName) {
     const barcodeToLUTIndex = {};
     const barcodeToKey = {};
     const numPoints = markerData.length;
@@ -263,12 +311,12 @@ glUtils._updateBarcodeToLUTIndexDict = function(markerData, keyName) {
             barcodeToKey[barcode] = (keyName == "letters" ? barcode : gene_name);
         }
     }
-    glUtils._barcodeToLUTIndex = barcodeToLUTIndex;
-    glUtils._barcodeToKey = barcodeToKey;
+    this._barcodeToLUTIndex = barcodeToLUTIndex;
+    this._barcodeToKey = barcodeToKey;
 }
 
 
-glUtils._createColorLUTTexture = function(gl) {
+glUtils.prototype._createColorLUTTexture = function(gl) {
     const randomColors = [];
     for (let i = 0; i < 4096; ++i) {
         randomColors[4 * i + 0] = Math.random() * 256.0; 
@@ -293,14 +341,14 @@ glUtils._createColorLUTTexture = function(gl) {
 }
 
 
-glUtils._updateColorLUTTexture = function(gl, texture) {
+glUtils.prototype._updateColorLUTTexture = function(gl, texture) {
     const allMarkersCheckbox = document.getElementById("AllMarkers-checkbox-ISS");
     const showAll = allMarkersCheckbox && allMarkersCheckbox.checked;
 
     const colors = new Array(4096 * 4);
-    for (let [barcode, index] of Object.entries(glUtils._barcodeToLUTIndex)) {
+    for (let [barcode, index] of Object.entries(this._barcodeToLUTIndex)) {
         // Get color, shape, etc. from HTML input elements for barcode
-        const key = glUtils._barcodeToKey[barcode];  // Could be barcode or gene name
+        const key = this._barcodeToKey[barcode];  // Could be barcode or gene name
         hexInput = document.getElementById(key + "-color-ISS")
         if (hexInput) {
             var hexColor = document.getElementById(key + "-color-ISS").value;
@@ -325,7 +373,7 @@ glUtils._updateColorLUTTexture = function(gl, texture) {
 }
 
 
-glUtils._createColorScaleTexture = function(gl) {
+glUtils.prototype._createColorScaleTexture = function(gl) {
     const bytedata = new Uint8Array(256 * 4);
 
     const texture = gl.createTexture();
@@ -342,7 +390,7 @@ glUtils._createColorScaleTexture = function(gl) {
 }
 
 
-glUtils._formatHex = function(color) {
+glUtils.prototype._formatHex = function(color) {
     if (color.includes("rgb")) {
         const r = color.split(",")[0].replace("rgb(", "").replace(")", "");
         const g = color.split(",")[1].replace("rgb(", "").replace(")", "");
@@ -354,14 +402,14 @@ glUtils._formatHex = function(color) {
 }
 
 
-glUtils._updateColorScaleTexture = function(gl, texture) {
+glUtils.prototype._updateColorScaleTexture = function(gl, texture) {
     const colors = [];
     for (let i = 0; i < 256; ++i) {
         const normalized = i / 255.0;
-        if (glUtils._colorscaleName.includes("interpolate") &&
-            !glUtils._colorscaleName.includes("Rainbow")) {
-            const color = d3[glUtils._colorscaleName](normalized);
-            const hexColor = glUtils._formatHex(color);  // D3 sometimes returns RGB strings
+        if (this._colorscaleName.includes("interpolate") &&
+            !this._colorscaleName.includes("Rainbow")) {
+            const color = d3[this._colorscaleName](normalized);
+            const hexColor = this._formatHex(color);  // D3 sometimes returns RGB strings
             colors[4 * i + 0] = Number("0x" + hexColor.substring(1,3));
             colors[4 * i + 1] = Number("0x" + hexColor.substring(3,5));
             colors[4 * i + 2] = Number("0x" + hexColor.substring(5,7));
@@ -379,7 +427,7 @@ glUtils._updateColorScaleTexture = function(gl, texture) {
             colors[4 * i + 3] = 255.0;
         }
     }
-    glUtils._colorscaleData = colors;
+    this._colorscaleData = colors;
 
     const bytedata = new Uint8Array(colors);
 
@@ -390,12 +438,12 @@ glUtils._updateColorScaleTexture = function(gl, texture) {
 }
 
 
-glUtils._updateColorbarCanvas = function(colorscaleName, colorscaleData, propertyName, propertyRange) {
+glUtils.prototype._updateColorbarCanvas = function(colorscaleName, colorscaleData, propertyName, propertyRange) {
     const canvas = document.getElementById("CP_colorbar");
     const ctx = canvas.getContext("2d");
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    if (!glUtils._showColorbar || colorscaleName == "null" ||
+    if (!this._showColorbar || colorscaleName == "null" ||
         colorscaleName == "ownColorFromColumn") return;
 
     const gradient = ctx.createLinearGradient(64, 0, 256+64, 0);
@@ -436,7 +484,14 @@ glUtils._updateColorbarCanvas = function(colorscaleName, colorscaleData, propert
 
 
 // Creates a 2D-canvas for drawing the colorbar on top of the WebGL-canvas
-glUtils._createColorbarCanvas = function() {
+// this needs to be a singleton
+glUtils.prototype._createColorbarCanvas = function() {
+    // const canvas = document.getElementById("CP_colorbar");
+
+    // if (canvas) {
+    //     return;
+    // }
+
     const root = this._canvas.parentElement;
     const canvas = document.createElement("canvas");
     root.appendChild(canvas);
@@ -450,7 +505,7 @@ glUtils._createColorbarCanvas = function() {
 
 
 // Creates WebGL canvas for drawing the markers
-glUtils._createMarkerWebGLCanvas = function() {
+glUtils.prototype._createMarkerWebGLCanvas = function() {
     const canvas = document.createElement("canvas");
     canvas.className = "gl_canvas";
     canvas.width = "1"; canvas.height = "1";
@@ -459,8 +514,9 @@ glUtils._createMarkerWebGLCanvas = function() {
 }
 
 
-glUtils._loadTextureFromImageURL = function(gl, src) {
+glUtils.prototype._loadTextureFromImageURL = function(gl, src) {
     const texture = gl.createTexture();
+    console.log(gl.TEXTURE_2D, texture)
     const image = new Image();
     image.onload = function() {
         gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -478,18 +534,18 @@ glUtils._loadTextureFromImageURL = function(gl, src) {
 
 
 // @deprecated Not required anymore, but kept for backwards-compatibility
-glUtils.clearNavigatorArea = function() {}
+glUtils.prototype.clearNavigatorArea = function() {}
 
 
-glUtils.draw = function() {
+glUtils.prototype.draw = function() {
     if (!this._initialized) return;
 
     const gl = this._canvas.getContext("webgl", glUtils._options);
 
     const bounds = tmapp["ISS_viewer"].viewport.getBounds();
-    glUtils._viewportRect = [bounds.x, bounds.y, bounds.width, bounds.height];
+    this._viewportRect = [bounds.x, bounds.y, bounds.width, bounds.height];
     const homeBounds = tmapp["ISS_viewer"].world.getHomeBounds();
-    glUtils._imageSize = [homeBounds.width, homeBounds.height];
+    this._imageSize = [homeBounds.width, homeBounds.height];
     const orientationDegrees = tmapp["ISS_viewer"].viewport.getRotation();
 
     // The OSD viewer can be rotated, so need to apply the same transform to markers
@@ -499,48 +555,48 @@ glUtils.draw = function() {
     gl.clearColor(0.0, 0.0, 0.0, 0.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    const program = glUtils._programs["markers"];
+    const program = this._programs["markers"];
 
     gl.useProgram(program);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
     const POSITION = gl.getAttribLocation(program, "a_position");
-    gl.uniform2fv(gl.getUniformLocation(program, "u_imageSize"), glUtils._imageSize);
-    gl.uniform4fv(gl.getUniformLocation(program, "u_viewportRect"), glUtils._viewportRect);
+    gl.uniform2fv(gl.getUniformLocation(program, "u_imageSize"), this._imageSize);
+    gl.uniform4fv(gl.getUniformLocation(program, "u_viewportRect"), this._viewportRect);
     gl.uniformMatrix2fv(gl.getUniformLocation(program, "u_viewportTransform"), false, viewportTransform);
-    gl.uniform2fv(gl.getUniformLocation(program, "u_markerScalarRange"), glUtils._markerScalarRange);
-    gl.uniform1f(gl.getUniformLocation(program, "u_markerOpacity"), glUtils._markerOpacity);
+    gl.uniform2fv(gl.getUniformLocation(program, "u_markerScalarRange"), this._markerScalarRange);
+    gl.uniform1f(gl.getUniformLocation(program, "u_markerOpacity"), this._markerOpacity);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, glUtils._textures["colorLUT"]);
+    gl.bindTexture(gl.TEXTURE_2D, this._textures["colorLUT"]);
     gl.uniform1i(gl.getUniformLocation(program, "u_colorLUT"), 0);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, glUtils._textures["colorscale"]);
+    gl.bindTexture(gl.TEXTURE_2D, this._textures["colorscale"]);
     gl.uniform1i(gl.getUniformLocation(program, "u_colorscale"), 1);
     gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, glUtils._textures["shapeAtlas"]);
+    gl.bindTexture(gl.TEXTURE_2D, this._textures["shapeAtlas"]);
     gl.uniform1i(gl.getUniformLocation(program, "u_shapeAtlas"), 2);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, glUtils._buffers["barcodeMarkers"]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["barcodeMarkers"]);
     gl.enableVertexAttribArray(POSITION);
     gl.vertexAttribPointer(POSITION, 4, gl.FLOAT, false, 0, 0);
     gl.uniform1i(gl.getUniformLocation(program, "u_markerType"), 0);
-    gl.uniform1f(gl.getUniformLocation(program, "u_markerScale"), glUtils._markerScale);
-    gl.uniform1i(gl.getUniformLocation(program, "u_useColorFromMarker"), glUtils._useColorFromMarker);
-    gl.drawArrays(gl.POINTS, 0, glUtils._numBarcodePoints);
+    gl.uniform1f(gl.getUniformLocation(program, "u_markerScale"), this._markerScale);
+    gl.uniform1i(gl.getUniformLocation(program, "u_useColorFromMarker"), this._useColorFromMarker);
+    gl.drawArrays(gl.POINTS, 0, this._numBarcodePoints);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, glUtils._buffers["CPMarkers"]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["CPMarkers"]);
     gl.enableVertexAttribArray(POSITION);
     gl.vertexAttribPointer(POSITION, 4, gl.FLOAT, false, 0, 0);
     gl.uniform1i(gl.getUniformLocation(program, "u_markerType"), 1);
-    gl.uniform1f(gl.getUniformLocation(program, "u_markerScale"), glUtils._markerScale * 0.5);
+    gl.uniform1f(gl.getUniformLocation(program, "u_markerScale"), this._markerScale * 0.5);
     gl.uniform1i(gl.getUniformLocation(program, "u_useColorFromMarker"),
-        glUtils._colorscaleName.includes("ownColorFromColumn"));
-    if (glUtils._colorscaleName != "null") {  // Only show markers when a colorscale is selected
-        gl.drawArrays(gl.POINTS, 0, glUtils._numCPPoints);
+        this._colorscaleName.includes("ownColorFromColumn"));
+    if (this._colorscaleName != "null") {  // Only show markers when a colorscale is selected
+        gl.drawArrays(gl.POINTS, 0, this._numCPPoints);
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
@@ -549,82 +605,34 @@ glUtils.draw = function() {
     gl.useProgram(null);
 }
 
+glUtils.prototype.resizeAndDraw = function() {
+    if (!this._initialized) return;
 
-glUtils.resize = function() {
-    const gl = this._canvas.getContext("webgl", glUtils._options);
-
-    const op = tmapp["object_prefix"];
-    const newSize = tmapp[op + "_viewer"].viewport.containerSize;
-    gl.canvas.width = newSize.x;
-    gl.canvas.height = newSize.y;
+    this.resize();
+    this.draw();
 }
-
-
-glUtils.resizeAndDraw = function() {
-    glUtils.resize();
-    glUtils.draw();
-}
-
 
 // @deprecated Not required anymore, but kept for backwards-compatibility
-glUtils.postRedraw = function() {}
+glUtils.prototype.postRedraw = function() {}
 
 
-glUtils.updateMarkerScale = function() {
+glUtils.prototype.updateMarkerScale = function() {
     const globalMarkerSize = Number(document.getElementById("ISS_globalmarkersize_text").value);
     // Clamp the scale factor to avoid giant markers and slow rendering if the
     // user inputs a very large value (say 10000 or something)
-    glUtils._markerScale = Math.max(0.01, Math.min(5.0, globalMarkerSize / 100.0));
+    this._markerScale = Math.max(0.01, Math.min(5.0, globalMarkerSize / 100.0));
 }
 
 
-glUtils.updateLUTTextures = function() {
+glUtils.prototype.updateLUTTextures = function() {
     if (!this._initialized) return;
 
-    const gl = this._canvas.getContext("webgl", glUtils._options);
+    const gl = this._canvas.getContext("webgl", this._options);
 
-    if (glUtils._numBarcodePoints > 0) {  // LUTs are currently only used for barcode data
-        glUtils._updateColorLUTTexture(gl, glUtils._textures["colorLUT"]);
+    if (this._numBarcodePoints > 0) {  // LUTs are currently only used for barcode data
+        this._updateColorLUTTexture(gl, this._textures["colorLUT"]);
     }
 }
 
+window.glUtils = glUtils;
 
-glUtils.init = function(osdViewer) {
-    if (this._initialized) return;
-
-    const osd = osdViewer.element.getElementsByClassName("openseadragon-canvas")[0];
-
-    this._canvas = osdViewer.element.getElementsByClassName("gl_canvas")[0];
-    if (!this._canvas) this._canvas = this._createMarkerWebGLCanvas();
-    const gl = this._canvas.getContext("webgl", glUtils._options);
-
-    // Place marker canvas under the OSD canvas. Doing this also enables proper
-    // compositing with the minimap and other OSD elements.
-    osd.appendChild(this._canvas);
-
-    this._programs["markers"] = this._loadShaderProgram(gl, this._markersVS, this._markersFS);
-    this._buffers["barcodeMarkers"] = this._createDummyMarkerBuffer(gl, this._numBarcodePoints);
-    this._buffers["CPMarkers"] = this._createDummyMarkerBuffer(gl, this._numCPMarkers);
-    this._textures["colorLUT"] = this._createColorLUTTexture(gl);
-    this._textures["colorscale"] = this._createColorScaleTexture(gl);
-    this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, glUtils._path_markershapes_img);
-
-    this._createColorbarCanvas();  // The colorbar is drawn separately in a 2D-canvas
-
-    glUtils.updateMarkerScale();
-    document.getElementById("ISS_globalmarkersize_text").addEventListener("input", glUtils.updateMarkerScale);
-    document.getElementById("ISS_globalmarkersize_text").addEventListener("input", glUtils.draw);
-    document.getElementById("ISS_markers").addEventListener("change", glUtils.updateLUTTextures);
-    document.getElementById("ISS_markers").addEventListener("change", glUtils.draw);
-
-    tmapp["hideSVGMarkers"] = true;
-    osdViewer.removeHandler('resize', glUtils.resizeAndDraw);
-    osdViewer.addHandler('resize', glUtils.resizeAndDraw);
-    osdViewer.removeHandler('open', glUtils.draw);
-    osdViewer.addHandler('open', glUtils.draw);
-    osdViewer.removeHandler('viewport-change', glUtils.draw);
-    osdViewer.addHandler('viewport-change', glUtils.draw);
-
-    this._initialized = true;
-    glUtils.resize();  // Force initial resize to OSD canvas size
-}

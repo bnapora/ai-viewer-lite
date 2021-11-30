@@ -193,8 +193,9 @@ tmapp.init = function () {
     filterUtils.initFilters();
     if (window.hasOwnProperty("glUtils")) {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
-        glUtils.init(tmapp["ISS_viewer"]);
-        glUtils.init(tmapp["ISS_magnifier"]);
+        // todo: should I make GL an attribute on each OSD viewer instead?
+        tmapp['viewerGl'] = new glUtils(tmapp["ISS_viewer"]);
+      //  tmapp['magGl'] = new glUtils(tmapp["ISS_magnifier"]);
     } else {
         console.log("Using CPU-based marker drawing (SVG canvas)")
     }
