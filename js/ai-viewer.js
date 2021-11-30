@@ -24,18 +24,14 @@
 tmapp.options_magnifier= {
     id: "ISS_magnifier",
     prefixUrl: "openseadragon/images/",
-    navigatorSizeRatio: 1,
     showNavigator: false,
     animationTime: 0.0,
     blendTime: 0,
-    minZoomImageRatio: 1,
-    maxZoomPixelRatio: 10,
+    minZoomLevel: 10,
     zoomPerClick: 0,
     constrainDuringPan: true,
     visibilityRatio: 1,
     showNavigationControl: false,
-    maxImageCacheCount:500,
-    debug: true,
     immediateRender: true,
     preload: true,
     panHorizontal: false,
@@ -48,6 +44,8 @@ tmapp.setupMagnifier = function(prefix, mainViewer) {
     var mname = prefix + "_magnifier";
     var magnifier = OpenSeadragon(tmapp.options_magnifier);
 
+    tmapp[mname] = magnifier;
+
     var syncHandler = function() {
         magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() + 20); // todo: this number will be configurable
         magnifier.viewport.panTo(mainViewer.viewport.getCenter());
@@ -55,8 +53,6 @@ tmapp.setupMagnifier = function(prefix, mainViewer) {
 
     mainViewer.addHandler('zoom', syncHandler);
     mainViewer.addHandler('pan', syncHandler);
-
-    tmapp[mname] = magnifier;
 }
 
 /**
@@ -193,7 +189,8 @@ tmapp.init = function () {
     filterUtils.initFilters();
     if (window.hasOwnProperty("glUtils")) {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
-        glUtils.init();
+        glUtils.init(tmapp["ISS_viewer"]);
+        glUtils.init(tmapp["ISS_magnifier"]);
     } else {
         console.log("Using CPU-based marker drawing (SVG canvas)")
     }
