@@ -4,76 +4,9 @@
 * @see {@link glUtils}
 */
 
-class glUtils {
-    resize() {
-        const gl = this._canvas.getContext("webgl", this._options);
+PATH_MARKERSHAPES_IMG = "misc/markershapes.png"
 
-        const newSize = this.viewer.viewport.containerSize;
-        gl.canvas.width = newSize.x;
-        gl.canvas.height = newSize.y;
-    }
-    constructor(osdViewer) {
-        this.viewer = osdViewer;
-        this._initialized = false;
-        this._programs =  {};
-        this._buffers = {};
-        this._textures = {};
-        this._numBarcodePoints = 0;
-        this._numCPPoints = 0;
-        this._imageSize = [1, 1];
-        this._viewportRect = [0, 0, 1, 1];
-        this._markerScale = 1.0;
-        this._markerScalarRange = [0.0, 1.0];
-        this._markerOpacity = 0.5;    //Modified from 1.0 to 0.5 to display center of anno
-        this._useColorFromMarker = false;
-        this._colorscaleName = "null";``
-        this._colorscaleData = [];
-        this._barcodeToLUTIndex = {};
-        this._barcodeToKey = {};
-        this._options = {antialias: false};
-        this._showColorbar = true;
-        this._path_markershapes_img = "misc/markershapes.png"
-
-        const osd = this.viewer.element.getElementsByClassName("openseadragon-canvas")[0];
-
-        this._canvas = this.viewer.element.getElementsByClassName("gl_canvas")[0];
-        if (!this._canvas) this._canvas = this._createMarkerWebGLCanvas();
-        const gl = this._canvas.getContext("webgl", this._options);
-
-        // Place marker canvas under the OSD canvas. Doing this also enables proper
-        // compositing with the minimap and other OSD elements.
-        osd.appendChild(this._canvas);
-
-        this._programs["markers"] = this._loadShaderProgram(gl, this._markersVS, this._markersFS);
-        this._buffers["barcodeMarkers"] = this._createDummyMarkerBuffer(gl, this._numBarcodePoints);
-        this._buffers["CPMarkers"] = this._createDummyMarkerBuffer(gl, this._numCPMarkers);
-        this._textures["colorLUT"] = this._createColorLUTTexture(gl);
-        this._textures["colorscale"] = this._createColorScaleTexture(gl);
-        this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, this._path_markershapes_img);
-
-        this._createColorbarCanvas();  // The colorbar is drawn separately in a 2D-canvas
-
-        this.updateMarkerScale();
-        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.updateMarkerScale);
-        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.draw);
-        document.getElementById("ISS_markers").addEventListener("change", this.updateLUTTextures);
-        document.getElementById("ISS_markers").addEventListener("change", this.draw);
-
-        tmapp["hideSVGMarkers"] = true;
-        osdViewer.removeHandler('resize', this.resizeAndDraw);
-        osdViewer.addHandler('resize', this.resizeAndDraw);
-        osdViewer.removeHandler('open', this.draw);
-        osdViewer.addHandler('open', this.draw);
-        osdViewer.removeHandler('viewport-change', this.draw);
-        osdViewer.addHandler('viewport-change', this.draw);
-
-        this._initialized = true;
-        this.resize();  // Force initial resize to OSD canvas size
-        return this;
-    }
-};
-
-glUtils.prototype._markersVS = `
+MARKERS_VS = `
     uniform vec2 u_imageSize;
     uniform vec4 u_viewportRect;
     uniform mat2 u_viewportTransform;
@@ -135,7 +68,7 @@ glUtils.prototype._markersVS = `
 `;
 
 
-glUtils.prototype._markersFS = `
+MARKERS_FS = `
     precision mediump float;
 
     uniform sampler2D u_shapeAtlas;
@@ -161,6 +94,73 @@ glUtils.prototype._markersFS = `
     }
 `;
 
+class glUtils {
+    resize() {
+        const gl = this._canvas.getContext("webgl", this._options);
+
+        const newSize = this.viewer.viewport.containerSize;
+        gl.canvas.width = newSize.x;
+        gl.canvas.height = newSize.y;
+    }
+    constructor(osdViewer) {
+        this.viewer = osdViewer;
+        this._initialized = false;
+        this._programs =  {};
+        this._buffers = {};
+        this._textures = {};
+        this._numBarcodePoints = 0;
+        this._numCPPoints = 0;
+        this._imageSize = [1, 1];
+        this._viewportRect = [0, 0, 1, 1];
+        this._markerScale = 1.0;
+        this._markerScalarRange = [0.0, 1.0];
+        this._markerOpacity = 0.5;    //Modified from 1.0 to 0.5 to display center of anno
+        this._useColorFromMarker = false;
+        this._colorscaleName = "null";``
+        this._colorscaleData = [];
+        this._barcodeToLUTIndex = {};
+        this._barcodeToKey = {};
+        this._options = {antialias: false};
+        this._showColorbar = true;
+
+        const osd = this.viewer.element.getElementsByClassName("openseadragon-canvas")[0];
+
+        this._canvas = this.viewer.element.getElementsByClassName("gl_canvas")[0];
+        if (!this._canvas) this._canvas = this._createMarkerWebGLCanvas();
+        const gl = this._canvas.getContext("webgl", this._options);
+
+        // Place marker canvas under the OSD canvas. Doing this also enables proper
+        // compositing with the minimap and other OSD elements.
+        osd.appendChild(this._canvas);
+
+        this._programs["markers"] = this._loadShaderProgram(gl, MARKERS_VS, MARKERS_FS);
+        this._buffers["barcodeMarkers"] = this._createDummyMarkerBuffer(gl, this._numBarcodePoints);
+        this._buffers["CPMarkers"] = this._createDummyMarkerBuffer(gl, this._numCPPoints);
+        this._textures["colorLUT"] = this._createColorLUTTexture(gl);
+        this._textures["colorscale"] = this._createColorScaleTexture(gl);
+        this._textures["shapeAtlas"] = this._loadTextureFromImageURL(gl, PATH_MARKERSHAPES_IMG);
+
+        this._createColorbarCanvas();  // The colorbar is drawn separately in a 2D-canvas
+
+        this.updateMarkerScale();
+        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.updateMarkerScale);
+        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.draw);
+        document.getElementById("ISS_markers").addEventListener("change", this.updateLUTTextures);
+        document.getElementById("ISS_markers").addEventListener("change", this.draw);
+
+        tmapp["hideSVGMarkers"] = true;
+        osdViewer.removeHandler('resize', this.resizeAndDraw);
+        osdViewer.addHandler('resize', this.resizeAndDraw);
+        osdViewer.removeHandler('open', this.draw);
+        osdViewer.addHandler('open', this.draw);
+        osdViewer.removeHandler('viewport-change', this.draw);
+        osdViewer.addHandler('viewport-change', this.draw);
+
+        this._initialized = true;
+        this.resize();  // Force initial resize to OSD canvas size
+        return this;
+    }
+};
 
 glUtils.prototype._loadShaderProgram = function(gl, vertSource, fragSource) {
     const vertShader = gl.createShader(gl.VERTEX_SHADER);
@@ -244,9 +244,7 @@ glUtils.prototype.loadMarkers = function() {
     }
 
     const bytedata = new Float32Array(positions);
-
-    var foo = gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["barcodeMarkers"]);
-    console.log(foo)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers["barcodeMarkers"]);
     gl.bufferData(gl.ARRAY_BUFFER, bytedata, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
