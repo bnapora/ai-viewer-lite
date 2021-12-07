@@ -96,7 +96,6 @@ MARKERS_FS = `
 
 class glUtils {
     constructor(osdViewer) {
-        console.log(this._initialized)
         this.viewer = osdViewer;
         this._initialized = false;
         this._programs =  {};
@@ -126,7 +125,6 @@ class glUtils {
         // Place marker canvas under the OSD canvas. Doing this also enables proper
         // compositing with the minimap and other OSD elements.
         osd.appendChild(this._canvas);
-        console.log(this._initialized)
 
         this._programs["markers"] = this._loadShaderProgram(gl, MARKERS_VS, MARKERS_FS);
         this._buffers["barcodeMarkers"] = this._createDummyMarkerBuffer(gl, this._numBarcodePoints);
@@ -138,22 +136,40 @@ class glUtils {
         this._createColorbarCanvas();  // The colorbar is drawn separately in a 2D-canvas
 
         this.updateMarkerScale();
-        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.updateMarkerScale);
-        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", this.draw);
-        document.getElementById("ISS_markers").addEventListener("change", this.updateLUTTextures);
-        document.getElementById("ISS_markers").addEventListener("change", this.draw);
+
+        const self = this;
+        const drawHandler = function(event) {
+            self.draw();
+        };
+        document.getElementById("ISS_globalmarkersize_text").addEventListener(
+            "input",
+            function(event) {
+                self.updateMarkerScale();
+            }
+        );
+        document.getElementById("ISS_globalmarkersize_text").addEventListener("input", drawHandler);
+        document.getElementById("ISS_markers").addEventListener(
+            "change",
+            function(event) {
+             self.updateLUTTextures();
+          }
+        );
+        document.getElementById("ISS_markers").addEventListener("change", drawHandler);
 
         tmapp["hideSVGMarkers"] = true;
-        osdViewer.removeHandler('resize', this.resizeAndDraw);
-        osdViewer.addHandler('resize', this.resizeAndDraw);
-        osdViewer.removeHandler('open', this.draw);
-        osdViewer.addHandler('open', this.draw);
-        osdViewer.removeHandler('viewport-change', this.draw);
-        osdViewer.addHandler('viewport-change', this.draw);
+
+        const resizeAndDrawHandler = function(event) {
+            self.resizeAndDraw();
+        };
+        this.viewer.removeHandler('resize', resizeAndDrawHandler);
+        this.viewer.addHandler('resize', resizeAndDrawHandler);
+        this.viewer.removeHandler('open', drawHandler);
+        this.viewer.addHandler('open', drawHandler);
+        this.viewer.removeHandler('viewport-change', drawHandler);
+        this.viewer.addHandler('viewport-change', drawHandler);
 
         this._initialized = true;
         this.resize();  // Force initial resize to OSD canvas size
-        console.log(this._initialized)
         return this;
     }
 };
@@ -226,9 +242,9 @@ glUtils.prototype.loadMarkers = function() {
     const numPoints = markerData.length;
     const keyName = document.getElementById("ISS_key_header").value;
 
-    // todo: these need to work with the magnifier too
-    const imageWidth = OSDViewerUtils.getImageWidth();
-    const imageHeight = OSDViewerUtils.getImageHeight();
+
+    const imageWidth = this.viewer.world.getItemAt(0).getContentSize().x;;
+    const imageHeight = this.viewer.world.getItemAt(0).getContentSize().y;
 
     // If new marker data was loaded, we need to assign each barcode an index
     // that we can use with the LUT textures for color, visibility, etc.
@@ -270,8 +286,8 @@ glUtils.prototype.loadCPMarkers = function() {
     const xColumnName = document.getElementById("CP_X_header").value;
     const yColumnName = document.getElementById("CP_Y_header").value;
     const colorscaleName = document.getElementById("CP_colorscale").value;
-    const imageWidth = OSDViewerUtils.getImageWidth();
-    const imageHeight = OSDViewerUtils.getImageHeight();
+    const imageWidth = this.viewer.world.getItemAt(0).getContentSize().x;
+    const imageHeight = this.viewer.world.getItemAt(0).getContentSize().y;
 
     const useColorFromMarker = colorscaleName.includes("ownColorFromColumn");
     let hexColor = "#000000";
@@ -443,7 +459,7 @@ glUtils.prototype._updateColorScaleTexture = function(gl, texture) {
 
 
 glUtils.prototype._updateColorbarCanvas = function(colorscaleName, colorscaleData, propertyName, propertyRange) {
-    const canvas = document.getElementById("CP_colorbar");
+    const canvas = this.viewer.element.getElementByClassName("CP_colorbar");
     const ctx = canvas.getContext("2d");
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -488,19 +504,18 @@ glUtils.prototype._updateColorbarCanvas = function(colorscaleName, colorscaleDat
 
 
 // Creates a 2D-canvas for drawing the colorbar on top of the WebGL-canvas
-// this needs to be a singleton
 glUtils.prototype._createColorbarCanvas = function() {
-    // const canvas = document.getElementById("CP_colorbar");
+    let canvas = this.viewer.element.getElementsByClassName("CP_colorbar")[0];
 
-    // if (canvas) {
-    //     return;
-    // }
+    if (canvas) {
+        return;
+    }
 
     const root = this._canvas.parentElement;
-    const canvas = document.createElement("canvas");
+    canvas = document.createElement("canvas");
     root.appendChild(canvas);
 
-    canvas.id = "CP_colorbar";
+    canvas.className = "CP_colorbar";
     canvas.width = "384";  // Fixed width in pixels
     canvas.height = "96";  // Fixed height in pixels
     canvas.style = "position:relative; float:left; width:31%; left:68%; " +
@@ -545,11 +560,11 @@ glUtils.prototype.draw = function() {
 
     const gl = this._canvas.getContext("webgl", this._options);
 
-    const bounds = tmapp["ISS_viewer"].viewport.getBounds();
+    const bounds = this.viewer.viewport.getBounds();
     this._viewportRect = [bounds.x, bounds.y, bounds.width, bounds.height];
-    const homeBounds = tmapp["ISS_viewer"].world.getHomeBounds();
+    const homeBounds = this.viewer.world.getHomeBounds();
     this._imageSize = [homeBounds.width, homeBounds.height];
-    const orientationDegrees = tmapp["ISS_viewer"].viewport.getRotation();
+    const orientationDegrees = this.viewer.viewport.getRotation();
 
     // The OSD viewer can be rotated, so need to apply the same transform to markers
     const t = orientationDegrees * (3.141592 / 180.0);

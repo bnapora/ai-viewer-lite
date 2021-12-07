@@ -133,7 +133,7 @@ dataUtils.processISSRawData = function () {
     if (window.hasOwnProperty("glUtils")) {
         // todo: should I make GL an attribute on each OSD viewer instead?
         tmapp['viewerGl'].loadMarkers();  // Update vertex buffers, etc. for WebGL drawing
-      //  tmapp['magGl'].loadMarkers();
+        tmapp['magGl'].loadMarkers();
     }
 }
 
