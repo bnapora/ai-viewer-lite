@@ -192,17 +192,17 @@ tmapp.init = function () {
     //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");});
     filterUtils.initFilters();
     // Check for WebGL support
-    const gl = tmapp[vname].drawer.canvas.getContext("webgl")
-      || tmapp[vname].drawer.canvas.getContext("experimental-webgl");
-    // Report the result.
-    if (gl && gl instanceof WebGLRenderingContext && window.hasOwnProperty("glUtils")) {
+    // const gl = tmapp[vname].drawer.canvas.getContext("webgl")
+    //   || tmapp[vname].drawer.canvas.getContext("experimental-webgl");
+    // // Report the result.
+    // if (gl && gl instanceof WebGLRenderingContext && window.hasOwnProperty("glUtils")) {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
         // todo: should I make GL an attribute on each OSD viewer instead?
         tmapp['viewerGl'] = new glUtils(tmapp["ISS_viewer"]);
         tmapp['magGl'] = new glUtils(tmapp["ISS_magnifier"]);
-    } else {
-        console.log("Using CPU-based marker drawing (SVG canvas)")
-    }
+    // } else {
+    //     console.log("Using CPU-based marker drawing (SVG canvas)")
+    // }
 } //finish init
 
 // //initialize exact_image_id from template (Use only when deployed in Exact application)
