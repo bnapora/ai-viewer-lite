@@ -130,8 +130,14 @@ dataUtils.processISSRawData = function () {
     if (document.getElementById("ISS_searchmarkers_row")) {
         document.getElementById("ISS_searchmarkers_row").style.display = "block";
     }
-    if (window.hasOwnProperty("glUtils")) {
-        glUtils.loadMarkers();  // Update vertex buffers, etc. for WebGL drawing
+
+    // If we have webGL renderers, update vertex buffers, etc. for WebGL drawing
+    if(tmapp['viewerGL']) {
+        tmapp['viewerGl'].loadMarkers();
+    }
+    if(tmapp['magGl']) {
+        tmapp['magGl'].loadMarkers();
+
     }
 }
 

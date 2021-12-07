@@ -330,7 +330,14 @@ filterUtils.getFilterFunction = function(filterName) {
 	caman.Store.put = function() {};
 
     var op = tmapp["object_prefix"];
-    if (!tmapp[op + "_viewer"].world || !tmapp[op + "_viewer"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1)) {
+    var viewer = tmapp[op + "_viewer"];
+    var magnifier = tmapp[op + "_magnifier"];
+    if (
+        !viewer.world ||
+        !viewer.world.getItemAt(Object.keys(filterUtils._filterItems).length-1) ||
+        !magnifier.world ||
+        !magnifier.world.getItemAt(Object.keys(filterUtils._filterItems).length-1)
+    ) {
         setTimeout(function() {
             if (calledItems == filterUtils._filterItems)
                 filterUtils.applyFilterItems(calledItems);
@@ -338,6 +345,7 @@ filterUtils.getFilterFunction = function(filterName) {
         return;
     }
     filters = [];
+    magFilters = [];
     for (const layer in filterUtils._filterItems) {
         processors = [];
         for(var filterIndex=0;filterIndex<filterUtils._filterItems[layer].length;filterIndex++) {
@@ -346,15 +354,25 @@ filterUtils.getFilterFunction = function(filterName) {
             );
         }
         filters.push({
-            items: tmapp[op + "_viewer"].world.getItemAt(layer),
+            items: viewer.world.getItemAt(layer),
             processors: processors
         });
+        magFilters.push({
+            items: magnifier.world.getItemAt(layer),
+            processors: processors
+        })
     };
-    tmapp[op + "_viewer"].setFilterOptions({
+    viewer.setFilterOptions({
         filters: filters
     });
-    for ( var i = 0; i < tmapp[op + "_viewer"].world._items.length; i++ ) {
-        tmapp[op + "_viewer"].world._items[i].tilesMatrix={};
+    magnifier.setFilterOptions({
+        filters: magFilters
+    })
+    for ( var i = 0; i < viewer.world._items.length; i++ ) {
+        viewer.world._items[i].tilesMatrix={};
+    }
+    for ( var i = 0; i < magnifier.world._items.length; i++ ) {
+        magnifier.world._items[i].tilesMatrix={};
     }
 }
 
@@ -390,7 +408,6 @@ filterUtils.getFilterItems = function() {
         }, 100);
         return;
     }
-    console.log("getFilterItems");
     filterInputsRanges = document.getElementsByClassName("filterInput");
     items = {};
     for (i = 0; i < filterInputsRanges.length; i++) {
@@ -422,7 +439,14 @@ filterUtils.getFilterItems = function() {
 
 filterUtils.setCompositeOperation = function(compositeOperation) {
     var op = tmapp["object_prefix"];
-    if (!tmapp[op + "_viewer"].world || !tmapp[op + "_viewer"].world.getItemAt(Object.keys(filterUtils._filterItems).length-1)) {
+    var viewer = tmapp[op + "_viewer"];
+    var magnifier = tmapp[op + "_magnifier"];
+    if (
+        !viewer.world ||
+        !viewer.world.getItemAt(Object.keys(filterUtils._filterItems).length-1) ||
+        !magnifier.world ||
+        !magnifier.world.getItemAt(Object.keys(filterUtils._filterItems).length-1)
+    ) {
         setTimeout(function() {
             filterUtils.setCompositeOperation(compositeOperation);
         }, 100);
@@ -430,9 +454,13 @@ filterUtils.setCompositeOperation = function(compositeOperation) {
     }
     var filterCompositeMode = document.getElementById("filterCompositeMode");
     filterCompositeMode.value = compositeOperation;
-    tmapp[op + "_viewer"].compositeOperation = compositeOperation;
-    for (i = 0; i < tmapp[op + "_viewer"].world.getItemCount(); i++) {
-        tmapp[op + "_viewer"].world.getItemAt(i).setCompositeOperation(compositeOperation);
+    viewer.compositeOperation = compositeOperation;
+    magnifier.compositeOperation = compositeOperation;
+    for (i = 0; i < viewer.world.getItemCount(); i++) {
+        viewer.world.getItemAt(i).setCompositeOperation(compositeOperation);
+    }
+    for (i = 0; i < magnifier.world.getItemCount(); i++) {
+        magnifier.world.getItemAt(i).setCompositeOperation(compositeOperation);
     }
     filterUtils._compositeMode = compositeOperation;
 }

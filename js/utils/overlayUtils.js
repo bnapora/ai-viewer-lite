@@ -163,6 +163,7 @@ overlayUtils.addLayer = function(layerName, tileSource, i) {
     if (i >= 0) {
         opacity = 0.0;
     }
+
     tmapp[vname].addTiledImage({
         index: i + 1,
         tileSource: tmapp._url_suffix + tileSource,
@@ -198,6 +199,8 @@ overlayUtils.setItemOpacity = function(item, opacity) {
         return;
     }
     tmapp[op + "_viewer"].world.getItemAt(item).setOpacity(opacity);
+    tmapp[op + "_magnifier"].world.getItemAt(item).setOpacity(opacity);
+
 }
 
 overlayUtils.areAllFullyLoaded = function () {

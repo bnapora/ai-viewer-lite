@@ -24,18 +24,15 @@
 tmapp.options_magnifier= {
     id: "ISS_magnifier",
     prefixUrl: "openseadragon/images/",
-    navigatorSizeRatio: 1,
     showNavigator: false,
     animationTime: 0.0,
     blendTime: 0,
-    minZoomImageRatio: 1,
-    maxZoomPixelRatio: 10,
+    minZoomLevel: 1,
+    minZoomImageRatio: 1.0,
     zoomPerClick: 0,
     constrainDuringPan: true,
     visibilityRatio: 1,
     showNavigationControl: false,
-    maxImageCacheCount:500,
-    debug: true,
     immediateRender: true,
     preload: true,
     panHorizontal: false,
@@ -46,17 +43,20 @@ tmapp.options_magnifier= {
 
 tmapp.setupMagnifier = function(prefix, mainViewer) {
     var mname = prefix + "_magnifier";
+    tmapp.options_magnifier['defaultZoomLevel'] = mainViewer.viewport.getZoom() * 4;
+    tmapp.options_magnifier['minPixelRatio'] = mainViewer.minPixelRatio;
+
     var magnifier = OpenSeadragon(tmapp.options_magnifier);
 
+    tmapp[mname] = magnifier;
+
     var syncHandler = function() {
-        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() + 20); // todo: this number will be configurable
+        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() * 4); // todo: this number will be configurable
         magnifier.viewport.panTo(mainViewer.viewport.getCenter());
     }
 
     mainViewer.addHandler('zoom', syncHandler);
     mainViewer.addHandler('pan', syncHandler);
-
-    tmapp[mname] = magnifier;
 }
 
 /**
@@ -191,9 +191,15 @@ tmapp.init = function () {
 
     //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");});
     filterUtils.initFilters();
-    if (window.hasOwnProperty("glUtils")) {
+    // Check for WebGL support
+    const gl = tmapp[vname].drawer.canvas.getContext("webgl")
+      || tmapp[vname].drawer.canvas.getContext("experimental-webgl");
+    // Report the result.
+    if (gl && gl instanceof WebGLRenderingContext && window.hasOwnProperty("glUtils")) {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
-        glUtils.init();
+        // todo: should I make GL an attribute on each OSD viewer instead?
+        tmapp['viewerGl'] = new glUtils(tmapp["ISS_viewer"]);
+        tmapp['magGl'] = new glUtils(tmapp["ISS_magnifier"]);
     } else {
         console.log("Using CPU-based marker drawing (SVG canvas)")
     }
