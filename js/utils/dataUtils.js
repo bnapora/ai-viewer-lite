@@ -130,7 +130,11 @@ dataUtils.processISSRawData = function () {
     if (document.getElementById("ISS_searchmarkers_row")) {
         document.getElementById("ISS_searchmarkers_row").style.display = "block";
     }
-    if (window.hasOwnProperty("glUtils")) {
+    // Check for WebGL support
+    const gl = tmapp[op + "_viewer"].drawer.canvas.getContext("webgl")
+      || tmapp[op + "_viewer"].drawer.canvas.getContext("experimental-webgl");
+    // Report the result.
+    if (gl && gl instanceof WebGLRenderingContext && window.hasOwnProperty("glUtils")) {
         // todo: should I make GL an attribute on each OSD viewer instead?
         tmapp['viewerGl'].loadMarkers();  // Update vertex buffers, etc. for WebGL drawing
         tmapp['magGl'].loadMarkers();
