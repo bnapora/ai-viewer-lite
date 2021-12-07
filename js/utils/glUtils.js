@@ -329,7 +329,7 @@ glUtils.prototype._updateBarcodeToLUTIndexDict = function(markerData, keyName) {
         const gene_name = markerData[i].gene_name;
         if (!(barcode in barcodeToLUTIndex)) {
             barcodeToLUTIndex[barcode] = index++;
-            barcodeToKey[barcode] = (keyName == "letters" ? barcode : gene_name);
+            barcodeToKey[barcode] = (keyName == "letters" ? barcode : dataUtils.getKeyFromString(gene_name));
         }
     }
     this._barcodeToLUTIndex = barcodeToLUTIndex;

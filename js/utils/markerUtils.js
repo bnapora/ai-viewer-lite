@@ -241,7 +241,6 @@ markerUtils.drawAllFromBarcode = function (barcode) {
     var op = tmapp["object_prefix"];
     var d3nodeName = "Gr" + op + barcode;
     //create G group for these barcodes
-
     if (!overlayUtils._d3nodes[d3nodeName]) {
         //console.log("new " + d3nodeName);
         overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[op + "_markers_svgnode"].append("g").attr("class", "Gr" + op + barcode);
@@ -301,17 +300,8 @@ markerUtils.drawAllFromList = function (list) {
         return;
     }
 
-    //find if we are using gene name or barcode as key
-    key=undefined;
-    if(dataUtils._nameAndLetters.drawGeneName && !dataUtils._nameAndLetters.drawGeneLetters){
-        //the key is GENE NAME  now
-        key=list[0].gene_name;
-    }else if(dataUtils._nameAndLetters.drawGeneLetters){
-        //if Barcode (gene letters) is on then we rather use this
-        key = list[0].letters;
-    }
-
-    if(key==undefined){
+    let key = dataUtils.getKeyFromString(list[0][dataUtils._key_field]);
+    if(!key){
         console.log("No key to find elements in list")
     }
 
@@ -319,7 +309,6 @@ markerUtils.drawAllFromList = function (list) {
     var op = tmapp["object_prefix"];
     var d3nodeName = "Gr" + op + key;
 
-    console.log(d3nodeName + " from list");
 
     if (!overlayUtils._d3nodes[d3nodeName]) {
         overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[op + "_markers_svgnode"].append("g").attr("class", "Gr" + op + key);
@@ -410,7 +399,7 @@ markerUtils.markerUI = function (barObject,options) {
     var checkinput = HTMLElementUtils.inputTypeCheckbox({
         id: barObject.key + "-checkbox-" + op,
         extraAttributes: { barcode: barObject.key },
-        eventListeners: { click: function () {
+        eventListeners: { change: function () {
             markerUtils.markerBoxToggle($(this));
             document.getElementById("AllMarkers-checkbox-" + op).checked = false;
         }}
@@ -504,9 +493,11 @@ markerUtils.markerUIAll = function (options) {
     var check = HTMLElementUtils.createElement({ type: "td" });
     var checkinput = HTMLElementUtils.inputTypeCheckbox({
         id: "AllMarkers-checkbox-" + op,
-        eventListeners: { click: function () { 
+        eventListeners: { change: function () {
             // TODO: Remove JQuery dependency here?
-            $("#ISS_table input[type=checkbox]").prop("checked",$("#AllMarkers-checkbox-ISS").prop("checked"));
+            const $checkboxes = $("#ISS_table input[type=checkbox]");
+            $checkboxes.prop("checked", $("#AllMarkers-checkbox-ISS").prop("checked"));
+            $checkboxes.change();
          } }
     });
     
