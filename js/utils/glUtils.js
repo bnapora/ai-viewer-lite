@@ -95,14 +95,8 @@ MARKERS_FS = `
 `;
 
 class glUtils {
-    resize() {
-        const gl = this._canvas.getContext("webgl", this._options);
-
-        const newSize = this.viewer.viewport.containerSize;
-        gl.canvas.width = newSize.x;
-        gl.canvas.height = newSize.y;
-    }
     constructor(osdViewer) {
+        console.log(this._initialized)
         this.viewer = osdViewer;
         this._initialized = false;
         this._programs =  {};
@@ -132,6 +126,7 @@ class glUtils {
         // Place marker canvas under the OSD canvas. Doing this also enables proper
         // compositing with the minimap and other OSD elements.
         osd.appendChild(this._canvas);
+        console.log(this._initialized)
 
         this._programs["markers"] = this._loadShaderProgram(gl, MARKERS_VS, MARKERS_FS);
         this._buffers["barcodeMarkers"] = this._createDummyMarkerBuffer(gl, this._numBarcodePoints);
@@ -158,9 +153,18 @@ class glUtils {
 
         this._initialized = true;
         this.resize();  // Force initial resize to OSD canvas size
+        console.log(this._initialized)
         return this;
     }
 };
+
+glUtils.prototype.resize = function(){
+    const gl = this._canvas.getContext("webgl", this._options);
+
+    const newSize = this.viewer.viewport.containerSize;
+    gl.canvas.width = newSize.x;
+    gl.canvas.height = newSize.y;
+}
 
 glUtils.prototype._loadShaderProgram = function(gl, vertSource, fragSource) {
     const vertShader = gl.createShader(gl.VERTEX_SHADER);
