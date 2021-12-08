@@ -100,6 +100,7 @@ tmapp.init = function () {
     tmapp["object_prefix"] = tmapp.options_osd.id.split("_")[0];
     var op = tmapp["object_prefix"];
     var vname = op + "_viewer";
+    const mname = op + '_magnifier';
     //init OSD viewer
     tmapp[vname] = OpenSeadragon(tmapp.options_osd);
     //pixelate because we need the exact values of pixels
@@ -191,18 +192,16 @@ tmapp.init = function () {
 
     //document.getElementById('cancelsearch-moving-button').addEventListener('click', function(){ markerUtils.showAllRows("moving");});
     filterUtils.initFilters();
-    // Check for WebGL support
-    // const gl = tmapp[vname].drawer.canvas.getContext("webgl")
-    //   || tmapp[vname].drawer.canvas.getContext("experimental-webgl");
-    // // Report the result.
-    // if (gl && gl instanceof WebGLRenderingContext && window.hasOwnProperty("glUtils")) {
+    // Check for WebGL support and report the result.
+
+    if (window.hasOwnProperty("glUtils") && interfaceUtils.supportsWebGL()) {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
         // todo: should I make GL an attribute on each OSD viewer instead?
-        tmapp['viewerGl'] = new glUtils(tmapp["ISS_viewer"]);
-        tmapp['magGl'] = new glUtils(tmapp["ISS_magnifier"]);
-    // } else {
-    //     console.log("Using CPU-based marker drawing (SVG canvas)")
-    // }
+        tmapp['viewerGl'] = new glUtils(tmapp[vname]);
+        tmapp['magGl'] = new glUtils(tmapp[mname]);
+    } else {
+        console.log("Using CPU-based marker drawing (SVG canvas)")
+    }
 } //finish init
 
 // //initialize exact_image_id from template (Use only when deployed in Exact application)

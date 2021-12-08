@@ -500,3 +500,11 @@ interfaceUtils.hideTabsExcept = function (a) {
     }
    
 }
+
+/** Check for webGL support in the current browser
+**/
+interfaceUtils.supportsWebGL = function () {
+    var canvasElement = document.createElement('canvas');
+    return !!( $.isFunction( canvasElement.getContext ) &&
+                canvasElement.getContext('webgl') );
+};
