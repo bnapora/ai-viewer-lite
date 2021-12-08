@@ -94,6 +94,7 @@ MARKERS_FS = `
     }
 `;
 
+
 class glUtils {
     constructor(osdViewer) {
         this.viewer = osdViewer;
