@@ -132,12 +132,11 @@ dataUtils.processISSRawData = function () {
     }
 
     // If we have webGL renderers, update vertex buffers, etc. for WebGL drawing
-    if(tmapp['viewerGL']) {
+    if(tmapp['viewerGl']) {
         tmapp['viewerGl'].loadMarkers();
     }
     if(tmapp['magGl']) {
         tmapp['magGl'].loadMarkers();
-
     }
 }
 
