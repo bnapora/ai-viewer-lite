@@ -368,13 +368,11 @@ markerUtils.markerBoxToggle = function (barcodeBox) {
     if (tmapp["hideSVGMarkers"]) return;  // We are using WebGL instead for the drawing
 
     if (barcodeBox.is(':checked')) {
-        //console.log(barcodeBox[0].attributes.barcode.value, "checked");
-        //get the correct overlay, fixed or moving
-        //markerUtils.drawAllFromBarcode(barcodeBox[0].attributes.barcode.value);
-        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value);
+        const op = tmapp['object_prefix']
+        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, tmapp[op + '_viewer']);
+        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, tmapp[op + '_magnifier']);
     } else {
         markerUtils.removeMarkerByBarcode(barcodeBox[0].attributes.barcode.value);
-        console.log("not checked");
     }
 }
 
@@ -398,10 +396,11 @@ markerUtils.markerUI = function (barObject,options) {
     var check = HTMLElementUtils.createElement({ type: "td" });
     var checkinput = HTMLElementUtils.inputTypeCheckbox({
         id: barObject.key + "-checkbox-" + op,
+        class: 'marker-checkbox',
         extraAttributes: { barcode: barObject.key },
         eventListeners: { change: function () {
             markerUtils.markerBoxToggle($(this));
-            document.getElementById("AllMarkers-checkbox-" + op).checked = false;
+            document.getElementById("AllMarkers-checkbox-" + op).checked = ($('.marker-checkbox:not(:checked)').length == 0);
         }}
     });
     markerUtils._checkBoxes[barObject.key] = checkinput;
@@ -492,12 +491,14 @@ markerUtils.markerUIAll = function (options) {
 
     var check = HTMLElementUtils.createElement({ type: "td" });
     var checkinput = HTMLElementUtils.inputTypeCheckbox({
-        id: "AllMarkers-checkbox-" + op,
+        id:  "AllMarkers-checkbox-" + op,
         eventListeners: { change: function () {
             // TODO: Remove JQuery dependency here?
-            const $checkboxes = $("#ISS_table input[type=checkbox]");
-            $checkboxes.prop("checked", $("#AllMarkers-checkbox-ISS").prop("checked"));
-            $checkboxes.change();
+            const $checkboxes = $(".marker-checkbox");
+            $checkboxes.prop("checked", $(this).prop("checked"));
+            $checkboxes.each(function(index) {
+                markerUtils.markerBoxToggle($(this));
+            });
          } }
     });
     
