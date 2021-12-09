@@ -80,7 +80,7 @@ markerUtils.removeMarkerByBarcode = function (barcode) {
     overlayUtils._d3nodes["Gr" + op + barcode] = null;
 }
 
-markerUtils.drawCPdata= function(options){
+markerUtils.drawCPdata= function(options, viewer){
     //pick up the property from the UI
     if(!CPDataUtils._drawCPdata){
         CPDataUtils.removeCPdata();
@@ -114,7 +114,7 @@ markerUtils.drawCPdata= function(options){
     if(!overlayUtils._d3nodes[svggroupname])
         overlayUtils._d3nodes[svggroupname]=overlayUtils._d3nodes[cpop+"_svgnode"].append("g").attr("id",svggroupname);
 
-    var imageWidth=OSDViewerUtils.getImageWidth();
+    var imageWidth=OSDViewerUtils.getImageWidth(viewer);
 
     // temporary values that will be acquired from the data later
     var minproperty=CPDataUtils.CP_rawdata_stats[propertyselector].min;
@@ -162,7 +162,7 @@ markerUtils.drawCPdata= function(options){
  * Draws all the markers from a non downsambled version of the barcode. Mostly for checking purposes
  * and is only invoked by code in a console. 
  * @param {string} barcode */
-markerUtils.drawAllFromNonDownsampledBarcode = function (barcode) {
+markerUtils.drawAllFromNonDownsampledBarcode = function (barcode, viewer) {
     var op = tmapp["object_prefix"];
     var d3nodeName = "Gr" + op + barcode;
     //create G group for these barcodes
@@ -175,7 +175,7 @@ markerUtils.drawAllFromNonDownsampledBarcode = function (barcode) {
         overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[op + "_markers_svgnode"].append("g").attr("class", "Gr" + op + barcode);
     }
     //imageWidth is the size of the image in the viewer
-    var imageWidth = OSDViewerUtils.getImageWidth();
+    var imageWidth = OSDViewerUtils.getImageWidth(viewer);
 
     var calculatedSize = null;
     if (document.getElementById(op + "_globalmarkersize_text")) {
@@ -219,13 +219,13 @@ markerUtils.drawAllFromNonDownsampledBarcode = function (barcode) {
  * visualization  purposes and is only invoked by code in a console. 
  * WILL TAKE A SUPER LONG TIME IF THE TOTAL AMOUNT OF BARCODES IS BIGGER THAN 50K
  *  */
-markerUtils.drawAllFromNonDownsampled = function () {
+markerUtils.drawAllFromNonDownsampled = function (viewer) {
     console.log("Be careful this might be slow");
     var op = tmapp["object_prefix"];
     //create G group for these barcodes
 
     dataUtils[op + "_data"].forEach(function (arr) {
-        markerUtils.drawAllFromNonDownsampledBarcode(arr.key);
+        markerUtils.drawAllFromNonDownsampledBarcode(arr.key, viewer);
     });
 
 }
@@ -237,19 +237,19 @@ markerUtils.drawAllFromNonDownsampled = function () {
  * covers a very big portion of the image meaning we are looking at a low resolution therefore
  * no need to draw all barcodes.
  * @param {string} barcode */
-markerUtils.drawAllFromBarcode = function (barcode) {
+markerUtils.drawAllFromBarcode = function (barcode, viewer_name) {
     var op = tmapp["object_prefix"];
-    var d3nodeName = "Gr" + op + barcode;
+    var d3nodeName = "Gr" + viewer_name + barcode;
     //create G group for these barcodes
     if (!overlayUtils._d3nodes[d3nodeName]) {
         //console.log("new " + d3nodeName);
-        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[op + "_markers_svgnode"].append("g").attr("class", "Gr" + op + barcode);
+        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[viewer_name + "_markers_svgnode"].append("g").attr("class", "Gr" + viewer_name + barcode);
     } else {
         overlayUtils._d3nodes[d3nodeName].selectAll("*").remove();
-        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[op + "_markers_svgnode"].append("g").attr("class", "Gr" + op + barcode);
+        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[viewer_name + "_markers_svgnode"].append("g").attr("class", "Gr" + viewer_name + barcode);
     }
     //imageWidth is the size of the image in the viewer
-    var imageWidth = OSDViewerUtils.getImageWidth();
+    var imageWidth = OSDViewerUtils.getImageWidth(tmapp[viewer_name]);
     var calculatedSize = null;
     if (document.getElementById(op + "_globalmarkersize_text")) {
         if (document.getElementById(op + "_globalmarkersize_text").value) {
@@ -294,7 +294,7 @@ markerUtils.drawAllFromBarcode = function (barcode) {
  * covers a very big portion of the image meaning we are looking at a low resolution therefore
  * no need to draw all barcodes.
  * @param {Array} list */
-markerUtils.drawAllFromList = function (list) {
+markerUtils.drawAllFromList = function (list, viewer_name) {
     //assuming the list is of only one barcode
     if (!list.length) {
         return;
@@ -307,18 +307,18 @@ markerUtils.drawAllFromList = function (list) {
 
     //var barcode = list[0].letters; //this should be key now
     var op = tmapp["object_prefix"];
-    var d3nodeName = "Gr" + op + key;
+    var d3nodeName = "Gr" + viewer_name + key;
 
 
     if (!overlayUtils._d3nodes[d3nodeName]) {
-        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[op + "_markers_svgnode"].append("g").attr("class", "Gr" + op + key);
+        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[viewer_name + "_markers_svgnode"].append("g").attr("class", "Gr" + viewer_name + key);
     } else {
         overlayUtils._d3nodes[d3nodeName].selectAll("*").remove();
         //overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[op + "_markers_svgnode"].append("g").attr("class", "Gr" + op + key);
     }
 
     //imageWidth is the size of the image in the viewer
-    var imageWidth = OSDViewerUtils.getImageWidth();
+    var imageWidth = OSDViewerUtils.getImageWidth(tmapp[viewer_name]);
 
     var calculatedSize = null;
     if (document.getElementById(key + "-size-" + op)) {
@@ -369,8 +369,8 @@ markerUtils.markerBoxToggle = function (barcodeBox) {
 
     if (barcodeBox.is(':checked')) {
         const op = tmapp['object_prefix']
-        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, tmapp[op + '_viewer']);
-        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, tmapp[op + '_magnifier']);
+        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_viewer');
+        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_magnifier');
     } else {
         markerUtils.removeMarkerByBarcode(barcodeBox[0].attributes.barcode.value);
     }
@@ -688,7 +688,8 @@ markerUtils.drawAllMarkers = function () {
     }
 
     Object.keys(dataUtils[op + "_barcodeGarden"]).forEach(function (b) {
-        markerUtils.drawAllFromBarcode(b);
+        markerUtils.drawAllFromBarcode(b, "ISS_viewer");
+        markerUtils.drawAllFromBarcode(b, "ISS_magnifier");
         document.getElementById(b + "-checkbox-" + op).checked = true;
     });
 
@@ -742,39 +743,38 @@ markerUtils.arrayOfMarkersInBox = function (quadtree, x0, y0, x3, y3, options) {
     //}else {return null;}
 }
 /** Take the SVG group that contains the marker groups and empty it */
-markerUtils.removeAllMarkers = function () {
-    var op = tmapp["object_prefix"];
-    document.getElementById(op + '_drawall_btn').setAttribute("class", "btn btn-secondary")
-    overlayUtils._d3nodes[op + "_markers_svgnode"].selectAll("*").remove();
+markerUtils.removeAllMarkers = function (viewer_name) {
+    document.getElementById(viewer_name + '_drawall_btn').setAttribute("class", "btn btn-secondary")
+    overlayUtils._d3nodes[viewer_name + "_markers_svgnode"].selectAll("*").remove();
     for (var c in markerUtils._checkBoxes) {
         markerUtils._checkBoxes[c].checked = false;
     }
 }
 /** some desc */
-markerUtils.drawAllToggle = function () {
-    var op = tmapp["object_prefix"];
-    var button = document.getElementById(op + '_drawall_btn');
+markerUtils.drawAllToggle = function (viewer_name) {
+    var button = document.getElementById(viewer_name + '_drawall_btn');
     if (button) {
         if (button.classList.contains("btn-secondary")) markerUtils.drawAllMarkers();
-        else if (button.classList.contains("btn-primary")) markerUtils.removeAllMarkers();
+        else if (button.classList.contains("btn-primary")) markerUtils.removeAllMarkers(viewer_name);
         else markerUtils.drawAllMarkers();
     }
 
 }
 /** some desc */
-markerUtils.drawBarcodeByView = function (barcode) {
+markerUtils.drawBarcodeByView = function (barcode, viewer_name) {
     //get four corners of view
     var op = tmapp["object_prefix"];
-    var bounds = tmapp[op + "_viewer"].viewport.getBounds();
-    var currentZoom = tmapp[op + "_viewer"].viewport.getZoom();
+    const viewer = tmapp[viewer_name];
+    var bounds = viewer.viewport.getBounds();
+    var currentZoom = viewer.viewport.getZoom();
 
 
     var xmin, xmax, ymin, ymax;
     xmin = bounds.x; ymin = bounds.y;
     xmax = xmin + bounds.width; ymax = ymin + bounds.height;
 
-    var imageWidth = OSDViewerUtils.getImageWidth();
-    var imageHeight = OSDViewerUtils.getImageHeight();
+    var imageWidth = OSDViewerUtils.getImageWidth(viewer);
+    var imageHeight = OSDViewerUtils.getImageHeight(viewer);
 
     if (xmin < 0) { xmin = 0; }; if (xmax > 1.0) { xmax = 1.0; };
     if (ymin < 0) { ymin = 0; }; if (ymax > imageHeight / imageWidth) { ymax = imageHeight / imageWidth; };
@@ -796,16 +796,16 @@ markerUtils.drawBarcodeByView = function (barcode) {
         var drawThese = dataUtils.randomSamplesFromList(markerUtils._startCullingAt, markersInViewportBounds);
 
         //console.log("drawing=" + drawThese.length);
-        markerUtils.drawAllFromList(drawThese);
+        markerUtils.drawAllFromList(drawThese, viewer_name);
 
     } else {
 
         //console.log("percentage bigger than " + overlayUtils._percentageForSubsample);
         //if the percentage of image I see is bigger than a threshold then use the predownsampled markers
         if (dataUtils._subsampledBarcodes[barcode]) {
-            markerUtils.drawAllFromList(dataUtils._subsampledBarcodes[barcode]);
+            markerUtils.drawAllFromList(dataUtils._subsampledBarcodes[barcode], viewer_name);
         } else {
-            markerUtils.drawAllFromBarcode(barcode);
+            markerUtils.drawAllFromBarcode(barcode, viewer_name);
         }
     }//markerUtils.drawAllFromList(dataUtils.subsampledBarcodes[barcode]);
 
