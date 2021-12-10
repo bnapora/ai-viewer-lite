@@ -73,7 +73,6 @@ tmapp.registerActions = function () {
         function () {
             markerUtils.drawAllToggle(vname);
             markerUtils.drawAllToggle(mname);
-
         },
         false
     );
@@ -128,24 +127,30 @@ tmapp.init = function () {
     tmapp[magnifier_svgovname] = tmapp[mname].svgOverlay();
 
     //main nodes
-    overlayUtils._d3nodes[vname + "_svgnode"] = d3.select(tmapp[viewer_svgovname].node());
-    overlayUtils._d3nodes[mname + "_svgnode"] = d3.select(tmapp[magnifier_svgovname].node());
+    const viewer_svgnodeName = vname + "_svgnode";
+    const mag_svgnodeName = mname + "_svgnode";
+    overlayUtils._d3nodes[viewer_svgnodeName] = d3.select(tmapp[viewer_svgovname].node());
+    overlayUtils._d3nodes[mag_svgnodeName] = d3.select(tmapp[magnifier_svgovname].node());
 
-    //overlay for marker data                                             //main node
-    overlayUtils._d3nodes[vname + "_markers_svgnode"] = overlayUtils._d3nodes[vname + "_svgnode"].append("g")
-        .attr("id", vname + "_markers_svgnode");
-    overlayUtils._d3nodes[mname + "_markers_svgnode"] = overlayUtils._d3nodes[mname + "_svgnode"].append("g")
-        .attr("id", mname + "_markers_svgnode");
+    //overlay for marker data
+    const viewer_markers = vname + "_markers_svgnode";
+    const mag_markers = mname + "_markers_svgnode";                                           //main node
+    overlayUtils._d3nodes[viewer_markers] = overlayUtils._d3nodes[viewer_svgnodeName].append("g")
+        .attr("id", viewer_markers);
+    overlayUtils._d3nodes[mag_markers] = overlayUtils._d3nodes[mag_svgnodeName].append("g")
+        .attr("id", mag_markers);
 
-    //overlay for region data                                              //main node
-    overlayUtils._d3nodes[vname + "_regions_svgnode"] = overlayUtils._d3nodes[vname + "_svgnode"].append("g")
-        .attr("id", vname + "_regions_svgnode");
-    overlayUtils._d3nodes[mname + "_regions_svgnode"] = overlayUtils._d3nodes[mname + "_svgnode"].append("g")
-        .attr("id", mname + "_regions_svgnode");
+    //overlay for region data
+    const viewer_regions = vname + "_regions_svgnode";
+    const mag_regions = mname + "_regions_svgnode";                                           //main node
+    overlayUtils._d3nodes[viewer_regions] = overlayUtils._d3nodes[viewer_svgnodeName].append("g")
+        .attr("id", viewer_regions);
+    overlayUtils._d3nodes[mag_regions] = overlayUtils._d3nodes[mag_svgnodeName].append("g")
+        .attr("id", mag_regions);
 
     //overlay for CP data
     var cpop="CP";                                   //main node;
-    overlayUtils._d3nodes[cpop + "_svgnode"] = overlayUtils._d3nodes[vname + "_svgnode"].append("g")
+    overlayUtils._d3nodes[cpop + "_svgnode"] = overlayUtils._d3nodes[viewer_svgnodeName].append("g")
         .attr("id", cpop +"_svgnode");
 
     var click_handler = function (event) {
