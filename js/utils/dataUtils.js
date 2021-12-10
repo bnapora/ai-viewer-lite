@@ -20,7 +20,8 @@ dataUtils = {
     _barcodesByAmount: [],
     _maximumAmountInLowerRes: 5000,
     _nameAndLetters: { drawGeneName: false, drawGeneLetters: false },
-    _drawOptions: { randomColorForMarker: true }
+    _drawOptions: { randomColorForMarker: true },
+    _key_field: undefined
     //_minimumAmountToDisplay: 500,
     //_subsamplingRate: 100,
 }
@@ -90,9 +91,10 @@ dataUtils.processISSRawData = function () {
             }
         }
     }
-    
-    //console.log("barcodeSelector nameSelector",barcodeSelector,nameSelector);
-    
+
+    // Once we are done determining the key, set it in dataUtils
+    dataUtils._key_field = knode.options[knode.selectedIndex].value;
+
     if (!(nameSelector == "null")) {
         //console.log("entered here");
         dataUtils._nameAndLetters.drawGeneName = true;
@@ -193,6 +195,12 @@ dataUtils.showMenuCSV = function(){
 
 }
 
+// Spaces aren't allowed in HTML element IDs, so we need to create keys that do not have them.
+// Here is a utility function to replace spaces with underscores.
+dataUtils.getKeyFromString = function(str) {
+    return str.replace(/\s+/g, "_");
+}
+
 /** 
 * Creeate the dataUtils[op + "_barcodeGarden"] ("Garden" as opposed to "forest")
 * To save all the trees per barcode or per key. It is an object so that it is easy to just call
@@ -208,10 +216,12 @@ dataUtils.makeQuadTrees = function () {
     
     
     var op = tmapp["object_prefix"];
-    var knode = document.getElementById(op + "_key_header");
-    var key = knode.options[knode.selectedIndex].value;
-    var allbarcodes = d3.nest().key(function (d) { return d[key]; }).entries(dataUtils[op + "_processeddata"]);
-    console.log(allbarcodes);
+    var allbarcodes = d3.nest().key(
+        function (d) {
+            return dataUtils.getKeyFromString(d[dataUtils._key_field]);
+        })
+        .entries(dataUtils[op + "_processeddata"]);
+
     dataUtils[op + "_barcodeGarden"] = {};
     for (var i = 0; i < allbarcodes.length; i++) {
         var gardenKey = allbarcodes[i].key;
@@ -310,7 +320,6 @@ dataUtils.readCSV = function (thecsv) {
             dataUtils.showMenuCSV();
         }
     );
-    // console.log('D3 Request-CSV', request)
 }
     
     /** 

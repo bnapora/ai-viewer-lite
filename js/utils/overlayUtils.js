@@ -272,11 +272,12 @@ overlayUtils.randomColor = function (colortype) {
  * Main function to update the view if there has been a reason for it. 
  * It computes all the elements that have to be drawn.
  */
-overlayUtils.modifyDisplayIfAny = function () {
+overlayUtils.modifyDisplayIfAny = function (viewer_name) {
     //get four corners of view
     var op = tmapp["object_prefix"];
-    var bounds = tmapp[op + "_viewer"].viewport.getBounds();
-    var currentZoom = tmapp[op + "_viewer"].viewport.getZoom();
+    var viewer = tmapp[viewer_name]
+    var bounds = viewer.viewport.getBounds();
+    var currentZoom = viewer.viewport.getZoom();
 
     var xmin, xmax, ymin, ymax;
     xmin = bounds.x; ymin = bounds.y;
@@ -312,14 +313,14 @@ overlayUtils.modifyDisplayIfAny = function () {
                 var drawThese = dataUtils.randomSamplesFromList(markerUtils.startCullingAt, markersInViewportBounds);
 
                 //console.log(drawThese.length);
-                markerUtils.drawAllFromList(drawThese);
+                markerUtils.drawAllFromList(drawThese, viewer_name);
 
             } else {
                 //if the percentage of image I see is bigger than a threshold then use the predownsampled markers
                 if (dataUtils._subsampledBarcodes[barcode]) {
-                    markerUtils.drawAllFromList(dataUtils._subsampledBarcodes[barcode]);
+                    markerUtils.drawAllFromList(dataUtils._subsampledBarcodes[barcode], viewer_name);
                 } else {
-                    markerUtils.drawAllFromBarcode(barcode);
+                    markerUtils.drawAllFromBarcode(barcode, viewer_name);
                 }
             }
         } 
@@ -330,11 +331,11 @@ overlayUtils.modifyDisplayIfAny = function () {
     if(CPDataUtils.hasOwnProperty(cpop+"_rawdata")){ //I need to put a button here to draw or remove
         //Zoom of 1 means all image is visible so low res. Bigger than 1 means zooming in.
         if (currentZoom > overlayUtils._zoomForSubsample) {            
-            markerUtils.drawCPdata({searchInTree:true,xmin:xmin, xmax:xmax, ymin:ymin, ymax:ymax});
+            markerUtils.drawCPdata({searchInTree:true,xmin:xmin, xmax:xmax, ymin:ymin, ymax:ymax}, viewer);
         } else {
             console.log("subsample");
             //I create the subsampled one already when I read de CP csv, in CPDataUtils[cpop + "_subsampled_data"]     
-            markerUtils.drawCPdata({searchInTree:false});            
+            markerUtils.drawCPdata({searchInTree:false}, viewer);
         }
     }
 }

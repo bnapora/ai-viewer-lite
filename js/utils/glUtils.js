@@ -244,8 +244,8 @@ glUtils.prototype.loadMarkers = function() {
     const keyName = document.getElementById("ISS_key_header").value;
 
 
-    const imageWidth = this.viewer.world.getItemAt(0).getContentSize().x;;
-    const imageHeight = this.viewer.world.getItemAt(0).getContentSize().y;
+    const imageWidth = OSDViewerUtils.getImageWidth(this.viewer);
+    const imageHeight = OSDViewerUtils.getImageHeight(this.viewer);
 
     // If new marker data was loaded, we need to assign each barcode an index
     // that we can use with the LUT textures for color, visibility, etc.
@@ -287,8 +287,8 @@ glUtils.prototype.loadCPMarkers = function() {
     const xColumnName = document.getElementById("CP_X_header").value;
     const yColumnName = document.getElementById("CP_Y_header").value;
     const colorscaleName = document.getElementById("CP_colorscale").value;
-    const imageWidth = this.viewer.world.getItemAt(0).getContentSize().x;
-    const imageHeight = this.viewer.world.getItemAt(0).getContentSize().y;
+    const imageWidth = OSDViewerUtils.getImageWidth(this.viewer);
+    const imageHeight = OSDViewerUtils.getImageHeight(this.viewer);
 
     const useColorFromMarker = colorscaleName.includes("ownColorFromColumn");
     let hexColor = "#000000";
@@ -329,7 +329,7 @@ glUtils.prototype._updateBarcodeToLUTIndexDict = function(markerData, keyName) {
         const gene_name = markerData[i].gene_name;
         if (!(barcode in barcodeToLUTIndex)) {
             barcodeToLUTIndex[barcode] = index++;
-            barcodeToKey[barcode] = (keyName == "letters" ? barcode : gene_name);
+            barcodeToKey[barcode] = (keyName == "letters" ? barcode : dataUtils.getKeyFromString(gene_name));
         }
     }
     this._barcodeToLUTIndex = barcodeToLUTIndex;

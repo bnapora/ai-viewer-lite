@@ -44,17 +44,29 @@ OSDViewerUtils.getZoom=function(overlay){
 }
 
 /** 
- * Get image width. For now it only brings the size of the main image */
-OSDViewerUtils.getImageWidth=function(){
-  var op=tmapp["object_prefix"];
-  return tmapp[op+"_viewer"].world.getItemAt(0).getContentSize().x;
+ * Get image width.
+ * @param {OpenSeadragonViewer} - optional. If specified, returns the width of the
+ * viewer passed in. If not, returns the width of the main viewer.
+ */
+OSDViewerUtils.getImageWidth=function(viewer){
+  if(!viewer) {
+    var op=tmapp["object_prefix"];
+    viewer = tmapp[op+"_viewer"];
+  }
+  return viewer.world.getItemAt(0).getContentSize().x;
 }
 
 /** 
- * Get image width. For now it only brings the size of the main image */
-OSDViewerUtils.getImageHeight=function(){
-  var op=tmapp["object_prefix"];
-  return tmapp[op+"_viewer"].world.getItemAt(0).getContentSize().y;
+ * Get image height.
+ * @param {OpenSeadragonViewer} - optional. If specified, returns the height of the
+ * viewer passed in. If not, returns the width of the main viewer.
+ */
+OSDViewerUtils.getImageHeight=function(viewer){
+  if(!viewer) {
+    var op=tmapp["object_prefix"];
+    viewer = tmapp[op+"_viewer"];
+  }
+  return viewer.world.getItemAt(0).getContentSize().y;
 }
 
 /** 

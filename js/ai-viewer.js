@@ -68,7 +68,15 @@ tmapp.registerActions = function () {
 
     interfaceUtils.listen(op + '_bringmarkers_btn','click', function () { dataUtils.processISSRawData(); },false);
     interfaceUtils.listen(op + '_search','input', function () { markerUtils.hideRowsThatDontContain(); },false);
-    interfaceUtils.listen(op + '_drawall_btn','click', function () { markerUtils.drawAllToggle(); },false);
+    interfaceUtils.listen(
+        op + '_drawall_btn','click',
+        function () {
+            markerUtils.drawAllToggle(vname);
+            markerUtils.drawAllToggle(mname);
+
+        },
+        false
+    );
     interfaceUtils.listen(op + '_drawregions_btn','click', function () { regionUtils.regionsOnOff() },false);
     interfaceUtils.listen(op + '_export_regions','click', function () { regionUtils.exportRegionsToJSON() },false);
     interfaceUtils.listen(op + '_import_regions','click', function () { regionUtils.importRegionsFromJSON() },false);
@@ -113,22 +121,32 @@ tmapp.init = function () {
     }
     overlayUtils.addAllLayers();
     //Create svgOverlay(); so that anything like D3, or any canvas library can act upon. https://d3js.org/
-    var svgovname = tmapp["object_prefix"] + "_svgov";
-    tmapp[svgovname] = tmapp[vname].svgOverlay();
+    var viewer_svgovname = vname + "_svgov";
+    var magnifier_svgovname = mname + "_svgov";
 
-                          //main node
-    overlayUtils._d3nodes[op + "_svgnode"] = d3.select(tmapp[svgovname].node());
+    tmapp[viewer_svgovname] = tmapp[vname].svgOverlay();
+    tmapp[magnifier_svgovname] = tmapp[mname].svgOverlay();
+
+    //main nodes
+    overlayUtils._d3nodes[vname + "_svgnode"] = d3.select(tmapp[viewer_svgovname].node());
+    overlayUtils._d3nodes[mname + "_svgnode"] = d3.select(tmapp[magnifier_svgovname].node());
 
     //overlay for marker data                                             //main node
-    overlayUtils._d3nodes[op + "_markers_svgnode"] = overlayUtils._d3nodes[op + "_svgnode"].append("g")
-        .attr("id", op + "_markers_svgnode");
+    overlayUtils._d3nodes[vname + "_markers_svgnode"] = overlayUtils._d3nodes[vname + "_svgnode"].append("g")
+        .attr("id", vname + "_markers_svgnode");
+    overlayUtils._d3nodes[mname + "_markers_svgnode"] = overlayUtils._d3nodes[mname + "_svgnode"].append("g")
+        .attr("id", mname + "_markers_svgnode");
+
     //overlay for region data                                              //main node
-    overlayUtils._d3nodes[op + "_regions_svgnode"] = overlayUtils._d3nodes[op + "_svgnode"].append("g")
-        .attr("id", op + "_regions_svgnode");
+    overlayUtils._d3nodes[vname + "_regions_svgnode"] = overlayUtils._d3nodes[vname + "_svgnode"].append("g")
+        .attr("id", vname + "_regions_svgnode");
+    overlayUtils._d3nodes[mname + "_regions_svgnode"] = overlayUtils._d3nodes[mname + "_svgnode"].append("g")
+        .attr("id", mname + "_regions_svgnode");
+
     //overlay for CP data
     var cpop="CP";                                   //main node;
-    overlayUtils._d3nodes[cpop+"_svgnode"] = overlayUtils._d3nodes[op + "_svgnode"].append("g")
-        .attr("id", cpop+"_svgnode");
+    overlayUtils._d3nodes[cpop + "_svgnode"] = overlayUtils._d3nodes[vname + "_svgnode"].append("g")
+        .attr("id", cpop +"_svgnode");
 
     var click_handler = function (event) {
         if (event.quick) {
@@ -154,8 +172,8 @@ tmapp.init = function () {
             // Run the callback
             console.log('Scrolling has stopped.');
             //
-            overlayUtils.modifyDisplayIfAny();
-
+            overlayUtils.modifyDisplayIfAny(vname);
+            overlayUtils.modifyDisplayIfAny(mname);
         }, tmapp._scrollDelay);
     }
 
