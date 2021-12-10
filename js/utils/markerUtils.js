@@ -240,13 +240,15 @@ markerUtils.drawAllFromNonDownsampled = function (viewer) {
 markerUtils.drawAllFromBarcode = function (barcode, viewer_name) {
     var op = tmapp["object_prefix"];
     var d3nodeName = "Gr" + viewer_name + barcode;
+    const marker_nodename = viewer_name + "_markers_svgnode";
+
     //create G group for these barcodes
     if (!overlayUtils._d3nodes[d3nodeName]) {
         //console.log("new " + d3nodeName);
-        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[viewer_name + "_markers_svgnode"].append("g").attr("class", "Gr" + viewer_name + barcode);
+        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[marker_nodename].append("g").attr("class", d3nodeName);
     } else {
         overlayUtils._d3nodes[d3nodeName].selectAll("*").remove();
-        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[viewer_name + "_markers_svgnode"].append("g").attr("class", "Gr" + viewer_name + barcode);
+        overlayUtils._d3nodes[d3nodeName] = overlayUtils._d3nodes[marker_nodename].append("g").attr("class", d3nodeName);
     }
     //imageWidth is the size of the image in the viewer
     var imageWidth = OSDViewerUtils.getImageWidth(tmapp[viewer_name]);
