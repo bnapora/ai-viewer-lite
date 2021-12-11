@@ -21,44 +21,6 @@
     ExactPWD: "bnapora"
 }
 
-tmapp.options_magnifier= {
-    id: "ISS_magnifier",
-    prefixUrl: "openseadragon/images/",
-    showNavigator: false,
-    animationTime: 0.0,
-    blendTime: 0,
-    minZoomLevel: 1,
-    minZoomImageRatio: 1.0,
-    zoomPerClick: 0,
-    constrainDuringPan: true,
-    visibilityRatio: 1,
-    showNavigationControl: false,
-    immediateRender: true,
-    preload: true,
-    panHorizontal: false,
-    panVertical: false,
-    mouseNavEnabled: false
-}
-
-
-tmapp.setupMagnifier = function(prefix, mainViewer) {
-    var mname = prefix + "_magnifier";
-    tmapp.options_magnifier['defaultZoomLevel'] = mainViewer.viewport.getZoom() * 4;
-    tmapp.options_magnifier['minPixelRatio'] = mainViewer.minPixelRatio;
-
-    var magnifier = OpenSeadragon(tmapp.options_magnifier);
-
-    tmapp[mname] = magnifier;
-
-    var syncHandler = function() {
-        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() * 4); // todo: this number will be configurable
-        magnifier.viewport.panTo(mainViewer.viewport.getCenter());
-    }
-
-    mainViewer.addHandler('zoom', syncHandler);
-    mainViewer.addHandler('pan', syncHandler);
-}
-
 /**
  * Get all the buttons from the interface and assign all the functions associated to them */
 tmapp.registerActions = function () {
@@ -113,7 +75,8 @@ tmapp.init = function () {
     //pixelate because we need the exact values of pixels
     tmapp[vname].addHandler("tile-drawn", OSDViewerUtils.pixelateAtMaximumZoomHandler);
 
-    tmapp.setupMagnifier(op, tmapp[vname]);
+    // Create a new Magnifier, and get its viewer to do things like add annotations
+    tmapp[mname] = new Magnifier(tmapp[vname], tmapp['options_magnifier']).viewer;
 
     if(!tmapp.layers){
         tmapp.layers = [];
@@ -259,4 +222,19 @@ tmapp.options_osd = {
     //     "Authorization": "Basic " + btoa(tmapp.ExactUID + ":" + tmapp.ExactPWD),
     //     // "Accept": "*/*",
     // }
+}
+
+tmapp.options_magnifier= {
+    id: "ISS_magnifier",
+    prefixUrl: "openseadragon/images/",
+    minZoomLevel: 1,
+    minZoomImageRatio: 1.0,
+    zoomPerClick: 0,
+    constrainDuringPan: true,
+    visibilityRatio: 1,
+    preload: true,
+    panHorizontal: false,
+    panVertical: false,
+    mouseNavEnabled: false,
+    magnificationRatio: 4
 }
