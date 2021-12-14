@@ -174,16 +174,7 @@ overlayUtils.addLayer = function(layerName, tileSource, i) {
             tmapp[vname].world.getItemAt(tmapp[vname].world.getItemCount()-1).setWidth(layerNX/layer0X);
         }
     });
-    tmapp[mname].addTiledImage({
-        index: i + 1,
-        tileSource: tmapp._url_suffix + tileSource,
-        opacity: opacity,
-        success: function(i) {
-            layer0X = tmapp[mname].world.getItemAt(0).getContentSize().x;
-            layerNX = tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).getContentSize().x;
-            tmapp[mname].world.getItemAt(tmapp[mname].world.getItemCount()-1).setWidth(layerNX/layer0X);
-        }
-    });
+    tmapp[mname].addLayer(tmapp.url_suffix, opacity, layerName, tileSource, i)
 }
 
 

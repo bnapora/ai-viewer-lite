@@ -140,6 +140,9 @@ dataUtils.processISSRawData = function () {
     if(tmapp['magGl']) {
         tmapp['magGl'].loadMarkers();
     }
+    if(tmapp['inlineMagGl']) {
+        tmapp['inlineMagGl'].loadMarkers();
+    }
 }
 
 /** 

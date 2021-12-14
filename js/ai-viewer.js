@@ -76,7 +76,9 @@ tmapp.init = function () {
     tmapp[vname].addHandler("tile-drawn", OSDViewerUtils.pixelateAtMaximumZoomHandler);
 
     // Create a new Magnifier, and get its viewer to do things like add annotations
-    tmapp[mname] = new Magnifier(tmapp[vname], tmapp['options_magnifier']).viewer;
+    tmapp[mname] = new Magnifier(tmapp[vname], tmapp['options_magnifier']);
+    tmapp[mname + "_main"] = tmapp[mname].viewer;
+    tmapp[mname + "_inline"] = tmapp[mname].inlineViewer;
 
     if(!tmapp.layers){
         tmapp.layers = [];
@@ -87,7 +89,8 @@ tmapp.init = function () {
     var magnifier_svgovname = mname + "_svgov";
 
     tmapp[viewer_svgovname] = tmapp[vname].svgOverlay();
-    tmapp[magnifier_svgovname] = tmapp[mname].svgOverlay();
+    tmapp[magnifier_svgovname] = tmapp[mname].viewer.svgOverlay();
+    // todo: this, but for the inline viewer as well
 
     //main nodes
     const viewer_svgnodeName = vname + "_svgnode";
@@ -141,7 +144,8 @@ tmapp.init = function () {
             console.log('Scrolling has stopped.');
             //
             overlayUtils.modifyDisplayIfAny(vname);
-            overlayUtils.modifyDisplayIfAny(mname);
+            overlayUtils.modifyDisplayIfAny(mname + "_main");
+            overlayUtils.modifyDisplayIfAny(mname + "_inline");
         }, tmapp._scrollDelay);
     }
 
@@ -184,7 +188,9 @@ tmapp.init = function () {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
         // todo: should I make GL an attribute on each OSD viewer instead?
         tmapp['viewerGl'] = new glUtils(tmapp[vname]);
-        tmapp['magGl'] = new glUtils(tmapp[mname]);
+        tmapp['magGl'] = new glUtils(tmapp[mname].viewer);
+        tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer);
+
     } else {
         console.log("Using CPU-based marker drawing (SVG canvas)")
     }
