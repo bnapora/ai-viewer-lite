@@ -369,12 +369,16 @@ markerUtils.drawAllFromList = function (list, viewer_name) {
 markerUtils.markerBoxToggle = function (barcodeBox) {
     if (tmapp["hideSVGMarkers"]) return;  // We are using WebGL instead for the drawing
 
+    const value = barcodeBox[0].attributes.barcode.value;
+
     if (barcodeBox.is(':checked')) {
         const op = tmapp['object_prefix']
-        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_viewer');
-        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_magnifier');
+        markerUtils.drawBarcodeByView(value, op + '_viewer');
+        markerUtils.drawBarcodeByView(value, op + '_magnifier_main');
+        markerUtils.drawBarcodeByView(value, op + '_magnifier_inline');
+
     } else {
-        markerUtils.removeMarkerByBarcode(barcodeBox[0].attributes.barcode.value);
+        markerUtils.removeMarkerByBarcode(value);
     }
 }
 

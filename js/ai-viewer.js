@@ -67,8 +67,8 @@ tmapp.registerActions = function () {
 tmapp.init = function () {
     //This prefix will be called by all other utilities in js/utils
     tmapp["object_prefix"] = tmapp.options_osd.id.split("_")[0];
-    var op = tmapp["object_prefix"];
-    var vname = op + "_viewer";
+    const op = tmapp["object_prefix"];
+    const vname = op + "_viewer";
     const mname = op + '_magnifier';
     //init OSD viewer
     tmapp[vname] = OpenSeadragon(tmapp.options_osd);
@@ -77,42 +77,54 @@ tmapp.init = function () {
 
     // Create a new Magnifier, and get its viewer to do things like add annotations
     tmapp[mname] = new Magnifier(tmapp[vname], tmapp['options_magnifier']);
-    tmapp[mname + "_main"] = tmapp[mname].viewer;
-    tmapp[mname + "_inline"] = tmapp[mname].inlineViewer;
+
+    const mnameMain = mname + "_main";
+    const mnameInline = mname + "_inline";
+    tmapp[mnameMain] = tmapp[mname].viewer;
+    tmapp[mnameInline] = tmapp[mname].inlineViewer;
 
     if(!tmapp.layers){
         tmapp.layers = [];
     }
     overlayUtils.addAllLayers();
     //Create svgOverlay(); so that anything like D3, or any canvas library can act upon. https://d3js.org/
-    var viewer_svgovname = vname + "_svgov";
-    var magnifier_svgovname = mname + "_svgov";
+    const viewer_svgovname = vname + "_svgov";
+    const magnifier_svgovname = mnameMain + "_svgov";
+    const magInline_svgovname = mnameInline + "_svgov"
 
     tmapp[viewer_svgovname] = tmapp[vname].svgOverlay();
     tmapp[magnifier_svgovname] = tmapp[mname].viewer.svgOverlay();
-    // todo: this, but for the inline viewer as well
+    tmapp[magInline_svgovname] = tmapp[mname].inlineViewer.svgOverlay();
 
     //main nodes
     const viewer_svgnodeName = vname + "_svgnode";
-    const mag_svgnodeName = mname + "_svgnode";
+    const mag_svgnodeName = mnameMain + "_svgnode";
+    const magInline_svgnodeName = mnameInline + "_svgnode";
     overlayUtils._d3nodes[viewer_svgnodeName] = d3.select(tmapp[viewer_svgovname].node());
     overlayUtils._d3nodes[mag_svgnodeName] = d3.select(tmapp[magnifier_svgovname].node());
+    overlayUtils._d3nodes[magInline_svgnodeName] = d3.select(tmapp[magInline_svgovname].node());
 
     //overlay for marker data
     const viewer_markers = vname + "_markers_svgnode";
-    const mag_markers = mname + "_markers_svgnode";                                           //main node
+    const mag_markers = mnameMain + "_markers_svgnode";
+    const magInline_markers = mnameInline + "_markers_svgnode"; //main node
     overlayUtils._d3nodes[viewer_markers] = overlayUtils._d3nodes[viewer_svgnodeName].append("g")
         .attr("id", viewer_markers);
     overlayUtils._d3nodes[mag_markers] = overlayUtils._d3nodes[mag_svgnodeName].append("g")
         .attr("id", mag_markers);
+    overlayUtils._d3nodes[magInline_markers] = overlayUtils._d3nodes[magInline_svgnodeName].append("g")
+        .attr("id", magInline_markers);
 
     //overlay for region data
     const viewer_regions = vname + "_regions_svgnode";
-    const mag_regions = mname + "_regions_svgnode";                                           //main node
+    const mag_regions = mnameMain + "_regions_svgnode";
+    const magInline_regions = mnameInline + "_regions_svgnode";                                         //main node
     overlayUtils._d3nodes[viewer_regions] = overlayUtils._d3nodes[viewer_svgnodeName].append("g")
         .attr("id", viewer_regions);
     overlayUtils._d3nodes[mag_regions] = overlayUtils._d3nodes[mag_svgnodeName].append("g")
         .attr("id", mag_regions);
+    overlayUtils._d3nodes[magInline_regions] = overlayUtils._d3nodes[magInline_svgnodeName].append("g")
+        .attr("id", magInline_regions);
 
     //overlay for CP data
     var cpop="CP";                                   //main node;
