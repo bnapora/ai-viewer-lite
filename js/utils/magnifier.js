@@ -187,8 +187,8 @@
 
         _createSuccessCallback(i, viewer) {
             return function(i) {
-                layer0X = viewer.world.getItemAt(0).getContentSize().x;
-                layerNX = viewer.world.getItemAt(viewer.world.getItemCount() - 1).getContentSize().x;
+                const layer0X = viewer.world.getItemAt(0).getContentSize().x;
+                const layerNX = viewer.world.getItemAt(viewer.world.getItemCount() - 1).getContentSize().x;
                 viewer.world.getItemAt(viewer.world.getItemCount() -1 ).setWidth(layerNX / layer0X);
             }
         }
