@@ -9,6 +9,9 @@
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.
     const fudge = new $.Point(1, 1);
+    const checkboxId = 'magnifier__show-in-viewer';
+    const activeClass = 'magnifier--active';
+    const inactiveClass = 'magnifier--inactive';
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -16,7 +19,7 @@
             this.ratio = options.magnificationRatio;
             this.element = document.getElementById(options.id);
             this.element.id = options.id;
-            this.showInViewer = document.getElementById('magnifier__show-in-viewer').checked;
+            this.showInViewer = document.getElementById(checkboxId).checked;
 
             options = $.extend(
                 true,
@@ -57,9 +60,9 @@
             this.inViewerElement.id = this.element.id + "--inline";
             this.inViewerElement.className = 'magnifier magnifier--square magnifier--inline'
             if(this.showInViewer) {
-                $.addClass(this.inViewerElement, 'magnifier--active');
+                $.addClass(this.inViewerElement, activeClass);
             } else {
-                $.addClass(this.inViewerElement, 'magnifier--inactive');
+                $.addClass(this.inViewerElement, inactiveClass);
             }
 
             this.displayRegionContainer.appendChild(this.displayRegion);
@@ -113,7 +116,7 @@
                 self.update();
             });
 
-            document.getElementById('magnifier__show-in-viewer').addEventListener('change', function() {
+            document.getElementById(checkboxId).addEventListener('change', function() {
                 self.toggleInViewer();
             })
 
@@ -170,13 +173,13 @@
         toggleInViewer() {
             if(this.showInViewer) {
                 this.showInViewer = false;
-                $.removeClass(this.inViewerElement, 'magnifier--active');
-                $.addClass(this.inViewerElement, 'magnifier--inactive');
+                $.removeClass(this.inViewerElement, activeClass);
+                $.addClass(this.inViewerElement, inactiveClass);
                 this.inlineViewer.setVisible(false);
             } else {
                 this.showInViewer = true;
-                $.removeClass(this.inViewerElement, 'magnifier--inactive');
-                $.addClass(this.inViewerElement, 'magnifier--active');
+                $.removeClass(this.inViewerElement, inactiveClass);
+                $.addClass(this.inViewerElement, activeClass);
                 this.inlineViewer.setVisible(true);
                 this.inlineViewer.forceRedraw();
             }
