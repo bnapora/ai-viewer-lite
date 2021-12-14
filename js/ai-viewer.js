@@ -21,44 +21,6 @@
     ExactPWD: "bnapora"
 }
 
-tmapp.options_magnifier= {
-    id: "ISS_magnifier",
-    prefixUrl: "openseadragon/images/",
-    showNavigator: false,
-    animationTime: 0.0,
-    blendTime: 0,
-    minZoomLevel: 1,
-    minZoomImageRatio: 1.0,
-    zoomPerClick: 0,
-    constrainDuringPan: true,
-    visibilityRatio: 1,
-    showNavigationControl: false,
-    immediateRender: true,
-    preload: true,
-    panHorizontal: false,
-    panVertical: false,
-    mouseNavEnabled: false
-}
-
-
-tmapp.setupMagnifier = function(prefix, mainViewer) {
-    var mname = prefix + "_magnifier";
-    tmapp.options_magnifier['defaultZoomLevel'] = mainViewer.viewport.getZoom() * 4;
-    tmapp.options_magnifier['minPixelRatio'] = mainViewer.minPixelRatio;
-
-    var magnifier = OpenSeadragon(tmapp.options_magnifier);
-
-    tmapp[mname] = magnifier;
-
-    var syncHandler = function() {
-        magnifier.viewport.zoomTo(mainViewer.viewport.getZoom() * 4); // todo: this number will be configurable
-        magnifier.viewport.panTo(mainViewer.viewport.getCenter());
-    }
-
-    mainViewer.addHandler('zoom', syncHandler);
-    mainViewer.addHandler('pan', syncHandler);
-}
-
 /**
  * Get all the buttons from the interface and assign all the functions associated to them */
 tmapp.registerActions = function () {
@@ -113,7 +75,10 @@ tmapp.init = function () {
     //pixelate because we need the exact values of pixels
     tmapp[vname].addHandler("tile-drawn", OSDViewerUtils.pixelateAtMaximumZoomHandler);
 
-    tmapp.setupMagnifier(op, tmapp[vname]);
+    // Create a new Magnifier, and get its viewer to do things like add annotations
+    tmapp[mname] = new Magnifier(tmapp[vname], tmapp['options_magnifier']);
+    tmapp[mname + "_main"] = tmapp[mname].viewer;
+    tmapp[mname + "_inline"] = tmapp[mname].inlineViewer;
 
     if(!tmapp.layers){
         tmapp.layers = [];
@@ -124,7 +89,8 @@ tmapp.init = function () {
     var magnifier_svgovname = mname + "_svgov";
 
     tmapp[viewer_svgovname] = tmapp[vname].svgOverlay();
-    tmapp[magnifier_svgovname] = tmapp[mname].svgOverlay();
+    tmapp[magnifier_svgovname] = tmapp[mname].viewer.svgOverlay();
+    // todo: this, but for the inline viewer as well
 
     //main nodes
     const viewer_svgnodeName = vname + "_svgnode";
@@ -178,7 +144,8 @@ tmapp.init = function () {
             console.log('Scrolling has stopped.');
             //
             overlayUtils.modifyDisplayIfAny(vname);
-            overlayUtils.modifyDisplayIfAny(mname);
+            overlayUtils.modifyDisplayIfAny(mname + "_main");
+            overlayUtils.modifyDisplayIfAny(mname + "_inline");
         }, tmapp._scrollDelay);
     }
 
@@ -221,7 +188,9 @@ tmapp.init = function () {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
         // todo: should I make GL an attribute on each OSD viewer instead?
         tmapp['viewerGl'] = new glUtils(tmapp[vname]);
-        tmapp['magGl'] = new glUtils(tmapp[mname]);
+        tmapp['magGl'] = new glUtils(tmapp[mname].viewer);
+        tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer);
+
     } else {
         console.log("Using CPU-based marker drawing (SVG canvas)")
     }
@@ -259,4 +228,19 @@ tmapp.options_osd = {
     //     "Authorization": "Basic " + btoa(tmapp.ExactUID + ":" + tmapp.ExactPWD),
     //     // "Accept": "*/*",
     // }
+}
+
+tmapp.options_magnifier= {
+    id: "ISS_magnifier",
+    prefixUrl: "openseadragon/images/",
+    minZoomLevel: 1,
+    minZoomImageRatio: 1.0,
+    zoomPerClick: 0,
+    constrainDuringPan: true,
+    visibilityRatio: 1,
+    preload: true,
+    panHorizontal: false,
+    panVertical: false,
+    mouseNavEnabled: false,
+    magnificationRatio: 4
 }
