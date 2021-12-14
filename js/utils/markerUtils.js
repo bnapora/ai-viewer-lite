@@ -372,7 +372,9 @@ markerUtils.markerBoxToggle = function (barcodeBox) {
     if (barcodeBox.is(':checked')) {
         const op = tmapp['object_prefix']
         markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_viewer');
-        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_magnifier');
+        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_magnifier_main');
+        markerUtils.drawBarcodeByView(barcodeBox[0].attributes.barcode.value, op + '_magnifier_inline');
+
     } else {
         markerUtils.removeMarkerByBarcode(barcodeBox[0].attributes.barcode.value);
     }
