@@ -16,7 +16,7 @@
             this.ratio = options.magnificationRatio;
             this.element = document.getElementById(options.id);
             this.element.id = options.id;
-            this.showInViewer = false;
+            this.showInViewer = document.getElementById('magnifier__show-in-viewer').checked;
 
             options = $.extend(
                 true,
@@ -55,7 +55,12 @@
 
             this.inViewerElement = $.makeNeutralElement("div");
             this.inViewerElement.id = this.element.id + "--inline";
-            this.inViewerElement.className = 'magnifier magnifier--square magnifier--inactive magnifier--inline'
+            this.inViewerElement.className = 'magnifier magnifier--square magnifier--inline'
+            if(this.showInViewer) {
+                $.addClass(this.inViewerElement, 'magnifier--active');
+            } else {
+                $.addClass(this.inViewerElement, 'magnifier--inactive');
+            }
 
             this.displayRegionContainer.appendChild(this.displayRegion);
             this.displayRegion.appendChild(this.inViewerElement);
