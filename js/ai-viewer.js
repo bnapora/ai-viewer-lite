@@ -200,8 +200,8 @@ tmapp.init = function () {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
         // todo: should I make GL an attribute on each OSD viewer instead?
         tmapp['viewerGl'] = new glUtils(tmapp[vname]);
-        tmapp['magGl'] = new glUtils(tmapp[mname].viewer);
-        tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer);
+        tmapp['magGl'] = new glUtils(tmapp[mname].viewer, 0.5);
+        tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer, 0.5);
 
     } else {
         console.log("Using CPU-based marker drawing (SVG canvas)")
