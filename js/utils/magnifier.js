@@ -82,7 +82,7 @@
             // The same thing again, but inside the viewer instead of outside. It looks better twice as big.
             this.inlineViewer = $($.extend(
                 options,
-                { element: this.inViewerElement, defaultZoomLevel: options.defaultZoomLevel * 2 })
+                { element: this.inViewerElement, defaultZoomLevel: options.defaultZoomLevel })
             );
 
             (function (style, borderWidth) {

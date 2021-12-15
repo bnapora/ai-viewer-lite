@@ -96,7 +96,7 @@ MARKERS_FS = `
 
 
 class glUtils {
-    constructor(osdViewer) {
+    constructor(osdViewer, markerScale) {
         this.viewer = osdViewer;
         this._initialized = false;
         this._programs =  {};
@@ -106,9 +106,10 @@ class glUtils {
         this._numCPPoints = 0;
         this._imageSize = [1, 1];
         this._viewportRect = [0, 0, 1, 1];
-        this._markerScale = 1.0;
+         // Supply a default marker scale, but allow us to scale them down for annotations
+        this._markerScale = markerScale ? markerScale: 1.0;
         this._markerScalarRange = [0.0, 1.0];
-        this._markerOpacity = 0.5;    //Modified from 1.0 to 0.5 to display center of anno
+        this._markerOpacity = 1.0;
         this._useColorFromMarker = false;
         this._colorscaleName = "null";``
         this._colorscaleData = [];

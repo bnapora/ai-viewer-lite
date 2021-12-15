@@ -6,3 +6,4 @@ CCMCT_1018715d369dd0df2fc0_DZI.dzi
 node_modules/**
 osd-magnifier/node_modules/**
 *.svs
+.DS_Store
