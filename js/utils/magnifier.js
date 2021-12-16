@@ -83,9 +83,7 @@
             // The same thing again, but inside the viewer instead of outside.
             this.inlineViewer = $(
                 $.extend(options, {
-                    element: this.inViewerElement,
-                    // prevent resizing the magnifier from adding unwanted space around the image
-                    minZoomImageRatio: 1.0,
+                    element: this.inViewerElement
                 })
             );
 
