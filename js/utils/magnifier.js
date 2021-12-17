@@ -12,6 +12,7 @@
     const checkboxId = "magnifier__show-in-viewer";
     const activeClass = "magnifier--active";
     const inactiveClass = "magnifier--inactive";
+    const roundId = "magnifier__round";
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -20,6 +21,8 @@
             this.element = document.getElementById(options.id);
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
+            this.round = document.getElementById(roundId).checked;
+
             this.startingWidth = 140;
             this.startingHeight = 140;
 
@@ -54,7 +57,8 @@
                 this.element.id + "-displayregioncontainer";
             this.displayRegionContainer.className = "displayregioncontainer";
             this.displayRegionContainer.style.width = this.startingWidth + "px";
-            this.displayRegionContainer.style.height = this.startingHeight + "px";
+            this.displayRegionContainer.style.height =
+                this.startingHeight + "px";
 
             this.inViewerElement = $.makeNeutralElement("div");
             this.inViewerElement.id = this.element.id + "--inline";
@@ -84,7 +88,7 @@
             // The same thing again, but inside the viewer instead of outside.
             this.inlineViewer = $(
                 $.extend(options, {
-                    element: this.inViewerElement
+                    element: this.inViewerElement,
                 })
             );
 
@@ -94,6 +98,11 @@
                 style.margin = "0px";
                 style.padding = "0px";
             })(this.displayRegion.style, this.borderWidth);
+
+            if (this.round) {
+                $.addClass(this.element, 'round');
+                $.addClass(this.displayRegion, 'round');
+            }
 
             const self = this;
             this.mainViewer.addHandler("zoom", function () {
@@ -125,6 +134,12 @@
                     self.toggleInViewer();
                 });
 
+            document
+                .getElementById(roundId)
+                .addEventListener("change", function () {
+                    self.toggleShape();
+                });
+
             this.update();
         }
 
@@ -144,7 +159,9 @@
                     this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
-                this.inlineViewer.viewport.zoomTo(zoomTarget * (this.ratio / 2));
+                this.inlineViewer.viewport.zoomTo(
+                    zoomTarget * (this.ratio / 2)
+                );
 
                 const center = this.mainViewer.viewport.getCenter();
                 this.viewer.viewport.panTo(center);
@@ -176,7 +193,7 @@
 
                 if (this.showInViewer) {
                     // Event handing for when the inline magnifier is active
-                    if(this.storedWidth && this.storedHeight) {
+                    if (this.storedWidth && this.storedHeight) {
                         width = this.storedWidth;
                         height = this.storedHeight;
                     }
@@ -195,9 +212,6 @@
         }
 
         toggleInViewer() {
-            //update style for magnifier-box
-            var style = this.displayRegion.style;
-
             if (this.showInViewer) {
                 this.showInViewer = false;
                 $.removeClass(this.inViewerElement, activeClass);
@@ -215,6 +229,16 @@
                 $.addClass(this.element, inactiveClass);
             }
             this.update();
+        }
+
+        toggleShape() {
+            if (this.round) {
+                $.removeClass(this.element, "round");
+                $.removeClass(this.displayRegion, "round");
+            } else {
+                $.addClass(this.element, "round");
+                $.addClass(this.displayRegion, "round");
+            }
         }
 
         _createSuccessCallback(i, viewer) {

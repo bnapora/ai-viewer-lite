@@ -1,6 +1,6 @@
 .magnifier {
     height: 400px;
-    width: 100%;
+    width: 400px;
 }
 
 .magnifier--inline {
@@ -20,4 +20,9 @@
 from the viewer underneath it */
 #ISS_magnifier-displayregion {
     z-index: 99;
+}
+
+.round {
+    border-radius: 100%;
+    overflow: clip;
 }
