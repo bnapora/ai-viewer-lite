@@ -20,15 +20,15 @@
             this.element = document.getElementById(options.id);
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
+            this.startingWidth = 140;
+            this.startingHeight = 140;
 
             options = $.extend(
                 true,
                 {
-                    sizeRatio: 0.2,
                     minPixelRatio: this.mainViewer.minPixelRatio,
                     defaultZoomLevel:
                         this.mainViewer.viewport.getZoom() * this.ratio,
-                    minZoomLevel: 1,
                 },
                 options,
                 {
@@ -41,7 +41,7 @@
                     animationTime: 0,
                     autoResize: options.autoResize,
                     // prevent resizing the magnifier from adding unwanted space around the image
-                    minZoomImageRatio: 1.0,
+                    minZoomImageRatio: 1,
                 }
             );
 
@@ -53,8 +53,8 @@
             this.displayRegionContainer.id =
                 this.element.id + "-displayregioncontainer";
             this.displayRegionContainer.className = "displayregioncontainer";
-            this.displayRegionContainer.style.width = "0";
-            this.displayRegionContainer.style.height = "0";
+            this.displayRegionContainer.style.width = this.startingWidth + "px";
+            this.displayRegionContainer.style.height = this.startingHeight + "px";
 
             this.inViewerElement = $.makeNeutralElement("div");
             this.inViewerElement.id = this.element.id + "--inline";
@@ -71,6 +71,7 @@
             this.mainViewer.canvas.appendChild(this.displayRegionContainer);
 
             $.setElementTouchActionNone(this.element);
+            $.setElementTouchActionNone(this.inViewerElement);
 
             this.borderWidth = 2; // in pixels
 
@@ -124,7 +125,6 @@
                     self.toggleInViewer();
                 });
 
-            this.storedBounds = null;
             this.update();
         }
 
@@ -144,28 +144,11 @@
                     this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
-                this.inlineViewer.viewport.zoomTo(zoomTarget);
+                this.inlineViewer.viewport.zoomTo(zoomTarget * (this.ratio / 2));
 
                 const center = this.mainViewer.viewport.getCenter();
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
-
-                if (this.showInViewer) {
-                    // Event handing for when the inline magnifier is active
-                    var bounds = this.inlineViewer.viewport.getBounds(true);
-                } else {
-                    // Event handling for when the sidebar magnifier is active
-                    var bounds = this.viewer.viewport.getBounds(true);
-                }
-
-                var topleft = this.mainViewer.viewport.pixelFromPoint(
-                        bounds.getTopLeft(),
-                        true
-                    );
-
-                var bottomright = this.mainViewer.viewport
-                    .pixelFromPoint(bounds.getBottomRight(), true)
-                    .minus(this.totalBorderWidths);
 
                 //update style for magnifier-box
                 var style = this.displayRegion.style;
@@ -173,20 +156,48 @@
                     ? "block"
                     : "none";
 
+                var bounds = this.viewer.viewport.getBounds(true);
+
+                var bottomright = this.mainViewer.viewport
+                    .pixelFromPoint(bounds.getBottomRight(), true)
+                    .minus(this.totalBorderWidths);
+
+                var topleft = this.mainViewer.viewport.pixelFromPoint(
+                    bounds.getTopLeft(),
+                    true
+                );
+
                 style.top = Math.round(topleft.y) + "px";
                 style.left = Math.round(topleft.x) + "px";
 
-                var width = Math.abs(topleft.x - bottomright.x);
-                var height = Math.abs(topleft.y - bottomright.y);
+                // provide some default values
+                var width = this.startingWidth;
+                var height = this.startingHeight;
+
+                if (this.showInViewer) {
+                    // Event handing for when the inline magnifier is active
+                    if(this.storedWidth && this.storedHeight) {
+                        width = this.storedWidth;
+                        height = this.storedHeight;
+                    }
+                } else {
+                    width = Math.abs(topleft.x - bottomright.x);
+                    height = Math.abs(topleft.y - bottomright.y);
+                }
+
                 // make sure width and height are non-negative so IE doesn't throw
                 style.width = Math.round(Math.max(width, 0)) + "px";
                 style.height = Math.round(Math.max(height, 0)) + "px";
 
-                this.storedBounds = bounds;
+                this.storedWidth = width;
+                this.storedHeight = height;
             }
         }
 
         toggleInViewer() {
+            //update style for magnifier-box
+            var style = this.displayRegion.style;
+
             if (this.showInViewer) {
                 this.showInViewer = false;
                 $.removeClass(this.inViewerElement, activeClass);
@@ -203,6 +214,7 @@
                 $.removeClass(this.element, activeClass);
                 $.addClass(this.element, inactiveClass);
             }
+            this.update();
         }
 
         _createSuccessCallback(i, viewer) {

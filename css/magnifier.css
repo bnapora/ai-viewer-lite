@@ -1,6 +1,6 @@
 .magnifier {
     height: 400px;
-    width: 400px;
+    width: 100%;
 }
 
 .magnifier--inline {

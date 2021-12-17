@@ -200,8 +200,8 @@ tmapp.init = function () {
         console.log("Using GPU-based marker drawing (WebGL canvas)")
         // todo: should I make GL an attribute on each OSD viewer instead?
         tmapp['viewerGl'] = new glUtils(tmapp[vname]);
-        tmapp['magGl'] = new glUtils(tmapp[mname].viewer, 0.5);
-        tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer, 0.5);
+        tmapp['magGl'] = new glUtils(tmapp[mname].viewer, 2);
+        tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer, 0.25);
 
     } else {
         console.log("Using CPU-based marker drawing (SVG canvas)")
@@ -245,8 +245,6 @@ tmapp.options_osd = {
 tmapp.options_magnifier= {
     id: "ISS_magnifier",
     prefixUrl: "openseadragon/images/",
-    minZoomLevel: 1,
-    minZoomImageRatio: 1.0,
     zoomPerClick: 0,
     constrainDuringPan: true,
     visibilityRatio: 1,
@@ -254,5 +252,5 @@ tmapp.options_magnifier= {
     panHorizontal: false,
     panVertical: false,
     mouseNavEnabled: false,
-    magnificationRatio: 8
+    magnificationRatio: 4
 }
