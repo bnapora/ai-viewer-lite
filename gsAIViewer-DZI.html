@@ -486,13 +486,23 @@
                             <div class="tab-pane" id="magnifier" style="height:100%;">
                                 <div class="panel panel-default" style="height:100%;">
                                     <div class="panel-body">
-                                        <div id="ISS_magnifier" class="magnifier magnifier--square magnifier--active">
+                                        <div id="ISS_magnifier" class="magnifier magnifier--active">
                                         </div>
                                         <h4>Settings</h4>
                                         <div>
                                             <label>
                                                 <input type="checkbox" id="magnifier__show-in-viewer">
                                                 Show magnifier in viewer
+                                            </label>
+
+                                            <h5>Magnifier shape</h5>
+                                            <label>
+                                                <input type="radio" name="magnifier__shape" id="magnifier__square" checked>
+                                                Square
+                                            </label>
+                                            <label>
+                                                <input type="radio" name="magnifier__shape" id="magnifier__round">
+                                                Round
                                             </label>
                                         </div>
                                         <h4>Metrics</h4>
