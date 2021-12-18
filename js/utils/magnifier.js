@@ -51,14 +51,15 @@
             this.displayRegion = $.makeNeutralElement("div");
             this.displayRegion.id = this.element.id + "-displayregion";
             this.displayRegion.className = "displayregion";
+            this.displayRegion.style.width = this.startingWidth + "px";
+            this.displayRegion.style.height = this.startingHeight + "px";
 
             this.displayRegionContainer = $.makeNeutralElement("div");
             this.displayRegionContainer.id =
                 this.element.id + "-displayregioncontainer";
             this.displayRegionContainer.className = "displayregioncontainer";
-            this.displayRegionContainer.style.width = this.startingWidth + "px";
-            this.displayRegionContainer.style.height =
-                this.startingHeight + "px";
+            this.displayRegionContainer.style.width = "0";
+            this.displayRegionContainer.style.height = "0";
 
             this.inViewerElement = $.makeNeutralElement("div");
             this.inViewerElement.id = this.element.id + "--inline";
@@ -100,8 +101,8 @@
             })(this.displayRegion.style, this.borderWidth);
 
             if (this.round) {
-                $.addClass(this.element, 'round');
-                $.addClass(this.displayRegion, 'round');
+                $.addClass(this.element, "round");
+                $.addClass(this.displayRegion, "round");
             }
 
             const self = this;
