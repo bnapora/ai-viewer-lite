@@ -80,7 +80,7 @@
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
 
-            this.borderWidth = 2; // in pixels
+            this.borderWidth = 4; // in pixels
 
             this.totalBorderWidths = new $.Point(
                 this.borderWidth * 2,
