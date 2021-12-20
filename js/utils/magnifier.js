@@ -67,8 +67,10 @@
                 "magnifier magnifier--square magnifier--inline";
             if (this.showInViewer) {
                 $.addClass(this.inViewerElement, activeClass);
+                $.addClass(this.element, inactiveClass);
             } else {
                 $.addClass(this.inViewerElement, inactiveClass);
+                $.addClass(this.element, activeClass)
             }
 
             this.displayRegionContainer.appendChild(this.displayRegion);
