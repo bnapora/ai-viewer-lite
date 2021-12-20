@@ -162,9 +162,7 @@
                     this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
-                this.inlineViewer.viewport.zoomTo(
-                    zoomTarget * (this.ratio / 2)
-                );
+                this.inlineViewer.viewport.zoomTo(zoomTarget);
 
                 const center = this.mainViewer.viewport.getCenter();
                 this.viewer.viewport.panTo(center);
@@ -224,6 +222,19 @@
                 $.addClass(this.element, activeClass);
             } else {
                 this.showInViewer = true;
+
+                // make it a big bigger so it's easier to work with
+                const expandedWidth = this.storedWidth * 2;
+                const expandedHeight = this.storedHeight * 2;
+                const difference = new $.Point(this.storedWidth - expandedWidth, this.storedHeight - expandedHeight)
+                this.storedWidth = expandedWidth;
+                this.storedHeight = expandedHeight;
+
+                // since we made it bigger, we have to recenter
+                this.inlineViewer.viewport.panBy(
+                    this.mainViewer.viewport.deltaPointsFromPixels(difference)
+                )
+
                 $.removeClass(this.inViewerElement, inactiveClass);
                 $.addClass(this.inViewerElement, activeClass);
                 this.inlineViewer.setVisible(true);
