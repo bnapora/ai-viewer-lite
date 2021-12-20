@@ -67,8 +67,10 @@
                 "magnifier magnifier--square magnifier--inline";
             if (this.showInViewer) {
                 $.addClass(this.inViewerElement, activeClass);
+                $.addClass(this.element, inactiveClass);
             } else {
                 $.addClass(this.inViewerElement, inactiveClass);
+                $.addClass(this.element, activeClass)
             }
 
             this.displayRegionContainer.appendChild(this.displayRegion);
@@ -78,7 +80,7 @@
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
 
-            this.borderWidth = 2; // in pixels
+            this.borderWidth = 4; // in pixels
 
             this.totalBorderWidths = new $.Point(
                 this.borderWidth * 2,
@@ -146,6 +148,19 @@
             this.update();
         }
 
+        updateDisplayRegionStyle(top, left, width, height) {
+            var style = this.displayRegion.style;
+            style.display = this.viewer.world.getItemCount()
+                ? "block"
+                : "none";
+
+            style.top = Math.round(top) + "px";
+            style.left = Math.round(left) + "px";
+            // make sure width and height are non-negative so IE doesn't throw
+            style.width = Math.round(Math.max(width, 0)) + "px";
+            style.height = Math.round(Math.max(height, 0)) + "px";
+        }
+
         update() {
             const viewerSize = $.getElementSize(this.viewer.element);
             const inlineViewerSize = $.getElementSize(
@@ -162,19 +177,11 @@
                     this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
-                this.inlineViewer.viewport.zoomTo(
-                    zoomTarget * (this.ratio / 2)
-                );
+                this.inlineViewer.viewport.zoomTo(zoomTarget);
 
                 const center = this.mainViewer.viewport.getCenter();
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
-
-                //update style for magnifier-box
-                var style = this.displayRegion.style;
-                style.display = this.viewer.world.getItemCount()
-                    ? "block"
-                    : "none";
 
                 var bounds = this.viewer.viewport.getBounds(true);
 
@@ -186,9 +193,6 @@
                     bounds.getTopLeft(),
                     true
                 );
-
-                style.top = Math.round(topleft.y) + "px";
-                style.left = Math.round(topleft.x) + "px";
 
                 // provide some default values
                 var width = this.startingWidth;
@@ -205,9 +209,7 @@
                     height = Math.abs(topleft.y - bottomright.y);
                 }
 
-                // make sure width and height are non-negative so IE doesn't throw
-                style.width = Math.round(Math.max(width, 0)) + "px";
-                style.height = Math.round(Math.max(height, 0)) + "px";
+                this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
 
                 this.storedWidth = width;
                 this.storedHeight = height;
@@ -224,6 +226,41 @@
                 $.addClass(this.element, activeClass);
             } else {
                 this.showInViewer = true;
+
+                // make it a bit bigger so it's easier to work with
+                var bounds = this.viewer.viewport.getBounds(true);
+
+                var bottomright = this.mainViewer.viewport
+                    .pixelFromPoint(bounds.getBottomRight(), true)
+                    .minus(this.totalBorderWidths);
+
+                var topleft = this.mainViewer.viewport.pixelFromPoint(
+                    bounds.getTopLeft(),
+                    true
+                );
+
+                const width = Math.abs(topleft.x - bottomright.x);
+                const height = Math.abs(topleft.y - bottomright.y);
+
+                const expandedWidth = width * 2;
+                const expandedHeight = height * 2;
+                this.storedWidth = expandedWidth;
+                this.storedHeight = expandedHeight;
+
+                this.updateDisplayRegionStyle(
+                    topleft.y - (height / 2),
+                    topleft.x - (width / 2),
+                    expandedWidth,
+                    expandedHeight
+                )
+
+                const difference = new $.Point(-1 * width, -1 * height);
+
+                // since we made it bigger, we have to recenter
+                this.inlineViewer.viewport.panBy(
+                    this.mainViewer.viewport.deltaPointsFromPixels(difference)
+                );
+
                 $.removeClass(this.inViewerElement, inactiveClass);
                 $.addClass(this.inViewerElement, activeClass);
                 this.inlineViewer.setVisible(true);
