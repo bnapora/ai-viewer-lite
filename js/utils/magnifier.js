@@ -148,6 +148,19 @@
             this.update();
         }
 
+        updateDisplayRegionStyle(top, left, width, height) {
+            var style = this.displayRegion.style;
+            style.display = this.viewer.world.getItemCount()
+                ? "block"
+                : "none";
+
+            style.top = Math.round(top) + "px";
+            style.left = Math.round(left) + "px";
+            // make sure width and height are non-negative so IE doesn't throw
+            style.width = Math.round(Math.max(width, 0)) + "px";
+            style.height = Math.round(Math.max(height, 0)) + "px";
+        }
+
         update() {
             const viewerSize = $.getElementSize(this.viewer.element);
             const inlineViewerSize = $.getElementSize(
@@ -170,12 +183,6 @@
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
 
-                //update style for magnifier-box
-                var style = this.displayRegion.style;
-                style.display = this.viewer.world.getItemCount()
-                    ? "block"
-                    : "none";
-
                 var bounds = this.viewer.viewport.getBounds(true);
 
                 var bottomright = this.mainViewer.viewport
@@ -186,9 +193,6 @@
                     bounds.getTopLeft(),
                     true
                 );
-
-                style.top = Math.round(topleft.y) + "px";
-                style.left = Math.round(topleft.x) + "px";
 
                 // provide some default values
                 var width = this.startingWidth;
@@ -205,9 +209,7 @@
                     height = Math.abs(topleft.y - bottomright.y);
                 }
 
-                // make sure width and height are non-negative so IE doesn't throw
-                style.width = Math.round(Math.max(width, 0)) + "px";
-                style.height = Math.round(Math.max(height, 0)) + "px";
+                this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
 
                 this.storedWidth = width;
                 this.storedHeight = height;
@@ -225,12 +227,7 @@
             } else {
                 this.showInViewer = true;
 
-                // make it a big bigger so it's easier to work with
-                var style = this.displayRegion.style;
-                style.display = this.viewer.world.getItemCount()
-                    ? "block"
-                    : "none";
-
+                // make it a bit bigger so it's easier to work with
                 var bounds = this.viewer.viewport.getBounds(true);
 
                 var bottomright = this.mainViewer.viewport
@@ -250,10 +247,12 @@
                 this.storedWidth = expandedWidth;
                 this.storedHeight = expandedHeight;
 
-                style.top = Math.round(Math.max(topleft.y - (height / 2), 0)) + "px";
-                style.left = Math.round(Math.max(topleft.x - (width / 2), 0)) + "px";
-                style.width = Math.round(Math.max(expandedWidth, 0)) + "px";
-                style.height = Math.round(Math.max(expandedHeight, 0)) + "px";
+                this.updateDisplayRegionStyle(
+                    topleft.y - (height / 2),
+                    topleft.x - (width / 2),
+                    expandedWidth,
+                    expandedHeight
+                )
 
                 const difference = new $.Point(-1 * width, -1 * height);
 
