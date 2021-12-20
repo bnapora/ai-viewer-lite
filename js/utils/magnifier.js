@@ -136,9 +136,11 @@
                 });
 
             document
-                .getElementById(roundId)
-                .addEventListener("change", function () {
-                    self.toggleShape();
+                .querySelectorAll('input[name="magnifier__shape"]')
+                .forEach(function (input) {
+                    input.addEventListener("change", function () {
+                        self.toggleShape();
+                    });
                 });
 
             this.update();
@@ -236,9 +238,11 @@
             if (this.round) {
                 $.removeClass(this.element, "round");
                 $.removeClass(this.displayRegion, "round");
+                this.round = false;
             } else {
                 $.addClass(this.element, "round");
                 $.addClass(this.displayRegion, "round");
+                this.round = true;
             }
         }
 
