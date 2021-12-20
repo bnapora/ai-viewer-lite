@@ -224,16 +224,41 @@
                 this.showInViewer = true;
 
                 // make it a big bigger so it's easier to work with
-                const expandedWidth = this.storedWidth * 2;
-                const expandedHeight = this.storedHeight * 2;
-                const difference = new $.Point(this.storedWidth - expandedWidth, this.storedHeight - expandedHeight)
+                var style = this.displayRegion.style;
+                style.display = this.viewer.world.getItemCount()
+                    ? "block"
+                    : "none";
+
+                var bounds = this.viewer.viewport.getBounds(true);
+
+                var bottomright = this.mainViewer.viewport
+                    .pixelFromPoint(bounds.getBottomRight(), true)
+                    .minus(this.totalBorderWidths);
+
+                var topleft = this.mainViewer.viewport.pixelFromPoint(
+                    bounds.getTopLeft(),
+                    true
+                );
+
+                const width = Math.abs(topleft.x - bottomright.x);
+                const height = Math.abs(topleft.y - bottomright.y);
+
+                const expandedWidth = width * 2;
+                const expandedHeight = height * 2;
                 this.storedWidth = expandedWidth;
                 this.storedHeight = expandedHeight;
+
+                style.top = Math.round(Math.max(topleft.y - (height / 2), 0)) + "px";
+                style.left = Math.round(Math.max(topleft.x - (width / 2), 0)) + "px";
+                style.width = Math.round(Math.max(expandedWidth, 0)) + "px";
+                style.height = Math.round(Math.max(expandedHeight, 0)) + "px";
+
+                const difference = new $.Point(-1 * width, -1 * height);
 
                 // since we made it bigger, we have to recenter
                 this.inlineViewer.viewport.panBy(
                     this.mainViewer.viewport.deltaPointsFromPixels(difference)
-                )
+                );
 
                 $.removeClass(this.inViewerElement, inactiveClass);
                 $.addClass(this.inViewerElement, activeClass);
