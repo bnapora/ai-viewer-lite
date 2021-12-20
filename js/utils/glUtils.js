@@ -107,7 +107,7 @@ class glUtils {
         this._imageSize = [1, 1];
         this._viewportRect = [0, 0, 1, 1];
          // Supply a default marker scale, but allow us to scale them down for annotations
-        this._markerScale = markerScale ? markerScale: 1.0;
+        this._markerScale = markerScale ? markerScale: 0.5;
         this._markerScalarRange = [0.0, 1.0];
         this._markerOpacity = 1.0;
         this._useColorFromMarker = false;
