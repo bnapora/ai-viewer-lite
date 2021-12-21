@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <script src="js/openseadragon.2.4.2.min.js"></script>
+        <script src="js/heatmap.js"></script>
+        <script src="js/openseadragon-heatmapjs-overlay.js"></script>
+        <script src="js/openseadragon-imaginghelper.js"></script>
+        <script src="js/ObjectiveTileSource.min.js"></script>
+    </head>
+    <body>
+        <h1>
+            Naked OSD - Heatmap.js
+        </h1>
+    </body>
+    <div id="osd" style="width: 1000px; height: 800px;"></div>
+
+    <script type="text/javascript">       
+		paint_heatmap = function(){
+			heatmap = new HeatmapOverlay(viewer,
+					  {
+						backgroundColor: 'rgba(0,0,0,0)',
+						// the maximum opacity (the value with the highest intensity will have it)
+						maxOpacity: 0.5,
+						// minimum opacity. any value > 0 will produce no transparent gradient transition
+						minOpacity: 0.05
+					  }
+					  );
+					  // now generate some random data
+						var points = [];
+						var max = 0;
+						var width = 80000;
+						var height = 60000;
+            var len = 1000;
+
+						while (len--) {
+						//   var val = Math.floor(Math.random()*100);
+                            var val = 10;
+						  // now also with custom radius
+						//   var radius = Math.floor(Math.random()*70);
+                            var radius = 5;
+
+						  max = Math.max(max, val);
+						  var point = {
+							x: Math.floor(Math.random()*width),
+							y: Math.floor(Math.random()*height),
+							value: val,
+							// radius configuration on point basis
+							radius: radius
+						  };
+						  points.push(point);
+						}
+						// heatmap data format
+						var data = {
+						  max: max,
+						  data: points
+						};
+					heatmap.setData(data);
+            };
+    </script>
+    <script type="text/javascript">
+
+        imageTst1 = {
+          type: "objectivetileservice",
+          region: "US-West",
+          bucket: "global/.Gestalt",
+          filepath: "Replicated/4eee7b944ad5e46c60ce.svs",
+          username: "",
+          authcode: "",
+          success: paint_heatmap
+        };
+        var viewer = OpenSeadragon({
+          id: "osd",
+          prefixUrl: "openseadragon/images/"         
+        });
+
+        viewer.open(imageTst1);            
+    </script>   
+</html>
