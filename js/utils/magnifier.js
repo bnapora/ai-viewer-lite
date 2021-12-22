@@ -54,6 +54,39 @@
             this.displayRegion.style.width = this.startingWidth + "px";
             this.displayRegion.style.height = this.startingHeight + "px";
 
+            // Styles for both of these have to be here or they will be
+            // overridden.
+            this.regionMoveHangle = $.makeNeutralElement("div");
+            this.regionMoveHangle.className = "displayregion__move";
+            this.regionMoveHangle.style.position = "absolute";
+            this.regionMoveHangle.style.top = "-20px";
+            this.regionMoveHangle.style.left = "-20px";
+            this.regionMoveHangle.style.width = "20px";
+            this.regionMoveHangle.style.height = "20px";
+            this.regionMoveHangle.style.cursor = "move";
+            this.regionMoveHangle.style.background = "rgba(0, 0, 0, 0.5)";
+            this.regionMoveHangle.style.border = "1px solid #000";
+            new $.MouseTracker({
+                element: this.regionMoveHangle,
+                dragHandler: $.delegate(this, this.moveRegion),
+            });
+
+            this.regionResizeHangle = $.makeNeutralElement("div");
+            this.regionResizeHangle.className = "displayregion__resize";
+            this.regionResizeHangle.style.position = "absolute";
+            this.regionResizeHangle.style.bottom = "-5px";
+            this.regionResizeHangle.style.right = "-5px";
+            this.regionResizeHangle.style.width = "10%";
+            this.regionResizeHangle.style.height = "10%";
+            this.regionResizeHangle.style.maxWidth = "50px";
+            this.regionResizeHangle.style.maxHeight = "50px";
+            this.regionResizeHangle.style.cursor = "se-resize";
+            this.regionResizeHangle.style.background = "#ccc";
+            new $.MouseTracker({
+                element: this.regionResizeHangle,
+                dragHandler: $.delegate(this, this.resizeRegion),
+            });
+
             this.displayRegionContainer = $.makeNeutralElement("div");
             this.displayRegionContainer.id =
                 this.element.id + "-displayregioncontainer";
@@ -65,16 +98,23 @@
             this.inViewerElement.id = this.element.id + "--inline";
             this.inViewerElement.className =
                 "magnifier magnifier--square magnifier--inline";
+
             if (this.showInViewer) {
                 $.addClass(this.inViewerElement, activeClass);
                 $.addClass(this.element, inactiveClass);
+                $.addClass(this.regionResizeHangle, activeClass);
+                $.addClass(this.regionMoveHangle, activeClass);
             } else {
                 $.addClass(this.inViewerElement, inactiveClass);
-                $.addClass(this.element, activeClass)
+                $.addClass(this.element, activeClass);
+                $.addClass(this.regionResizeHangle, inactiveClass);
+                $.addClass(this.regionMoveHangle, inactiveClass);
             }
 
-            this.displayRegionContainer.appendChild(this.displayRegion);
+            this.displayRegion.appendChild(this.regionMoveHangle);
+            this.displayRegion.appendChild(this.regionResizeHangle);
             this.displayRegion.appendChild(this.inViewerElement);
+            this.displayRegionContainer.appendChild(this.displayRegion);
             this.mainViewer.canvas.appendChild(this.displayRegionContainer);
 
             $.setElementTouchActionNone(this.element);
@@ -91,7 +131,7 @@
             // The same thing again, but inside the viewer instead of outside.
             this.inlineViewer = $(
                 $.extend(options, {
-                    element: this.inViewerElement,
+                    element: this.inViewerElement
                 })
             );
 
@@ -148,11 +188,60 @@
             this.update();
         }
 
+        moveRegion(event) {
+            this.displayRegion = newHeight + "px";
+            if (this.inlineViewer.viewport) {
+                this.inlineViewer.viewport.panBy(
+                    this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
+                );
+            }
+        }
+
+        resizeRegion(event) {
+            const zoom = this.inlineViewer.viewport.getZoom();
+
+            // first, resize the actual element
+            const viewerSize = $.getElementSize(this.mainViewer.element);
+            const displayRegionSize = $.getElementSize(this.displayRegion);
+            const borderSize = 2 * this.borderWidth;
+            let newWidth = displayRegionSize.x + borderSize + event.delta.x;
+            newWidth = Math.min(newWidth, viewerSize.x * 0.75);
+            newWidth = Math.max(newWidth, 100); // to preserve some sanity
+            this.displayRegion.style.width = newWidth + "px";
+
+            let newHeight = displayRegionSize.y + borderSize + event.delta.y;
+            newHeight = Math.min(newHeight, viewerSize.y * 0.75);
+            newHeight = Math.max(newHeight, 100);
+            this.displayRegion.style.height = newHeight + "px";
+
+            this.storedWidth = newWidth;
+            this.storedHeight = newHeight;
+            // then set the overlay magnifier accordingly
+
+            var bounds = this.inlineViewer.viewport.getBounds(true);
+            var topleft = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getTopLeft(),
+                true
+            );
+            var bottomright = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getBottomRight(),
+                true
+            );
+
+            const delta =
+                event.delta.x / Math.abs(topleft.x - bottomright.x) +
+                event.delta.y / Math.abs(topleft.y - bottomright.y);
+
+            this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
+            this.inlineViewer.viewport.panTo(
+                bounds.getCenter().plus(delta),
+                true
+            );
+        }
+
         updateDisplayRegionStyle(top, left, width, height) {
             var style = this.displayRegion.style;
-            style.display = this.viewer.world.getItemCount()
-                ? "block"
-                : "none";
+            style.display = this.viewer.world.getItemCount() ? "block" : "none";
 
             style.top = Math.round(top) + "px";
             style.left = Math.round(left) + "px";
@@ -209,7 +298,12 @@
                     height = Math.abs(topleft.y - bottomright.y);
                 }
 
-                this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
+                this.updateDisplayRegionStyle(
+                    topleft.y,
+                    topleft.x,
+                    width,
+                    height
+                );
 
                 this.storedWidth = width;
                 this.storedHeight = height;
@@ -224,6 +318,10 @@
                 this.inlineViewer.setVisible(false);
                 $.removeClass(this.element, inactiveClass);
                 $.addClass(this.element, activeClass);
+                $.removeClass(this.regionResizeHangle, activeClass);
+                $.removeClass(this.regionMoveHangle, activeClass);
+                $.addClass(this.regionResizeHangle, inactiveClass);
+                $.addClass(this.regionMoveHangle, inactiveClass);
             } else {
                 this.showInViewer = true;
 
@@ -248,19 +346,23 @@
                 this.storedHeight = expandedHeight;
 
                 this.updateDisplayRegionStyle(
-                    topleft.y - (height / 2),
-                    topleft.x - (width / 2),
+                    topleft.y - height / 2,
+                    topleft.x - width / 2,
                     expandedWidth,
                     expandedHeight
-                )
+                );
 
-                const difference = new $.Point(-1 * width, -1 * height);
+                const difference = new $.Point(width, height);
 
                 // since we made it bigger, we have to recenter
                 this.inlineViewer.viewport.panBy(
                     this.mainViewer.viewport.deltaPointsFromPixels(difference)
                 );
 
+                $.addClass(this.regionResizeHangle, activeClass);
+                $.addClass(this.regionMoveHangle, activeClass);
+                $.removeClass(this.regionResizeHangle, inactiveClass);
+                $.removeClass(this.regionMoveHangle, inactiveClass);
                 $.removeClass(this.inViewerElement, inactiveClass);
                 $.addClass(this.inViewerElement, activeClass);
                 this.inlineViewer.setVisible(true);

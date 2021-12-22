@@ -26,3 +26,8 @@ from the viewer underneath it */
     border-radius: 100%;
     overflow: clip;
 }
+
+.displayregioncontainer {
+    width:  0;
+    height:  0;
+}
