@@ -160,6 +160,14 @@
                 self.update(true);
             });
 
+            this.mainViewer.addHandler("canvas-click", function (event) {
+                // we want to catch clicks, not drags
+                if (event.quick) {
+                    event.preventDefaultAction = true;
+                    self.clickToZoom(event);
+                }
+            });
+
             document
                 .getElementById(checkboxId)
                 .addEventListener("change", function () {
@@ -177,9 +185,52 @@
             this.update();
         }
 
+        clickToZoom(event) {
+            // Center the magnifiers on a click target, to make
+            // it easy to look at annotated cells.
+            const target =
+                this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                    event.position
+                );
+
+            this.viewer.viewport.panTo(target);
+            this.inlineViewer.viewport.panTo(target);
+
+            let bounds, top, left, width, height;
+
+            if (this.showInViewer) {
+                bounds = this.inlineViewer.viewport.getBounds();
+
+                // put the center of the display region on top of the click target;
+
+                height = parseInt(this.displayRegion.style.height, 10);
+                width = parseInt(this.displayRegion.style.width, 10);
+                top = event.position.y - (height / 2);
+                left = event.position.x - (width / 2);
+
+            } else {
+                bounds = this.viewer.viewport.getBounds();
+
+                const bottomright = this.mainViewer.viewport
+                    .pixelFromPoint(bounds.getBottomRight(), true)
+                    .minus(this.totalBorderWidths);
+
+                const topleft = this.mainViewer.viewport.pixelFromPoint(
+                    bounds.getTopLeft(),
+                    true
+                );
+
+                width = Math.abs(topleft.x - bottomright.x);
+                height = Math.abs(topleft.y - bottomright.y);
+                top = topleft.y;
+                left = topleft.x;
+            }
+            this.updateDisplayRegionStyle(top, left, width, height);
+        }
+
         moveRegion(event) {
-            var top =  parseInt(this.displayRegion.style.top, 10);
-            var left =  parseInt(this.displayRegion.style.left, 10);
+            var top = parseInt(this.displayRegion.style.top, 10);
+            var left = parseInt(this.displayRegion.style.left, 10);
 
             this.updateDisplayRegionStyle(
                 top + event.delta.y,
@@ -234,7 +285,9 @@
             );
 
             // then set the overlay magnifier accordingly
-            const resizeRatio = Math.abs(oldTopleft.x - oldBottomright.x) / Math.abs(newTopleft.x - newBottomright.x);
+            const resizeRatio =
+                Math.abs(oldTopleft.x - oldBottomright.x) /
+                Math.abs(newTopleft.x - newBottomright.x);
 
             const zoom = this.inlineViewer.viewport.getZoom() * resizeRatio;
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
@@ -246,21 +299,21 @@
             style.display = this.viewer.world.getItemCount() ? "block" : "none";
 
             // make sure these are non-negative so IE doesn't throw
-            if(top) {
+            if (top) {
                 style.top = Math.round(Math.max(top, 0)) + "px";
             }
-            if(left) {
+            if (left) {
                 style.left = Math.round(Math.max(left, 0)) + "px";
             }
-            if(width) {
+            if (width) {
                 style.width = Math.round(Math.max(width, 0)) + "px";
             }
-            if(height) {
+            if (height) {
                 style.height = Math.round(Math.max(height, 0)) + "px";
             }
         }
 
-        update(pinOverlay=false, refPoint=null) {
+        update(pinOverlay = false, refPoint = null) {
             const viewerSize = $.getElementSize(this.viewer.element);
             const inlineViewerSize = $.getElementSize(
                 this.inlineViewer.element
@@ -296,7 +349,7 @@
                     width = Math.min(Math.abs(topleft.x - bottomright.x), 100);
                     height = Math.min(Math.abs(topleft.y - bottomright.y), 100);
 
-                    if(pinOverlay) {
+                    if (pinOverlay) {
                         center = this.mainViewer.viewport.getCenter();
                     } else {
                         // the center of the overlay magnifier is at whatever
@@ -322,7 +375,6 @@
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
 
                     var bounds = this.viewer.viewport.getBounds(true);
-
                     var bottomright = this.mainViewer.viewport
                         .pixelFromPoint(bounds.getBottomRight(), true)
                         .minus(this.totalBorderWidths);
@@ -418,8 +470,8 @@
                 const expandedHeight = height * factor;
 
                 this.updateDisplayRegionStyle(
-                    topleft.y - (expandedHeight / 4),
-                    topleft.x - (expandedWidth / 4),
+                    topleft.y - expandedHeight / 4,
+                    topleft.x - expandedWidth / 4,
                     expandedWidth,
                     expandedHeight
                 );
