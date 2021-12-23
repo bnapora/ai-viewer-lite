@@ -145,8 +145,8 @@
             }
 
             const self = this;
-            this.mainViewer.addHandler("zoom", function () {
-                self.update();
+            this.mainViewer.addHandler("zoom", function (event) {
+                self.update(false, event.refPoint);
             });
             this.mainViewer.addHandler("pan", function () {
                 self.update(true); // bring the overlay viewer along if you pan the underlying main viewer
@@ -195,37 +195,51 @@
         resizeRegion(event) {
             // first, resize the actual element
             const viewerSize = $.getElementSize(this.mainViewer.element);
-            const displayRegionSize = $.getElementSize(this.displayRegion);
-            const borderSize = 2 * this.borderWidth;
 
-            let newWidth = displayRegionSize.x + borderSize + event.delta.x;
+            const width = parseInt(this.displayRegion.style.width, 10);
+            const height = parseInt(this.displayRegion.style.height, 10);
+            const center = this.inlineViewer.viewport.getCenter();
+
+            // Get some actual viewer coordinates so we can preserve the image
+            // position in the viewer on resize. We can't just use
+            // options.preserveImageSizeOnResize because of the way the
+            // app behaves the rest of the time, but we can put its behavior here.
+            var oldBounds = this.inlineViewer.viewport.getBounds(true);
+            var oldTopleft = this.mainViewer.viewport.pixelFromPoint(
+                oldBounds.getTopLeft(),
+                true
+            );
+            var oldBottomright = this.mainViewer.viewport.pixelFromPoint(
+                oldBounds.getBottomRight(),
+                true
+            );
+
+            let newWidth = width + event.delta.x;
             newWidth = Math.min(newWidth, viewerSize.x * 0.75);
             newWidth = Math.max(newWidth, 100); // to preserve some sanity
 
-            let newHeight = displayRegionSize.y + borderSize + event.delta.y;
+            let newHeight = height + event.delta.y;
             newHeight = Math.min(newHeight, viewerSize.y * 0.75);
             newHeight = Math.max(newHeight, 100);
 
             this.updateDisplayRegionStyle(null, null, newWidth, newHeight);
 
+            var newBounds = this.inlineViewer.viewport.getBounds(true);
+            var newTopleft = this.mainViewer.viewport.pixelFromPoint(
+                oldBounds.getTopLeft(),
+                true
+            );
+            var newBottomright = this.mainViewer.viewport.pixelFromPoint(
+                oldBounds.getBottomRight(),
+                true
+            );
+
             // then set the overlay magnifier accordingly
-            var bounds = this.inlineViewer.viewport.getBounds(true);
-            var topleft = this.mainViewer.viewport.pixelFromPoint(
-                bounds.getTopLeft(),
-                true
-            );
-            var bottomright = this.mainViewer.viewport.pixelFromPoint(
-                bounds.getBottomRight(),
-                true
-            );
+            const resizeRatio = Math.abs(oldTopleft.x - oldBottomright.x) / Math.abs(newTopleft.x - newBottomright.x);
 
-            const delta =
-                event.delta.x / Math.abs(topleft.x - bottomright.x) +
-                event.delta.y / Math.abs(topleft.y - bottomright.y);
-
-            const zoom = this.inlineViewer.viewport.getZoom() * (1 - delta);
-
+            const zoom = this.inlineViewer.viewport.getZoom() * resizeRatio;
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
+            this.inlineViewer.viewport.panTo(center);
         }
 
         updateDisplayRegionStyle(top, left, width, height) {
@@ -247,7 +261,7 @@
             }
         }
 
-        update(pinOverlay=false) {
+        update(pinOverlay=false, refPoint=null) {
             const viewerSize = $.getElementSize(this.viewer.element);
             const inlineViewerSize = $.getElementSize(
                 this.inlineViewer.element
@@ -262,8 +276,8 @@
                 const zoomTarget =
                     this.mainViewer.viewport.getZoom() * this.ratio;
 
-                this.viewer.viewport.zoomTo(zoomTarget);
-                this.inlineViewer.viewport.zoomTo(zoomTarget);
+                this.viewer.viewport.zoomTo(zoomTarget, refPoint);
+                this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
 
                 var bounds, bottomright, topleft, width, height, center;
 
