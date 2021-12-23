@@ -149,23 +149,15 @@
                 self.update();
             });
             this.mainViewer.addHandler("pan", function () {
-                self.update();
+                self.update(true); // bring the overlay viewer along if you pan the underlying main viewer
             });
 
             this.mainViewer.addHandler("update-level", function () {
-                self.update();
-            });
-
-            this.mainViewer.addHandler("full-page", function () {
-                self.update();
-            });
-
-            this.mainViewer.addHandler("full-screen", function () {
-                self.update();
+                self.update(true);
             });
 
             this.mainViewer.world.addHandler("update-viewport", function () {
-                self.update();
+                self.update(true);
             });
 
             document
@@ -186,15 +178,12 @@
         }
 
         moveRegion(event) {
-            var bounds = this.inlineViewer.viewport.getBounds(true);
-            var topleft = this.mainViewer.viewport.pixelFromPoint(
-                bounds.getTopLeft(),
-                true
-            );
+            var top =  parseInt(this.displayRegion.style.top, 10);
+            var left =  parseInt(this.displayRegion.style.left, 10);
 
             this.updateDisplayRegionStyle(
-                topleft.y + event.delta.y,
-                topleft.x + event.delta.x
+                top + event.delta.y,
+                left + event.delta.x
             );
             if (this.inlineViewer.viewport) {
                 this.inlineViewer.viewport.panBy(
@@ -258,7 +247,7 @@
             }
         }
 
-        update() {
+        update(pinOverlay=false) {
             const viewerSize = $.getElementSize(this.viewer.element);
             const inlineViewerSize = $.getElementSize(
                 this.inlineViewer.element
@@ -294,24 +283,28 @@
                     width = Math.min(Math.abs(topleft.x - bottomright.x), 100);
                     height = Math.min(Math.abs(topleft.y - bottomright.y), 100);
 
-                    // the center of the overlay magnifier is at whatever
-                    // is in the center of its display region, on the main
-                    // viewer. We're using layers, but they are all the same
-                    // size for this purpose, so just pick one.
+                    if(pinOverlay) {
+                        center = this.mainViewer.viewport.getCenter();
+                    } else {
+                        // the center of the overlay magnifier is at whatever
+                        // is in the center of its display region, on the main
+                        // viewer. We're using layers, but they are all the same
+                        // size for this purpose, so just pick one.
 
-                    // This is in coordinates relative to the main viewer.
-                    var bounds_rect = new $.Rect(
-                        topleft.x,
-                        topleft.y,
-                        width,
-                        height
-                    );
-
-                    // Translate those into viewport coordinates for the inline viewer.
-                    center =
-                        this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                            bounds_rect.getCenter()
+                        // This is in coordinates relative to the main viewer.
+                        var bounds_rect = new $.Rect(
+                            topleft.x,
+                            topleft.y,
+                            width,
+                            height
                         );
+
+                        // Translate those into viewport coordinates for the inline viewer.
+                        center =
+                            this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                                bounds_rect.getCenter()
+                            );
+                    }
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
 
