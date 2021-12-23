@@ -393,7 +393,8 @@
                 var center = this.mainViewer.viewport.getCenter();
                 this.viewer.viewport.panTo(center);
 
-                // make it a bit bigger so it's easier to work with
+                // make it a bit bigger so it shows the same things,
+                // just on top of the main viewer
                 var bounds = this.viewer.viewport.getBounds(true);
 
                 var bottomright = this.mainViewer.viewport
@@ -408,8 +409,13 @@
                 const width = Math.abs(topleft.x - bottomright.x);
                 const height = Math.abs(topleft.y - bottomright.y);
 
-                const expandedWidth = width * (this.ratio / 2);
-                const expandedHeight = height * (this.ratio / 2);
+                // How much bigger does each side of the square
+                // need to be in order to accommodate an overlay
+                // magnifier at the same zoom level?
+                const factor = Math.log2(this.ratio);
+
+                const expandedWidth = width * factor;
+                const expandedHeight = height * factor;
 
                 this.updateDisplayRegionStyle(
                     topleft.y - (expandedHeight / 4),
@@ -431,7 +437,6 @@
                 $.removeClass(this.element, activeClass);
                 $.addClass(this.element, inactiveClass);
             }
-            this.update();
         }
 
         toggleShape() {
