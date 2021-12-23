@@ -193,14 +193,7 @@
         }
 
         resizeRegion(event) {
-            // first, resize the actual element
-            const viewerSize = $.getElementSize(this.mainViewer.element);
-
-            const width = parseInt(this.displayRegion.style.width, 10);
-            const height = parseInt(this.displayRegion.style.height, 10);
-            const center = this.inlineViewer.viewport.getCenter();
-
-            // Get some actual viewer coordinates so we can preserve the image
+            // First, get some actual viewer coordinates so we can preserve the image
             // position in the viewer on resize. We can't just use
             // options.preserveImageSizeOnResize because of the way the
             // app behaves the rest of the time, but we can put its behavior here.
@@ -213,6 +206,12 @@
                 oldBounds.getBottomRight(),
                 true
             );
+
+            // then, resize the actual element that contains the overlay viewer
+            const viewerSize = $.getElementSize(this.mainViewer.element);
+            const width = parseInt(this.displayRegion.style.width, 10);
+            const height = parseInt(this.displayRegion.style.height, 10);
+            const center = this.inlineViewer.viewport.getCenter();
 
             let newWidth = width + event.delta.x;
             newWidth = Math.min(newWidth, viewerSize.x * 0.75);
