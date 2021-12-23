@@ -237,8 +237,6 @@
             const zoom = this.inlineViewer.viewport.getZoom() * (1 - delta);
 
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
-
-            this.update();
         }
 
         updateDisplayRegionStyle(top, left, width, height) {
@@ -361,11 +359,7 @@
                 var center = this.mainViewer.viewport.getCenter();
                 this.viewer.viewport.panTo(center);
 
-                //re-sync the inline viewer to this, invisibly
-                this.inlineViewer.viewport.panTo(center);
-
                 var bounds = this.viewer.viewport.getBounds(true);
-                this.inlineViewer.viewport.fitBounds(bounds);
 
                 var bottomright = this.mainViewer.viewport
                     .pixelFromPoint(bounds.getBottomRight(), true)
@@ -385,12 +379,16 @@
                     width,
                     height
                 );
+                //re-sync the inline viewer to this, invisibly
+                this.inlineViewer.viewport.panTo(center);
             } else {
                 this.showInViewer = true;
 
+                var center = this.mainViewer.viewport.getCenter();
+                this.viewer.viewport.panTo(center);
+
                 // make it a bit bigger so it's easier to work with
                 var bounds = this.viewer.viewport.getBounds(true);
-                this.inlineViewer.viewport.fitBounds(bounds);
 
                 var bottomright = this.mainViewer.viewport
                     .pixelFromPoint(bounds.getBottomRight(), true)
@@ -413,6 +411,8 @@
                     expandedWidth,
                     expandedHeight
                 );
+
+                this.inlineViewer.viewport.panTo(center);
 
                 $.addClass(this.regionResizeHangle, activeClass);
                 $.addClass(this.regionMoveHangle, activeClass);
