@@ -143,6 +143,9 @@ dataUtils.processISSRawData = function () {
     if(tmapp['inlineMagGl']) {
         tmapp['inlineMagGl'].loadMarkers();
     }
+
+    // either way, sort our lists of markers by viewer position, code and name
+    tmapp[op + '_magnifier'].buildMarkerList(dataUtils[op + "_processeddata"]);
 }
 
 /** 

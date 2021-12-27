@@ -22,6 +22,8 @@
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
+            this.markers = [];
+
 
             options = $.extend(
                 true,
@@ -397,6 +399,7 @@
                 }
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
+                console.log(this.getVisibleMarkerCounts());
             }
         }
 
@@ -532,6 +535,44 @@
                 success: this._createSuccessCallback(i, this.inlineViewer),
             });
         }
+
+        /**
+         * Takes a list of markers from dataUtils and make them easily findable based on whether they are
+         * visible in the current viewport.
+         * **/
+        buildMarkerList(processed_markers) {
+            processed_markers.forEach(m => {
+                const point = new $.Point(m["viewer_X_pos"], m["viewer_Y_pos"]);
+                this.markers.push({'point': point, 'letters': m['letters'], 'name': m['gene_name']})
+            });
+        }
+
+        /**
+         *  Gets the names and barcodes of markers that are in the current visible
+         *  viewport.
+         **/
+         getVisibleMarkerCounts() {
+            if (this.markers.length === 0) {
+                // No data has been loaded yet so let's not bother
+                return {};
+            }
+            let viewport = this.viewer.viewport;
+            let visibleMarkers = {};
+            if(this.showInViewer) {
+                viewport = this.inlineViewer.viewport;
+            }
+            const bounds = viewport.getBounds(true);
+            this.markers.forEach(m => {
+                if(bounds.containsPoint(m.point)) {
+                    if(m.name in visibleMarkers) {
+                        visibleMarkers[m.name] += 1;
+                    } else {
+                        visibleMarkers[m.name] = 1;
+                    }
+                }
+            });
+            return visibleMarkers;
+         }
     }
     window.Magnifier = Magnifier;
 })(OpenSeadragon);
