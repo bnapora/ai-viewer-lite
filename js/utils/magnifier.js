@@ -23,6 +23,8 @@
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
             this.markers = [];
+            this.visibleMarkers = {};
+            this.metrics = document.getElementById(options.id + "__metrics");
 
             options = $.extend(
                 true,
@@ -550,6 +552,7 @@
                     letters: m["letters"],
                     name: m["gene_name"],
                 });
+                this.visibleMarkers[dataUtils.getKeyFromString(m["gene_name"])] = 0
             });
         }
 
@@ -562,33 +565,35 @@
                 // No data has been loaded yet so let's not bother
                 return {};
             }
+            // First, reset our counts
+            Object.keys(this.visibleMarkers).forEach(k => {
+                this.visibleMarkers[k] = 0;
+            })
             let viewport = this.viewer.viewport;
-            let visibleMarkers = {};
             if (this.showInViewer) {
                 viewport = this.inlineViewer.viewport;
             }
             const bounds = viewport.getBounds(false);
             this.markers.forEach((m) => {
+                const name = dataUtils.getKeyFromString(m.name);
                 if (
                     bounds.containsPoint(m.point) &&
-                    markerUtils._checkBoxes[dataUtils.getKeyFromString(m.name)]
+                    markerUtils._checkBoxes[name]
                         .checked
                 ) {
-                    if (m.name in visibleMarkers) {
-                        visibleMarkers[m.name] += 1;
-                    } else {
-                        visibleMarkers[m.name] = 1;
+                    if (name in this.visibleMarkers) {
+                        this.visibleMarkers[name] += 1;
                     }
                 }
             });
-            return visibleMarkers;
         }
 
         showVisibleMarkerCounts() {
-            let counts = this.getVisibleMarkerCounts();
-            if(Object.keys(counts).length !== 0) {
-                console.log(counts);
-            }
+            this.getVisibleMarkerCounts();
+            Object.keys(this.visibleMarkers).forEach(k => {
+                const countElement = document.getElementById('metrics__count--' + k);
+                countElement.innerText = this.visibleMarkers[k];
+            })
         }
     }
     window.Magnifier = Magnifier;
