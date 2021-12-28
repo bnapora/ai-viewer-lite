@@ -24,7 +24,6 @@
             this.round = document.getElementById(roundId).checked;
             this.markers = [];
 
-
             options = $.extend(
                 true,
                 {
@@ -207,9 +206,8 @@
 
                 height = parseInt(this.displayRegion.style.height, 10);
                 width = parseInt(this.displayRegion.style.width, 10);
-                top = event.position.y - (height / 2);
-                left = event.position.x - (width / 2);
-
+                top = event.position.y - height / 2;
+                left = event.position.x - width / 2;
             } else {
                 bounds = this.viewer.viewport.getBounds();
 
@@ -228,6 +226,7 @@
                 left = topleft.x;
             }
             this.updateDisplayRegionStyle(top, left, width, height);
+            this.showVisibleMarkerCounts()
         }
 
         moveRegion(event) {
@@ -243,6 +242,7 @@
                     this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
                 );
             }
+            this.showVisibleMarkerCounts()
         }
 
         resizeRegion(event) {
@@ -294,6 +294,7 @@
             const zoom = this.inlineViewer.viewport.getZoom() * resizeRatio;
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
             this.inlineViewer.viewport.panTo(center);
+            this.showVisibleMarkerCounts()
         }
 
         updateDisplayRegionStyle(top, left, width, height) {
@@ -399,7 +400,7 @@
                 }
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
-                console.log(this.getVisibleMarkerCounts());
+                this.showVisibleMarkerCounts()
             }
         }
 
@@ -492,6 +493,7 @@
                 $.removeClass(this.element, activeClass);
                 $.addClass(this.element, inactiveClass);
             }
+            this.showVisibleMarkerCounts()
         }
 
         toggleShape() {
@@ -541,9 +543,13 @@
          * visible in the current viewport.
          * **/
         buildMarkerList(processed_markers) {
-            processed_markers.forEach(m => {
+            processed_markers.forEach((m) => {
                 const point = new $.Point(m["viewer_X_pos"], m["viewer_Y_pos"]);
-                this.markers.push({'point': point, 'letters': m['letters'], 'name': m['gene_name']})
+                this.markers.push({
+                    point: point,
+                    letters: m["letters"],
+                    name: m["gene_name"],
+                });
             });
         }
 
@@ -551,20 +557,24 @@
          *  Gets the names and barcodes of markers that are in the current visible
          *  viewport.
          **/
-         getVisibleMarkerCounts() {
+        getVisibleMarkerCounts() {
             if (this.markers.length === 0) {
                 // No data has been loaded yet so let's not bother
                 return {};
             }
             let viewport = this.viewer.viewport;
             let visibleMarkers = {};
-            if(this.showInViewer) {
+            if (this.showInViewer) {
                 viewport = this.inlineViewer.viewport;
             }
-            const bounds = viewport.getBounds(true);
-            this.markers.forEach(m => {
-                if(bounds.containsPoint(m.point)) {
-                    if(m.name in visibleMarkers) {
+            const bounds = viewport.getBounds(false);
+            this.markers.forEach((m) => {
+                if (
+                    bounds.containsPoint(m.point) &&
+                    markerUtils._checkBoxes[dataUtils.getKeyFromString(m.name)]
+                        .checked
+                ) {
+                    if (m.name in visibleMarkers) {
                         visibleMarkers[m.name] += 1;
                     } else {
                         visibleMarkers[m.name] = 1;
@@ -572,7 +582,14 @@
                 }
             });
             return visibleMarkers;
-         }
+        }
+
+        showVisibleMarkerCounts() {
+            let counts = this.getVisibleMarkerCounts();
+            if(Object.keys(counts).length !== 0) {
+                console.log(counts);
+            }
+        }
     }
     window.Magnifier = Magnifier;
 })(OpenSeadragon);
