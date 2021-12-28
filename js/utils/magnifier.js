@@ -159,6 +159,10 @@
                 self.update(true);
             });
 
+            this.mainViewer.addHandler("resize", function () {
+                self.update(true);
+            });
+
             this.mainViewer.world.addHandler("update-viewport", function () {
                 self.update(true);
             });
@@ -170,6 +174,14 @@
                     self.clickToZoom(event);
                 }
             });
+
+            this.viewer.addHandler('animation-finish', function() {
+                self.showVisibleMarkerCounts();
+            })
+
+            this.inlineViewer.addHandler('animation-finish', function() {
+                self.showVisibleMarkerCounts();
+            })
 
             document
                 .getElementById(checkboxId)
@@ -228,7 +240,6 @@
                 left = topleft.x;
             }
             this.updateDisplayRegionStyle(top, left, width, height);
-            this.showVisibleMarkerCounts()
         }
 
         moveRegion(event) {
@@ -244,7 +255,6 @@
                     this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
                 );
             }
-            this.showVisibleMarkerCounts()
         }
 
         resizeRegion(event) {
@@ -296,7 +306,6 @@
             const zoom = this.inlineViewer.viewport.getZoom() * resizeRatio;
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
             this.inlineViewer.viewport.panTo(center);
-            this.showVisibleMarkerCounts()
         }
 
         updateDisplayRegionStyle(top, left, width, height) {
@@ -402,8 +411,7 @@
                 }
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
-                this.showVisibleMarkerCounts()
-            }
+                }
         }
 
         toggleInViewer() {
@@ -495,7 +503,6 @@
                 $.removeClass(this.element, activeClass);
                 $.addClass(this.element, inactiveClass);
             }
-            this.showVisibleMarkerCounts()
         }
 
         toggleShape() {
@@ -560,11 +567,8 @@
          *  Gets the names and barcodes of markers that are in the current visible
          *  viewport.
          **/
-        getVisibleMarkerCounts() {
-            if (this.markers.length === 0) {
-                // No data has been loaded yet so let's not bother
-                return {};
-            }
+
+        showVisibleMarkerCounts() {
             // First, reset our counts
             Object.keys(this.visibleMarkers).forEach(k => {
                 this.visibleMarkers[k] = 0;
@@ -586,10 +590,6 @@
                     }
                 }
             });
-        }
-
-        showVisibleMarkerCounts() {
-            this.getVisibleMarkerCounts();
             Object.keys(this.visibleMarkers).forEach(k => {
                 const countElement = document.getElementById('metrics__count--' + k);
                 countElement.innerText = this.visibleMarkers[k];

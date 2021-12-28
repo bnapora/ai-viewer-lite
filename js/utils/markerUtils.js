@@ -556,9 +556,10 @@ markerUtils.metricsUI = function(barObject) {
         id: "metrics__count--" + barObject.key,
         extraAttributes: { class: "metrics__count" },
     });
-    var color = document.getElementById(
+    var colorInput = document.getElementById(
         barObject.key + "-color-" + tmapp["object_prefix"]
-    ).value;
+    );
+    var color = colorInput.value;
     var colorDiv = HTMLElementUtils.createElement({
         type: "div",
         extraAttributes: { class: "metrics__color" },
@@ -570,6 +571,10 @@ markerUtils.metricsUI = function(barObject) {
     row.appendChild(name);
     row.appendChild(count);
     row.appendChild(colorCell);
+
+    colorInput.addEventListener('change', function(event) {
+        colorDiv.style.backgroundColor = event.target.value;
+    });
 
     return row;
 }
