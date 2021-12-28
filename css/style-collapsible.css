@@ -7,8 +7,7 @@
  }
 
 #sidebar-wrapper {
-  flex-basis: 500px;
-  flex: 1 0 auto;
+  flex: 1 0 500px;
   margin-right: -100rem;
   min-height: 100vh;
   padding-right: 10px;

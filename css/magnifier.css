@@ -32,3 +32,11 @@ from the viewer underneath it */
     width:  0;
     height:  0;
 }
+
+.metrics__name {
+    font-weight: 800;
+}
+
+.metrics__color {
+    height:  20px;
+}

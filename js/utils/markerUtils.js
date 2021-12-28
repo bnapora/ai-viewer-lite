@@ -544,14 +544,44 @@ markerUtils.markerUIAll = function (options) {
     return row;
 }
 
-/** Print the table filled with all the interactions to turn on and off the barcodes 
+markerUtils.metricsUI = function(barObject) {
+    var row = HTMLElementUtils.createElement({ type: "tr" });
+    var name = HTMLElementUtils.createElement({
+        type: "td",
+        innerText: barObject.values[0].gene_name,
+        extraAttributes: { class: "metrics__name" },
+    });
+    var count = HTMLElementUtils.createElement({
+        type: "td",
+        id: "metrics__count--" + barObject.key,
+        extraAttributes: { class: "metrics__count" },
+    });
+    var color = document.getElementById(
+        barObject.key + "-color-" + tmapp["object_prefix"]
+    ).value;
+    var colorDiv = HTMLElementUtils.createElement({
+        type: "div",
+        extraAttributes: { class: "metrics__color" },
+    });
+    colorDiv.style.backgroundColor = color;
+    var colorCell = HTMLElementUtils.createElement({ type: "td" });
+    colorCell.appendChild(colorDiv);
+
+    row.appendChild(name);
+    row.appendChild(count);
+    row.appendChild(colorCell);
+
+    return row;
+}
+
+/** Print the table filled with all the interactions to turn on and off the barcodes
  * choose color, shape and size
  */
 markerUtils.printBarcodeUIs = function (options) {
     //get object prefix to refer to it by code
     var op = tmapp["object_prefix"];
     //overlayUtils._d3nodes[op]=d3.select( tmapp[op+"_svgov"].node());
-    //chekc if gene_name exists    
+    //chekc if gene_name exists
     var headers = ["Count", "Color", "Shape"];
     if (markerUtils._showSizeColumn) {
         headers = ["Count", "Color", "Shape", "Size"];
@@ -617,7 +647,7 @@ markerUtils.printBarcodeUIs = function (options) {
         tblHeadTr.appendChild(th);
     });
     tbl.appendChild(tblHead);
-    
+
     var row = markerUtils.markerUIAll(options);
     tblBody.appendChild(row);
 
@@ -625,9 +655,18 @@ markerUtils.printBarcodeUIs = function (options) {
         var row = markerUtils.markerUI(barcode,options);
         tblBody.appendChild(row);
     });
-    
+
     tbl.appendChild(tblBody);
     container.appendChild(tbl);
+
+    // Now make the annotation count UI
+    var metricsTable = document.getElementById(op + "_magnifier__metrics");
+    dataUtils[op + "_data"].forEach(function (barcode) {
+        // Also add UI to the magnifier tab to show the counts of
+        // annotations in the magnifier
+        var metricsRow = markerUtils.metricsUI(barcode);
+        metricsTable.appendChild(metricsRow);
+    });
 
 }
 /** In the marlers interface, hide all the rows that do not contain the search string 
