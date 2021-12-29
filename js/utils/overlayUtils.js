@@ -79,7 +79,6 @@ overlayUtils.addLayerSettings = function(layerName, tileSource, layerIndex) {
     td_visible.appendChild(visible);
     td_visible.style.textAlign = "center";
     td_visible.style.padding = "6px";
-    td_visible.style.minWidth = "100px";
 
     var opacity = document.createElement("input");
     opacity.type = "range";
@@ -92,7 +91,6 @@ overlayUtils.addLayerSettings = function(layerName, tileSource, layerIndex) {
     td_opacity.appendChild(opacity);
     td_opacity.style.textAlign = "center";
     td_opacity.style.padding = "6px";
-    td_opacity.style.minWidth = "100px";
     tileSource = tileSource.replace(/\\/g, '\\\\');
     tr.innerHTML = "<td style='padding:6px;'>" + layerName + "</td>";
     tr.appendChild(td_visible);
