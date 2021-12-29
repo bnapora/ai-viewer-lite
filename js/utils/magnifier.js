@@ -22,6 +22,9 @@
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
+            this.markers = [];
+            this.visibleMarkers = {};
+            this.metrics = document.getElementById(options.id + "__metrics");
 
             options = $.extend(
                 true,
@@ -156,6 +159,10 @@
                 self.update(true);
             });
 
+            this.mainViewer.addHandler("resize", function () {
+                self.update(true);
+            });
+
             this.mainViewer.world.addHandler("update-viewport", function () {
                 self.update(true);
             });
@@ -167,6 +174,14 @@
                     self.clickToZoom(event);
                 }
             });
+
+            this.viewer.addHandler('animation-finish', function() {
+                self.showVisibleMarkerCounts();
+            })
+
+            this.inlineViewer.addHandler('animation-finish', function() {
+                self.showVisibleMarkerCounts();
+            })
 
             document
                 .getElementById(checkboxId)
@@ -205,9 +220,8 @@
 
                 height = parseInt(this.displayRegion.style.height, 10);
                 width = parseInt(this.displayRegion.style.width, 10);
-                top = event.position.y - (height / 2);
-                left = event.position.x - (width / 2);
-
+                top = event.position.y - height / 2;
+                left = event.position.x - width / 2;
             } else {
                 bounds = this.viewer.viewport.getBounds();
 
@@ -397,7 +411,7 @@
                 }
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
-            }
+                }
         }
 
         toggleInViewer() {
@@ -531,6 +545,55 @@
                 opacity: opacity,
                 success: this._createSuccessCallback(i, this.inlineViewer),
             });
+        }
+
+        /**
+         * Takes a list of markers from dataUtils and make them easily findable based on whether they are
+         * visible in the current viewport.
+         * **/
+        buildMarkerList(processed_markers) {
+            processed_markers.forEach((m) => {
+                const point = new $.Point(m["viewer_X_pos"], m["viewer_Y_pos"]);
+                this.markers.push({
+                    point: point,
+                    letters: m["letters"],
+                    name: m["gene_name"],
+                });
+                this.visibleMarkers[dataUtils.getKeyFromString(m["gene_name"])] = 0
+            });
+        }
+
+        /**
+         *  Gets the names and barcodes of markers that are in the current visible
+         *  viewport.
+         **/
+
+        showVisibleMarkerCounts() {
+            // First, reset our counts
+            Object.keys(this.visibleMarkers).forEach(k => {
+                this.visibleMarkers[k] = 0;
+            })
+            let viewport = this.viewer.viewport;
+            if (this.showInViewer) {
+                viewport = this.inlineViewer.viewport;
+            }
+            const bounds = viewport.getBounds(false);
+            this.markers.forEach((m) => {
+                const name = dataUtils.getKeyFromString(m.name);
+                if (
+                    bounds.containsPoint(m.point) &&
+                    markerUtils._checkBoxes[name]
+                        .checked
+                ) {
+                    if (name in this.visibleMarkers) {
+                        this.visibleMarkers[name] += 1;
+                    }
+                }
+            });
+            Object.keys(this.visibleMarkers).forEach(k => {
+                const countElement = document.getElementById('metrics__count--' + k);
+                countElement.innerText = this.visibleMarkers[k];
+            })
         }
     }
     window.Magnifier = Magnifier;
