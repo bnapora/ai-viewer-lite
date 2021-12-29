@@ -175,13 +175,13 @@
                 }
             });
 
-            this.viewer.addHandler('animation-finish', function() {
+            this.viewer.addHandler("animation-finish", function () {
                 self.showVisibleMarkerCounts();
-            })
+            });
 
-            this.inlineViewer.addHandler('animation-finish', function() {
+            this.inlineViewer.addHandler("animation-finish", function () {
                 self.showVisibleMarkerCounts();
-            })
+            });
 
             document
                 .getElementById(checkboxId)
@@ -276,7 +276,6 @@
             const viewerSize = $.getElementSize(this.mainViewer.element);
             const width = parseInt(this.displayRegion.style.width, 10);
             const height = parseInt(this.displayRegion.style.height, 10);
-            const center = this.inlineViewer.viewport.getCenter();
 
             let newWidth = width + event.delta.x;
             newWidth = Math.min(newWidth, viewerSize.x * 0.75);
@@ -288,15 +287,28 @@
 
             this.updateDisplayRegionStyle(null, null, newWidth, newHeight);
 
-            var newBounds = this.inlineViewer.viewport.getBounds(true);
+            var newBounds = this.inlineViewer.viewport.getBounds(false);
+
             var newTopleft = this.mainViewer.viewport.pixelFromPoint(
-                oldBounds.getTopLeft(),
+                newBounds.getTopLeft(),
                 true
             );
             var newBottomright = this.mainViewer.viewport.pixelFromPoint(
-                oldBounds.getBottomRight(),
+                newBounds.getBottomRight(),
                 true
             );
+
+            // This is in coordinates relative to the main viewer.
+            var bounds_rect = new $.Rect(
+                newTopleft.x,
+                newTopleft.y,
+                Math.abs(newBottomright.x - newTopleft.x),
+                Math.abs(newBottomright.y - newTopleft.y)
+            );
+            const center =
+                this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                    bounds_rect.getCenter()
+                );
 
             // then set the overlay magnifier accordingly
             const resizeRatio =
@@ -305,6 +317,7 @@
 
             const zoom = this.inlineViewer.viewport.getZoom() * resizeRatio;
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
+
             this.inlineViewer.viewport.panTo(center);
         }
 
@@ -411,7 +424,7 @@
                 }
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
-                }
+            }
         }
 
         toggleInViewer() {
@@ -559,7 +572,9 @@
                     letters: m["letters"],
                     name: m["gene_name"],
                 });
-                this.visibleMarkers[dataUtils.getKeyFromString(m["gene_name"])] = 0
+                this.visibleMarkers[
+                    dataUtils.getKeyFromString(m["gene_name"])
+                ] = 0;
             });
         }
 
@@ -570,9 +585,9 @@
 
         showVisibleMarkerCounts() {
             // First, reset our counts
-            Object.keys(this.visibleMarkers).forEach(k => {
+            Object.keys(this.visibleMarkers).forEach((k) => {
                 this.visibleMarkers[k] = 0;
-            })
+            });
             let viewport = this.viewer.viewport;
             if (this.showInViewer) {
                 viewport = this.inlineViewer.viewport;
@@ -582,18 +597,19 @@
                 const name = dataUtils.getKeyFromString(m.name);
                 if (
                     bounds.containsPoint(m.point) &&
-                    markerUtils._checkBoxes[name]
-                        .checked
+                    markerUtils._checkBoxes[name].checked
                 ) {
                     if (name in this.visibleMarkers) {
                         this.visibleMarkers[name] += 1;
                     }
                 }
             });
-            Object.keys(this.visibleMarkers).forEach(k => {
-                const countElement = document.getElementById('metrics__count--' + k);
+            Object.keys(this.visibleMarkers).forEach((k) => {
+                const countElement = document.getElementById(
+                    "metrics__count--" + k
+                );
                 countElement.innerText = this.visibleMarkers[k];
-            })
+            });
         }
     }
     window.Magnifier = Magnifier;
