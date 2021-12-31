@@ -258,7 +258,10 @@
             this.inlineViewer.viewport.panBy(
                 this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
             );
-            this.viewer.viewport.fitBounds(this.inlineViewer.viewport.getBounds(), true);
+            this.viewer.viewport.fitBounds(
+                this.inlineViewer.viewport.getBounds(),
+                true
+            );
         }
 
         resizeRegion(event) {
@@ -307,24 +310,30 @@
                 Math.abs(oldTopleft.x - oldBottomright.x) /
                 Math.abs(newTopleft.x - newBottomright.x);
 
-            const zoom = this.inlineViewer.viewport.getZoom() * resizeRatio;
+            const zoom = Math.min(
+                this.inlineViewer.viewport.getZoom() * resizeRatio,
+                this.mainViewer.viewport.getZoom() * this.ratio
+            );
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
 
+            var xBounds = this.inlineViewer.viewport.getBounds();
+
+            var left = parseInt(this.displayRegion.style.left, 10)
+            var top = parseInt(this.displayRegion.style.top, 10)
 
             // This is in coordinates relative to the main viewer.
             var bounds_rect = new $.Rect(
-                newTopleft.x,
-                newTopleft.y,
-                Math.abs(newBottomright.x - newTopleft.x),
-                Math.abs(newBottomright.y - newTopleft.y)
+                left,
+                top,
+                newWidth,
+                newHeight
             );
             const center =
                 this.mainViewer.viewport.viewerElementToViewportCoordinates(
                     bounds_rect.getCenter()
                 );
-            console.log(center, this.inlineViewer.viewport.getCenter())
             this.inlineViewer.viewport.panTo(center);
-            this.viewer.viewport.fitBounds(newBounds);
+            this.viewer.viewport.fitBounds(xBounds);
         }
 
         updateDisplayRegionStyle(top, left, width, height) {
