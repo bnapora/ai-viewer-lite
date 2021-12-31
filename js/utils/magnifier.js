@@ -600,7 +600,7 @@
             if (this.showInViewer) {
                 viewport = this.inlineViewer.viewport;
             }
-            const bounds = viewport.getBounds(false);
+            const bounds = viewport.getBounds();
             this.markers.forEach((m) => {
                 const name = dataUtils.getKeyFromString(m.name);
                 if (
