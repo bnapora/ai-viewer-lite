@@ -25,6 +25,13 @@
             this.markers = [];
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
+            this.borderWidth = 4; // in pixels
+            this.minWidth = 100;
+
+            this.totalBorderWidths = new $.Point(
+                this.borderWidth * 2,
+                this.borderWidth * 2
+            ).minus(fudge);
 
             options = $.extend(
                 true,
@@ -48,12 +55,19 @@
                 }
             );
 
+            // The magnifier outline and overlay magnifier
             this.displayRegion = $.makeNeutralElement("div");
             this.displayRegion.id = this.element.id + "-displayregion";
             this.displayRegion.className = "displayregion";
             this.displayRegion.style.width = this.startingWidth + "px";
             this.displayRegion.style.height = this.startingHeight + "px";
+            this.displayRegion.style.position = "absolute";
+            this.displayRegion.style.border =
+                this.borderWidth + "px solid #333";
+            this.displayRegion.style.margin = "0";
+            this.displayRegion.style.padding = "0";
 
+            // Move and resize controls for the overlay magnifier.
             // Styles for both of these have to be here or they will be
             // overridden.
             this.regionMoveHangle = $.makeNeutralElement("div");
@@ -66,10 +80,6 @@
             this.regionMoveHangle.style.cursor = "move";
             this.regionMoveHangle.style.background = "rgba(0, 0, 0, 0.5)";
             this.regionMoveHangle.style.border = "1px solid #000";
-            new $.MouseTracker({
-                element: this.regionMoveHangle,
-                dragHandler: $.delegate(this, this.moveRegion),
-            });
 
             this.regionResizeHangle = $.makeNeutralElement("div");
             this.regionResizeHangle.className = "displayregion__resize";
@@ -82,11 +92,8 @@
             this.regionResizeHangle.style.maxHeight = "50px";
             this.regionResizeHangle.style.cursor = "se-resize";
             this.regionResizeHangle.style.background = "#ccc";
-            new $.MouseTracker({
-                element: this.regionResizeHangle,
-                dragHandler: $.delegate(this, this.resizeRegion),
-            });
 
+            // Invisible container for the overlay magnifier and controls
             this.displayRegionContainer = $.makeNeutralElement("div");
             this.displayRegionContainer.id =
                 this.element.id + "-displayregioncontainer";
@@ -111,6 +118,11 @@
                 $.addClass(this.regionMoveHangle, inactiveClass);
             }
 
+            if (this.round) {
+                $.addClass(this.element, "round");
+                $.addClass(this.displayRegion, "round");
+            }
+
             this.displayRegion.appendChild(this.regionMoveHangle);
             this.displayRegion.appendChild(this.regionResizeHangle);
             this.displayRegion.appendChild(this.inViewerElement);
@@ -120,13 +132,7 @@
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
 
-            this.borderWidth = 4; // in pixels
-
-            this.totalBorderWidths = new $.Point(
-                this.borderWidth * 2,
-                this.borderWidth * 2
-            ).minus(fudge);
-
+            // Actually instantiate the magnifier viewers now
             this.viewer = $(options);
             // The same thing again, but inside the viewer instead of outside.
             this.inlineViewer = $(
@@ -135,18 +141,18 @@
                 })
             );
 
-            (function (style, borderWidth) {
-                style.position = "absolute";
-                style.border = borderWidth + "px solid #333";
-                style.margin = "0px";
-                style.padding = "0px";
-            })(this.displayRegion.style, this.borderWidth);
+            // Move and resize handlers
+            new $.MouseTracker({
+                element: this.regionMoveHangle,
+                dragHandler: $.delegate(this, this.moveRegion),
+            });
 
-            if (this.round) {
-                $.addClass(this.element, "round");
-                $.addClass(this.displayRegion, "round");
-            }
+            new $.MouseTracker({
+                element: this.regionResizeHangle,
+                dragHandler: $.delegate(this, this.resizeRegion),
+            });
 
+            // OSD event handlers for the magnifiers and main viewers
             const self = this;
             this.mainViewer.addHandler("zoom", function (event) {
                 self.update(false, event.refPoint);
@@ -183,6 +189,7 @@
                 self.showVisibleMarkerCounts();
             });
 
+            // Event handlers for magnifier controls
             document
                 .getElementById(checkboxId)
                 .addEventListener("change", function () {
@@ -198,7 +205,46 @@
                 });
 
             this.update();
-            this.showVisibleMarkerCounts();
+        }
+
+        updateDisplayRegionStyle(top, left, width, height) {
+            var style = this.displayRegion.style;
+            style.display = this.viewer.world.getItemCount() ? "block" : "none";
+
+            // make sure these are non-negative so IE doesn't throw
+            if (top) {
+                style.top = Math.round(Math.max(top, 0)) + "px";
+            }
+            if (left) {
+                style.left = Math.round(Math.max(left, 0)) + "px";
+            }
+            if (width) {
+                style.width = Math.round(Math.max(width, 0)) + "px";
+            }
+            if (height) {
+                style.height = Math.round(Math.max(height, 0)) + "px";
+            }
+        }
+
+        updateDisplayRegionFromBounds(bounds) {
+            const bottomright = this.mainViewer.viewport
+                .pixelFromPoint(bounds.getBottomRight(), true)
+                .minus(this.totalBorderWidths);
+
+            const topleft = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getTopLeft(),
+                true
+            );
+
+            let width = Math.abs(topleft.x - bottomright.x);
+            let height = Math.abs(topleft.y - bottomright.y);
+
+            if (this.showInViewer) {
+                width = Math.max(width, this.minWidth);
+                height = Math.max(height, this.minWidth);
+            }
+
+            this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
         }
 
         clickToZoom(event) {
