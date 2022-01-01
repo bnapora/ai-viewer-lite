@@ -258,39 +258,26 @@
             this.viewer.viewport.panTo(target);
             this.inlineViewer.viewport.panTo(target);
 
-            let bounds, top, left, width, height;
+            let bounds;
 
             if (this.showInViewer) {
                 bounds = this.inlineViewer.viewport.getBounds();
 
                 // put the center of the display region on top of the click target;
 
-                height = parseInt(this.displayRegion.style.height, 10);
-                width = parseInt(this.displayRegion.style.width, 10);
-                top = event.position.y - height / 2;
-                left = event.position.x - width / 2;
+                const height = parseInt(this.displayRegion.style.height, 10);
+                const width = parseInt(this.displayRegion.style.width, 10);
+                const top = event.position.y - height / 2;
+                const left = event.position.x - width / 2;
 
                 this.viewer.viewport.fitBounds(bounds);
+                this.updateDisplayRegionStyle(top, left, width, height);
             } else {
                 bounds = this.viewer.viewport.getBounds();
 
-                const bottomright = this.mainViewer.viewport
-                    .pixelFromPoint(bounds.getBottomRight(), true)
-                    .minus(this.totalBorderWidths);
-
-                const topleft = this.mainViewer.viewport.pixelFromPoint(
-                    bounds.getTopLeft(),
-                    true
-                );
-
-                width = Math.abs(topleft.x - bottomright.x);
-                height = Math.abs(topleft.y - bottomright.y);
-                top = topleft.y;
-                left = topleft.x;
-
+                this.updateDisplayRegionFromBounds(bounds);
                 this.inlineViewer.viewport.fitBounds(bounds);
             }
-            this.updateDisplayRegionStyle(top, left, width, height);
         }
 
         moveRegion(event) {
@@ -362,8 +349,6 @@
             );
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
 
-            var xBounds = this.inlineViewer.viewport.getBounds();
-
             var left = parseInt(this.displayRegion.style.left, 10)
             var top = parseInt(this.displayRegion.style.top, 10)
 
@@ -379,26 +364,7 @@
                     bounds_rect.getCenter()
                 );
             this.inlineViewer.viewport.panTo(center);
-            this.viewer.viewport.fitBounds(xBounds);
-        }
-
-        updateDisplayRegionStyle(top, left, width, height) {
-            var style = this.displayRegion.style;
-            style.display = this.viewer.world.getItemCount() ? "block" : "none";
-
-            // make sure these are non-negative so IE doesn't throw
-            if (top) {
-                style.top = Math.round(Math.max(top, 0)) + "px";
-            }
-            if (left) {
-                style.left = Math.round(Math.max(left, 0)) + "px";
-            }
-            if (width) {
-                style.width = Math.round(Math.max(width, 0)) + "px";
-            }
-            if (height) {
-                style.height = Math.round(Math.max(height, 0)) + "px";
-            }
+            this.viewer.viewport.fitBounds(this.inlineViewer.viewport.getBounds());
         }
 
         update(pinOverlay = false, refPoint = null) {
@@ -419,23 +385,23 @@
                 this.viewer.viewport.zoomTo(zoomTarget, refPoint);
                 this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
 
-                var bounds, bottomright, topleft, width, height, center;
+                let bounds, center;
 
                 if (this.showInViewer) {
                     // Event handing for when the inline magnifier is active
-                    var bounds = this.inlineViewer.viewport.getBounds(true);
+                    bounds = this.inlineViewer.viewport.getBounds(true);
 
-                    var bottomright = this.mainViewer.viewport
+                    const bottomright = this.mainViewer.viewport
                         .pixelFromPoint(bounds.getBottomRight(), true)
                         .minus(this.totalBorderWidths);
 
-                    var topleft = this.mainViewer.viewport.pixelFromPoint(
+                    const topleft = this.mainViewer.viewport.pixelFromPoint(
                         bounds.getTopLeft(),
                         true
                     );
 
-                    width = Math.min(Math.abs(topleft.x - bottomright.x), 100);
-                    height = Math.min(Math.abs(topleft.y - bottomright.y), 100);
+                    const width = Math.min(Math.abs(topleft.x - bottomright.x), this.minWidth);
+                    const height = Math.min(Math.abs(topleft.y - bottomright.y), this.minWidth);
 
                     if (pinOverlay) {
                         center = this.mainViewer.viewport.getCenter();
@@ -461,27 +427,9 @@
                     }
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
-
-                    var bounds = this.viewer.viewport.getBounds(true);
-                    var bottomright = this.mainViewer.viewport
-                        .pixelFromPoint(bounds.getBottomRight(), true)
-                        .minus(this.totalBorderWidths);
-
-                    var topleft = this.mainViewer.viewport.pixelFromPoint(
-                        bounds.getTopLeft(),
-                        true
-                    );
-
-                    width = Math.abs(topleft.x - bottomright.x);
-                    height = Math.abs(topleft.y - bottomright.y);
+                    bounds = this.viewer.viewport.getBounds(true);
+                    this.updateDisplayRegionFromBounds(bounds);
                     center = this.mainViewer.viewport.getCenter();
-
-                    this.updateDisplayRegionStyle(
-                        topleft.y,
-                        topleft.x,
-                        width,
-                        height
-                    );
                 }
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
@@ -501,26 +449,9 @@
                 $.addClass(this.regionResizeHangle, inactiveClass);
                 $.addClass(this.regionMoveHangle, inactiveClass);
 
-                var bounds = this.viewer.viewport.getBounds(true);
+                const bounds = this.viewer.viewport.getBounds(true);
 
-                var bottomright = this.mainViewer.viewport
-                    .pixelFromPoint(bounds.getBottomRight(), true)
-                    .minus(this.totalBorderWidths);
-
-                var topleft = this.mainViewer.viewport.pixelFromPoint(
-                    bounds.getTopLeft(),
-                    true
-                );
-
-                const width = Math.abs(topleft.x - bottomright.x);
-                const height = Math.abs(topleft.y - bottomright.y);
-
-                this.updateDisplayRegionStyle(
-                    topleft.y,
-                    topleft.x,
-                    width,
-                    height
-                );
+                this.updateDisplayRegionFromBounds(bounds);
                 //re-sync the inline viewer to this, invisibly
                 this.inlineViewer.viewport.panTo(bounds.getCenter());
             } else {
@@ -528,7 +459,7 @@
 
                 // make it a bit bigger so it shows the same things,
                 // just on top of the main viewer
-                var bounds = this.viewer.viewport.getBounds(true);
+                const bounds = this.viewer.viewport.getBounds(true);
 
                 var bottomright = this.mainViewer.viewport
                     .pixelFromPoint(bounds.getBottomRight(), true)
