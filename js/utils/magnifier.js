@@ -25,6 +25,13 @@
             this.markers = [];
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
+            this.borderWidth = 4; // in pixels
+            this.minWidth = 100;
+
+            this.totalBorderWidths = new $.Point(
+                this.borderWidth * 2,
+                this.borderWidth * 2
+            ).minus(fudge);
 
             options = $.extend(
                 true,
@@ -48,12 +55,19 @@
                 }
             );
 
+            // The magnifier outline and overlay magnifier
             this.displayRegion = $.makeNeutralElement("div");
             this.displayRegion.id = this.element.id + "-displayregion";
             this.displayRegion.className = "displayregion";
             this.displayRegion.style.width = this.startingWidth + "px";
             this.displayRegion.style.height = this.startingHeight + "px";
+            this.displayRegion.style.position = "absolute";
+            this.displayRegion.style.border =
+                this.borderWidth + "px solid #333";
+            this.displayRegion.style.margin = "0";
+            this.displayRegion.style.padding = "0";
 
+            // Move and resize controls for the overlay magnifier.
             // Styles for both of these have to be here or they will be
             // overridden.
             this.regionMoveHangle = $.makeNeutralElement("div");
@@ -66,10 +80,6 @@
             this.regionMoveHangle.style.cursor = "move";
             this.regionMoveHangle.style.background = "rgba(0, 0, 0, 0.5)";
             this.regionMoveHangle.style.border = "1px solid #000";
-            new $.MouseTracker({
-                element: this.regionMoveHangle,
-                dragHandler: $.delegate(this, this.moveRegion),
-            });
 
             this.regionResizeHangle = $.makeNeutralElement("div");
             this.regionResizeHangle.className = "displayregion__resize";
@@ -82,11 +92,8 @@
             this.regionResizeHangle.style.maxHeight = "50px";
             this.regionResizeHangle.style.cursor = "se-resize";
             this.regionResizeHangle.style.background = "#ccc";
-            new $.MouseTracker({
-                element: this.regionResizeHangle,
-                dragHandler: $.delegate(this, this.resizeRegion),
-            });
 
+            // Invisible container for the overlay magnifier and controls
             this.displayRegionContainer = $.makeNeutralElement("div");
             this.displayRegionContainer.id =
                 this.element.id + "-displayregioncontainer";
@@ -111,6 +118,11 @@
                 $.addClass(this.regionMoveHangle, inactiveClass);
             }
 
+            if (this.round) {
+                $.addClass(this.element, "round");
+                $.addClass(this.displayRegion, "round");
+            }
+
             this.displayRegion.appendChild(this.regionMoveHangle);
             this.displayRegion.appendChild(this.regionResizeHangle);
             this.displayRegion.appendChild(this.inViewerElement);
@@ -120,13 +132,7 @@
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
 
-            this.borderWidth = 4; // in pixels
-
-            this.totalBorderWidths = new $.Point(
-                this.borderWidth * 2,
-                this.borderWidth * 2
-            ).minus(fudge);
-
+            // Actually instantiate the magnifier viewers now
             this.viewer = $(options);
             // The same thing again, but inside the viewer instead of outside.
             this.inlineViewer = $(
@@ -135,18 +141,18 @@
                 })
             );
 
-            (function (style, borderWidth) {
-                style.position = "absolute";
-                style.border = borderWidth + "px solid #333";
-                style.margin = "0px";
-                style.padding = "0px";
-            })(this.displayRegion.style, this.borderWidth);
+            // Move and resize handlers
+            new $.MouseTracker({
+                element: this.regionMoveHangle,
+                dragHandler: $.delegate(this, this.moveRegion),
+            });
 
-            if (this.round) {
-                $.addClass(this.element, "round");
-                $.addClass(this.displayRegion, "round");
-            }
+            new $.MouseTracker({
+                element: this.regionResizeHangle,
+                dragHandler: $.delegate(this, this.resizeRegion),
+            });
 
+            // OSD event handlers for the magnifiers and main viewers
             const self = this;
             this.mainViewer.addHandler("zoom", function (event) {
                 self.update(false, event.refPoint);
@@ -175,14 +181,15 @@
                 }
             });
 
-            this.viewer.addHandler('animation-finish', function() {
+            this.viewer.addHandler("animation-finish", function () {
                 self.showVisibleMarkerCounts();
-            })
+            });
 
-            this.inlineViewer.addHandler('animation-finish', function() {
+            this.inlineViewer.addHandler("animation-finish", function () {
                 self.showVisibleMarkerCounts();
-            })
+            });
 
+            // Event handlers for magnifier controls
             document
                 .getElementById(checkboxId)
                 .addEventListener("change", function () {
@@ -198,114 +205,6 @@
                 });
 
             this.update();
-        }
-
-        clickToZoom(event) {
-            // Center the magnifiers on a click target, to make
-            // it easy to look at annotated cells.
-            const target =
-                this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                    event.position
-                );
-
-            this.viewer.viewport.panTo(target);
-            this.inlineViewer.viewport.panTo(target);
-
-            let bounds, top, left, width, height;
-
-            if (this.showInViewer) {
-                bounds = this.inlineViewer.viewport.getBounds();
-
-                // put the center of the display region on top of the click target;
-
-                height = parseInt(this.displayRegion.style.height, 10);
-                width = parseInt(this.displayRegion.style.width, 10);
-                top = event.position.y - height / 2;
-                left = event.position.x - width / 2;
-            } else {
-                bounds = this.viewer.viewport.getBounds();
-
-                const bottomright = this.mainViewer.viewport
-                    .pixelFromPoint(bounds.getBottomRight(), true)
-                    .minus(this.totalBorderWidths);
-
-                const topleft = this.mainViewer.viewport.pixelFromPoint(
-                    bounds.getTopLeft(),
-                    true
-                );
-
-                width = Math.abs(topleft.x - bottomright.x);
-                height = Math.abs(topleft.y - bottomright.y);
-                top = topleft.y;
-                left = topleft.x;
-            }
-            this.updateDisplayRegionStyle(top, left, width, height);
-        }
-
-        moveRegion(event) {
-            var top = parseInt(this.displayRegion.style.top, 10);
-            var left = parseInt(this.displayRegion.style.left, 10);
-
-            this.updateDisplayRegionStyle(
-                top + event.delta.y,
-                left + event.delta.x
-            );
-            if (this.inlineViewer.viewport) {
-                this.inlineViewer.viewport.panBy(
-                    this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
-                );
-            }
-        }
-
-        resizeRegion(event) {
-            // First, get some actual viewer coordinates so we can preserve the image
-            // position in the viewer on resize. We can't just use
-            // options.preserveImageSizeOnResize because of the way the
-            // app behaves the rest of the time, but we can put its behavior here.
-            var oldBounds = this.inlineViewer.viewport.getBounds(true);
-            var oldTopleft = this.mainViewer.viewport.pixelFromPoint(
-                oldBounds.getTopLeft(),
-                true
-            );
-            var oldBottomright = this.mainViewer.viewport.pixelFromPoint(
-                oldBounds.getBottomRight(),
-                true
-            );
-
-            // then, resize the actual element that contains the overlay viewer
-            const viewerSize = $.getElementSize(this.mainViewer.element);
-            const width = parseInt(this.displayRegion.style.width, 10);
-            const height = parseInt(this.displayRegion.style.height, 10);
-            const center = this.inlineViewer.viewport.getCenter();
-
-            let newWidth = width + event.delta.x;
-            newWidth = Math.min(newWidth, viewerSize.x * 0.75);
-            newWidth = Math.max(newWidth, 100); // to preserve some sanity
-
-            let newHeight = height + event.delta.y;
-            newHeight = Math.min(newHeight, viewerSize.y * 0.75);
-            newHeight = Math.max(newHeight, 100);
-
-            this.updateDisplayRegionStyle(null, null, newWidth, newHeight);
-
-            var newBounds = this.inlineViewer.viewport.getBounds(true);
-            var newTopleft = this.mainViewer.viewport.pixelFromPoint(
-                oldBounds.getTopLeft(),
-                true
-            );
-            var newBottomright = this.mainViewer.viewport.pixelFromPoint(
-                oldBounds.getBottomRight(),
-                true
-            );
-
-            // then set the overlay magnifier accordingly
-            const resizeRatio =
-                Math.abs(oldTopleft.x - oldBottomright.x) /
-                Math.abs(newTopleft.x - newBottomright.x);
-
-            const zoom = this.inlineViewer.viewport.getZoom() * resizeRatio;
-            this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
-            this.inlineViewer.viewport.panTo(center);
         }
 
         updateDisplayRegionStyle(top, left, width, height) {
@@ -327,6 +226,147 @@
             }
         }
 
+        updateDisplayRegionFromBounds(bounds) {
+            const bottomright = this.mainViewer.viewport
+                .pixelFromPoint(bounds.getBottomRight(), true)
+                .minus(this.totalBorderWidths);
+
+            const topleft = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getTopLeft(),
+                true
+            );
+
+            let width = Math.abs(topleft.x - bottomright.x);
+            let height = Math.abs(topleft.y - bottomright.y);
+
+            if (this.showInViewer) {
+                width = Math.max(width, this.minWidth);
+                height = Math.max(height, this.minWidth);
+            }
+
+            this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
+        }
+
+        clickToZoom(event) {
+            // Center the magnifiers on a click target, to make
+            // it easy to look at annotated cells.
+            const target =
+                this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                    event.position
+                );
+
+            this.viewer.viewport.panTo(target);
+            this.inlineViewer.viewport.panTo(target);
+
+            let bounds;
+
+            if (this.showInViewer) {
+                bounds = this.inlineViewer.viewport.getBounds();
+
+                // put the center of the display region on top of the click target;
+
+                const height = parseInt(this.displayRegion.style.height, 10);
+                const width = parseInt(this.displayRegion.style.width, 10);
+                const top = event.position.y - height / 2;
+                const left = event.position.x - width / 2;
+
+                this.viewer.viewport.fitBounds(bounds);
+                this.updateDisplayRegionStyle(top, left, width, height);
+            } else {
+                bounds = this.viewer.viewport.getBounds();
+
+                this.updateDisplayRegionFromBounds(bounds);
+                this.inlineViewer.viewport.fitBounds(bounds);
+            }
+        }
+
+        moveRegion(event) {
+            var top = parseInt(this.displayRegion.style.top, 10);
+            var left = parseInt(this.displayRegion.style.left, 10);
+
+            this.updateDisplayRegionStyle(
+                top + event.delta.y,
+                left + event.delta.x
+            );
+            this.inlineViewer.viewport.panBy(
+                this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
+            );
+            this.viewer.viewport.fitBounds(
+                this.inlineViewer.viewport.getBounds(),
+                true
+            );
+        }
+
+        resizeRegion(event) {
+            // First, get some actual viewer coordinates so we can preserve the image
+            // position in the viewer on resize. We can't just use
+            // options.preserveImageSizeOnResize because of the way the
+            // app behaves the rest of the time, but we can put its behavior here.
+            var oldBounds = this.inlineViewer.viewport.getBounds(true);
+            var oldTopleft = this.mainViewer.viewport.pixelFromPoint(
+                oldBounds.getTopLeft(),
+                true
+            );
+            var oldBottomright = this.mainViewer.viewport.pixelFromPoint(
+                oldBounds.getBottomRight(),
+                true
+            );
+
+            // then, resize the actual element that contains the overlay viewer
+            const viewerSize = $.getElementSize(this.mainViewer.element);
+            const width = parseInt(this.displayRegion.style.width, 10);
+            const height = parseInt(this.displayRegion.style.height, 10);
+
+            let newWidth = width + event.delta.x;
+            newWidth = Math.min(newWidth, viewerSize.x * 0.75);
+            newWidth = Math.max(newWidth, 100); // to preserve some sanity
+
+            let newHeight = height + event.delta.y;
+            newHeight = Math.min(newHeight, viewerSize.y * 0.75);
+            newHeight = Math.max(newHeight, 100);
+
+            this.updateDisplayRegionStyle(null, null, newWidth, newHeight);
+
+            var newBounds = this.inlineViewer.viewport.getBounds();
+
+            var newTopleft = this.mainViewer.viewport.pixelFromPoint(
+                newBounds.getTopLeft(),
+                true
+            );
+            var newBottomright = this.mainViewer.viewport.pixelFromPoint(
+                newBounds.getBottomRight(),
+                true
+            );
+
+            // then set the overlay magnifier accordingly
+            const resizeRatio =
+                Math.abs(oldTopleft.x - oldBottomright.x) /
+                Math.abs(newTopleft.x - newBottomright.x);
+
+            const zoom = Math.min(
+                this.inlineViewer.viewport.getZoom() * resizeRatio,
+                this.mainViewer.viewport.getZoom() * this.ratio
+            );
+            this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
+
+            var left = parseInt(this.displayRegion.style.left, 10)
+            var top = parseInt(this.displayRegion.style.top, 10)
+
+            // This is in coordinates relative to the main viewer.
+            var bounds_rect = new $.Rect(
+                left,
+                top,
+                newWidth,
+                newHeight
+            );
+            const center =
+                this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                    bounds_rect.getCenter()
+                );
+            this.inlineViewer.viewport.panTo(center);
+            this.viewer.viewport.fitBounds(this.inlineViewer.viewport.getBounds());
+        }
+
         update(pinOverlay = false, refPoint = null) {
             const viewerSize = $.getElementSize(this.viewer.element);
             const inlineViewerSize = $.getElementSize(
@@ -345,23 +385,23 @@
                 this.viewer.viewport.zoomTo(zoomTarget, refPoint);
                 this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
 
-                var bounds, bottomright, topleft, width, height, center;
+                let bounds, center;
 
                 if (this.showInViewer) {
                     // Event handing for when the inline magnifier is active
-                    var bounds = this.inlineViewer.viewport.getBounds(true);
+                    bounds = this.inlineViewer.viewport.getBounds(true);
 
-                    var bottomright = this.mainViewer.viewport
+                    const bottomright = this.mainViewer.viewport
                         .pixelFromPoint(bounds.getBottomRight(), true)
                         .minus(this.totalBorderWidths);
 
-                    var topleft = this.mainViewer.viewport.pixelFromPoint(
+                    const topleft = this.mainViewer.viewport.pixelFromPoint(
                         bounds.getTopLeft(),
                         true
                     );
 
-                    width = Math.min(Math.abs(topleft.x - bottomright.x), 100);
-                    height = Math.min(Math.abs(topleft.y - bottomright.y), 100);
+                    const width = Math.min(Math.abs(topleft.x - bottomright.x), this.minWidth);
+                    const height = Math.min(Math.abs(topleft.y - bottomright.y), this.minWidth);
 
                     if (pinOverlay) {
                         center = this.mainViewer.viewport.getCenter();
@@ -387,31 +427,13 @@
                     }
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
-
-                    var bounds = this.viewer.viewport.getBounds(true);
-                    var bottomright = this.mainViewer.viewport
-                        .pixelFromPoint(bounds.getBottomRight(), true)
-                        .minus(this.totalBorderWidths);
-
-                    var topleft = this.mainViewer.viewport.pixelFromPoint(
-                        bounds.getTopLeft(),
-                        true
-                    );
-
-                    width = Math.abs(topleft.x - bottomright.x);
-                    height = Math.abs(topleft.y - bottomright.y);
+                    bounds = this.viewer.viewport.getBounds(true);
+                    this.updateDisplayRegionFromBounds(bounds);
                     center = this.mainViewer.viewport.getCenter();
-
-                    this.updateDisplayRegionStyle(
-                        topleft.y,
-                        topleft.x,
-                        width,
-                        height
-                    );
                 }
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
-                }
+            }
         }
 
         toggleInViewer() {
@@ -427,41 +449,17 @@
                 $.addClass(this.regionResizeHangle, inactiveClass);
                 $.addClass(this.regionMoveHangle, inactiveClass);
 
-                // Set it back to its normal size and to the center of the image
-                var center = this.mainViewer.viewport.getCenter();
-                this.viewer.viewport.panTo(center);
+                const bounds = this.viewer.viewport.getBounds(true);
 
-                var bounds = this.viewer.viewport.getBounds(true);
-
-                var bottomright = this.mainViewer.viewport
-                    .pixelFromPoint(bounds.getBottomRight(), true)
-                    .minus(this.totalBorderWidths);
-
-                var topleft = this.mainViewer.viewport.pixelFromPoint(
-                    bounds.getTopLeft(),
-                    true
-                );
-
-                const width = Math.abs(topleft.x - bottomright.x);
-                const height = Math.abs(topleft.y - bottomright.y);
-
-                this.updateDisplayRegionStyle(
-                    topleft.y,
-                    topleft.x,
-                    width,
-                    height
-                );
+                this.updateDisplayRegionFromBounds(bounds);
                 //re-sync the inline viewer to this, invisibly
-                this.inlineViewer.viewport.panTo(center);
+                this.inlineViewer.viewport.panTo(bounds.getCenter());
             } else {
                 this.showInViewer = true;
 
-                var center = this.mainViewer.viewport.getCenter();
-                this.viewer.viewport.panTo(center);
-
                 // make it a bit bigger so it shows the same things,
                 // just on top of the main viewer
-                var bounds = this.viewer.viewport.getBounds(true);
+                const bounds = this.viewer.viewport.getBounds(true);
 
                 var bottomright = this.mainViewer.viewport
                     .pixelFromPoint(bounds.getBottomRight(), true)
@@ -490,7 +488,7 @@
                     expandedHeight
                 );
 
-                this.inlineViewer.viewport.panTo(center);
+                this.inlineViewer.viewport.panTo(bounds.getCenter());
 
                 $.addClass(this.regionResizeHangle, activeClass);
                 $.addClass(this.regionMoveHangle, activeClass);
@@ -559,7 +557,9 @@
                     letters: m["letters"],
                     name: m["gene_name"],
                 });
-                this.visibleMarkers[dataUtils.getKeyFromString(m["gene_name"])] = 0
+                this.visibleMarkers[
+                    dataUtils.getKeyFromString(m["gene_name"])
+                ] = 0;
             });
         }
 
@@ -570,30 +570,31 @@
 
         showVisibleMarkerCounts() {
             // First, reset our counts
-            Object.keys(this.visibleMarkers).forEach(k => {
+            Object.keys(this.visibleMarkers).forEach((k) => {
                 this.visibleMarkers[k] = 0;
-            })
+            });
             let viewport = this.viewer.viewport;
             if (this.showInViewer) {
                 viewport = this.inlineViewer.viewport;
             }
-            const bounds = viewport.getBounds(false);
+            const bounds = viewport.getBounds();
             this.markers.forEach((m) => {
                 const name = dataUtils.getKeyFromString(m.name);
                 if (
                     bounds.containsPoint(m.point) &&
-                    markerUtils._checkBoxes[name]
-                        .checked
+                    markerUtils._checkBoxes[name].checked
                 ) {
                     if (name in this.visibleMarkers) {
                         this.visibleMarkers[name] += 1;
                     }
                 }
             });
-            Object.keys(this.visibleMarkers).forEach(k => {
-                const countElement = document.getElementById('metrics__count--' + k);
+            Object.keys(this.visibleMarkers).forEach((k) => {
+                const countElement = document.getElementById(
+                    "metrics__count--" + k
+                );
                 countElement.innerText = this.visibleMarkers[k];
-            })
+            });
         }
     }
     window.Magnifier = Magnifier;
