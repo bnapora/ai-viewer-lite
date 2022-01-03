@@ -145,7 +145,7 @@ dataUtils.processISSRawData = function () {
     }
 
     // either way, sort our lists of markers by viewer position, code and name
-    tmapp[op + '_magnifier'].buildMarkerList(dataUtils[op + "_processeddata"]);
+    tmapp[op + '_magnifier'].buildMarkerList(dataUtils[op + "_data"]);
     // Show the markers currently in the magnifier
     tmapp[op + '_magnifier'].showVisibleMarkerCounts();
 }

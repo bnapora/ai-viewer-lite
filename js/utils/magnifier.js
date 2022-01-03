@@ -185,10 +185,6 @@
                 self.showVisibleMarkerCounts();
             });
 
-            this.inlineViewer.addHandler("animation-finish", function () {
-                self.showVisibleMarkerCounts();
-            });
-
             // Event handlers for magnifier controls
             document
                 .getElementById(checkboxId)
@@ -349,22 +345,19 @@
             );
             this.inlineViewer.viewport.zoomTo(zoom, undefined, true);
 
-            var left = parseInt(this.displayRegion.style.left, 10)
-            var top = parseInt(this.displayRegion.style.top, 10)
+            var left = parseInt(this.displayRegion.style.left, 10);
+            var top = parseInt(this.displayRegion.style.top, 10);
 
             // This is in coordinates relative to the main viewer.
-            var bounds_rect = new $.Rect(
-                left,
-                top,
-                newWidth,
-                newHeight
-            );
+            var bounds_rect = new $.Rect(left, top, newWidth, newHeight);
             const center =
                 this.mainViewer.viewport.viewerElementToViewportCoordinates(
                     bounds_rect.getCenter()
                 );
             this.inlineViewer.viewport.panTo(center);
-            this.viewer.viewport.fitBounds(this.inlineViewer.viewport.getBounds());
+            this.viewer.viewport.fitBounds(
+                this.inlineViewer.viewport.getBounds()
+            );
         }
 
         update(pinOverlay = false, refPoint = null) {
@@ -400,8 +393,14 @@
                         true
                     );
 
-                    const width = Math.min(Math.abs(topleft.x - bottomright.x), this.minWidth);
-                    const height = Math.min(Math.abs(topleft.y - bottomright.y), this.minWidth);
+                    const width = Math.min(
+                        Math.abs(topleft.x - bottomright.x),
+                        this.minWidth
+                    );
+                    const height = Math.min(
+                        Math.abs(topleft.y - bottomright.y),
+                        this.minWidth
+                    );
 
                     if (pinOverlay) {
                         center = this.mainViewer.viewport.getCenter();
@@ -550,16 +549,17 @@
          * visible in the current viewport.
          * **/
         buildMarkerList(processed_markers) {
-            processed_markers.forEach((m) => {
-                const point = new $.Point(m["viewer_X_pos"], m["viewer_Y_pos"]);
-                this.markers.push({
-                    point: point,
-                    letters: m["letters"],
-                    name: m["gene_name"],
-                });
-                this.visibleMarkers[
-                    dataUtils.getKeyFromString(m["gene_name"])
-                ] = 0;
+            const imageWidth = OSDViewerUtils.getImageWidth(this.viewer);
+            const self = this;
+            processed_markers.forEach(function (m) {
+                self.markers[m.key] = m.values.map(
+                    (v) =>
+                        new $.Point(
+                            v["global_X_pos"] / imageWidth,
+                            v["global_Y_pos"] / imageWidth
+                        )
+                );
+                self.visibleMarkers[m.key] = 0;
             });
         }
 
@@ -569,31 +569,28 @@
          **/
 
         showVisibleMarkerCounts() {
-            // First, reset our counts
-            Object.keys(this.visibleMarkers).forEach((k) => {
-                this.visibleMarkers[k] = 0;
-            });
+            const self = this;
             let viewport = this.viewer.viewport;
             if (this.showInViewer) {
                 viewport = this.inlineViewer.viewport;
             }
             const bounds = viewport.getBounds();
-            this.markers.forEach((m) => {
-                const name = dataUtils.getKeyFromString(m.name);
-                if (
-                    bounds.containsPoint(m.point) &&
-                    markerUtils._checkBoxes[name].checked
-                ) {
-                    if (name in this.visibleMarkers) {
-                        this.visibleMarkers[name] += 1;
-                    }
+            this.markers.forEach(function (k, points) {
+                if (markerUtils._checkBoxes[name].checked) {
+                    self.visibleMarkers[k] = points.reduceRight(function (
+                        prev,
+                        curr
+                    ) {
+                        return bounds.containsPoint(curr) ? prev + 1 : prev;
+                    },
+                    0);
                 }
             });
-            Object.keys(this.visibleMarkers).forEach((k) => {
+            Object.keys(this.visibleMarkers).forEach(function (k) {
                 const countElement = document.getElementById(
                     "metrics__count--" + k
                 );
-                countElement.innerText = this.visibleMarkers[k];
+                countElement.innerText = self.visibleMarkers[k];
             });
         }
     }

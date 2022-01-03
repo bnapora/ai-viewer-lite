@@ -87,6 +87,7 @@ tmapp.init = function () {
         tmapp.layers = [];
     }
     overlayUtils.addAllLayers();
+
     //Create svgOverlay(); so that anything like D3, or any canvas library can act upon. https://d3js.org/
     const viewer_svgovname = vname + "_svgov";
     const magnifier_svgovname = mnameMain + "_svgov";
