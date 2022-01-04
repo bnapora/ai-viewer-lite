@@ -22,7 +22,7 @@
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
-            this.markers = [];
+            this.markers = {};
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
             this.borderWidth = 4; // in pixels
@@ -575,9 +575,9 @@
                 viewport = this.inlineViewer.viewport;
             }
             const bounds = viewport.getBounds();
-            this.markers.forEach(function (k, points) {
-                if (markerUtils._checkBoxes[name].checked) {
-                    self.visibleMarkers[k] = points.reduceRight(function (
+            Object.keys(this.markers).forEach(function (k) {
+                if (markerUtils._checkBoxes[k].checked) {
+                    self.visibleMarkers[k] = self.markers[k].reduceRight(function (
                         prev,
                         curr
                     ) {
