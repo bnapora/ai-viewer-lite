@@ -45,8 +45,13 @@ markerUtils = {
  *   */
 markerUtils.drawSymbol = function (group, type, x, y, size, color, barcode, globalx, globaly) {
     var marker = overlayUtils._d3nodes[group].append("path")
-        .style("fill", color).attr('transform', 'translate(' + x + ',' + y + ')').attr('class', barcode)//+' '+overlay+'ov zl'+level)
-        .attr("d", d3.symbol().size(size).type(type)).attr("x", x).attr("y", y);
+        .style("fill", color)
+        .attr("fill-opacity", "0.5")
+        .attr('transform', 'translate(' + x + ',' + y + ')')
+        .attr('class', barcode)//+' '+overlay+'ov zl'+level)
+        .attr("d", d3.symbol().size(size).type(type))
+        .attr("x", x)
+        .attr("y", y);
     if (globalx && globaly) {
         marker.attr("globalx", globalx).attr("globaly", globaly);
     }
@@ -65,19 +70,24 @@ markerUtils.drawd3rect = function (x, y, size, color, barcode) {
 
     var d3R = d3.select(tmapp[tmapp["object_prefix"] + "_svgov"].node());
 
-    d3R.append("rect").style('fill', color).attr("class", barcode + ' ' + ovetmapp["object_prefix"] + 'ov')
-        .attr("x", Number(x)).attr("width", Number(size)).attr("y", Number(y)).attr("height", Number(size));
+    d3R.append("rect")
+        .style('fill', color)
+        .attr("fill-opacity", "0.5")
+        .attr("class", barcode + ' ' + ovetmapp["object_prefix"] + 'ov')
+        .attr("x", Number(x))
+        .attr("width", Number(size))
+        .attr("y", Number(y))
+        .attr("height", Number(size));
 }
 
 /** 
  * Remove the svg group that contains a certain barcode
  * @param {string} barcode Barcode to erase
  * */
-markerUtils.removeMarkerByBarcode = function (barcode) {
-    var op = tmapp["object_prefix"];
-    console.log("trying to delete markers " + ".Gr" + op + barcode);
-    overlayUtils._d3nodes["Gr" + op + barcode].remove();
-    overlayUtils._d3nodes["Gr" + op + barcode] = null;
+markerUtils.removeMarkerByBarcode = function (barcode, viewer) {
+    console.log("trying to delete markers " + ".Gr" + viewer + barcode);
+    overlayUtils._d3nodes["Gr" + viewer + barcode].remove();
+    overlayUtils._d3nodes["Gr" + viewer + barcode] = null;
 }
 
 markerUtils.drawCPdata= function(options, viewer){
@@ -370,15 +380,17 @@ markerUtils.markerBoxToggle = function (barcodeBox) {
     if (tmapp["hideSVGMarkers"]) return;  // We are using WebGL instead for the drawing
 
     const value = barcodeBox[0].attributes.barcode.value;
+    const op = tmapp['object_prefix']
 
     if (barcodeBox.is(':checked')) {
-        const op = tmapp['object_prefix']
         markerUtils.drawBarcodeByView(value, op + '_viewer');
         markerUtils.drawBarcodeByView(value, op + '_magnifier_main');
         markerUtils.drawBarcodeByView(value, op + '_magnifier_inline');
 
     } else {
-        markerUtils.removeMarkerByBarcode(value);
+        markerUtils.removeMarkerByBarcode(value, op + '_viewer');
+        markerUtils.removeMarkerByBarcode(value, op + '_magnifier_main');
+        markerUtils.removeMarkerByBarcode(value, op + '_magnifier_inline');
     }
 }
 
