@@ -225,7 +225,7 @@
         updateDisplayRegionFromBounds(bounds) {
             const bottomright = this.mainViewer.viewport
                 .pixelFromPoint(bounds.getBottomRight(), true)
-                .minus(this.totalBorderWidths);
+                .plus(this.totalBorderWidths);
 
             const topleft = this.mainViewer.viewport.pixelFromPoint(
                 bounds.getTopLeft(),
@@ -386,7 +386,7 @@
 
                     const bottomright = this.mainViewer.viewport
                         .pixelFromPoint(bounds.getBottomRight(), true)
-                        .minus(this.totalBorderWidths);
+                        .plus(this.totalBorderWidths);
 
                     const topleft = this.mainViewer.viewport.pixelFromPoint(
                         bounds.getTopLeft(),
@@ -462,7 +462,7 @@
 
                 var bottomright = this.mainViewer.viewport
                     .pixelFromPoint(bounds.getBottomRight(), true)
-                    .minus(this.totalBorderWidths);
+                    .plus(this.totalBorderWidths);
 
                 var topleft = this.mainViewer.viewport.pixelFromPoint(
                     bounds.getTopLeft(),
