@@ -205,6 +205,43 @@
             this.update();
         }
 
+        getCenterFromBounds(bounds) {
+            const bottomright = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getBottomRight(),
+                true
+            );
+
+            const topleft = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getTopLeft(),
+                true
+            );
+
+            const width = Math.min(
+                Math.abs(topleft.x - bottomright.x),
+                this.minWidth
+            );
+            const height = Math.min(
+                Math.abs(topleft.y - bottomright.y),
+                this.minWidth
+            );
+
+            // the center of the overlay magnifier is at whatever
+            // is in the center of its display region, on the main
+            // viewer. We're using layers, but they are all the same
+            // size for this purpose, so just pick one.
+
+            // This is in coordinates relative to the main viewer.
+            const bounds_rect = new $.Rect(topleft.x, topleft.y, width, height);
+
+            // Translate those into viewport coordinates for the inline viewer.
+            const center =
+                this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                    bounds_rect.getCenter()
+                );
+
+            return center;
+        }
+
         updateDisplayRegionStyle(top, left, width, height) {
             var style = this.displayRegion.style;
             style.display = this.viewer.world.getItemCount() ? "block" : "none";
@@ -373,44 +410,7 @@
             if (this.showInViewer) {
                 // Event handing for when the inline magnifier is active
                 bounds = this.inlineViewer.viewport.getBounds(true);
-
-                const bottomright = this.mainViewer.viewport.pixelFromPoint(
-                    bounds.getBottomRight(),
-                    true
-                );
-
-                const topleft = this.mainViewer.viewport.pixelFromPoint(
-                    bounds.getTopLeft(),
-                    true
-                );
-
-                const width = Math.min(
-                    Math.abs(topleft.x - bottomright.x),
-                    this.minWidth
-                );
-                const height = Math.min(
-                    Math.abs(topleft.y - bottomright.y),
-                    this.minWidth
-                );
-
-                // the center of the overlay magnifier is at whatever
-                // is in the center of its display region, on the main
-                // viewer. We're using layers, but they are all the same
-                // size for this purpose, so just pick one.
-
-                // This is in coordinates relative to the main viewer.
-                var bounds_rect = new $.Rect(
-                    topleft.x,
-                    topleft.y,
-                    width,
-                    height
-                );
-
-                // Translate those into viewport coordinates for the inline viewer.
-                center =
-                    this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                        bounds_rect.getCenter()
-                    );
+                center = this.getCenterFromBounds(bounds);
                 this.inlineViewer.viewport.panTo(center);
                 this.viewer.viewport.fitBounds(bounds);
             } else {
@@ -446,32 +446,7 @@
                 bounds = this.viewer.viewport.getBounds();
             }
 
-            const bottomright = this.mainViewer.viewport.pixelFromPoint(
-                bounds.getBottomRight(),
-                true
-            );
-
-            const topleft = this.mainViewer.viewport.pixelFromPoint(
-                bounds.getTopLeft(),
-                true
-            );
-
-            const width = Math.abs(topleft.x - bottomright.x);
-            const height = Math.abs(topleft.y - bottomright.y);
-
-            // the center of the overlay magnifier is at whatever
-            // is in the center of its display region, on the main
-            // viewer. We're using layers, but they are all the same
-            // size for this purpose, so just pick one.
-
-            // This is in coordinates relative to the main viewer.
-            var bounds_rect = new $.Rect(topleft.x, topleft.y, width, height);
-
-            // Translate those into viewport coordinates for the inline viewer.
-            center =
-                this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                    bounds_rect.getCenter()
-                );
+            center = this.getCenterFromBounds(bounds);
 
             this.viewer.viewport.panTo(center);
 
