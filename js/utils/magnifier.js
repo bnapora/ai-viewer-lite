@@ -155,22 +155,24 @@
             // OSD event handlers for the magnifiers and main viewers
             const self = this;
             this.mainViewer.addHandler("zoom", function (event) {
-                self.update(false, event.refPoint);
+                self.mainViewerZoom(event.refPoint);
             });
-            this.mainViewer.addHandler("pan", function () {
-                self.update(true); // bring the overlay viewer along if you pan the underlying main viewer
+            this.mainViewer.addHandler("canvas-drag", function (event) {
+                // I'd listen to pan, but this gives us a delta, which gives
+                // more information about how to position the display region.
+                self.mainViewerPan(event);
             });
 
             this.mainViewer.addHandler("update-level", function () {
-                self.update(true);
+                self.update();
             });
 
             this.mainViewer.addHandler("resize", function () {
-                self.update(true);
+                self.update();
             });
 
             this.mainViewer.world.addHandler("update-viewport", function () {
-                self.update(true);
+                self.update();
             });
 
             this.mainViewer.addHandler("canvas-click", function (event) {
@@ -201,6 +203,43 @@
                 });
 
             this.update();
+        }
+
+        getCenterFromBounds(bounds) {
+            const bottomright = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getBottomRight(),
+                true
+            );
+
+            const topleft = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getTopLeft(),
+                true
+            );
+
+            const width = Math.min(
+                Math.abs(topleft.x - bottomright.x),
+                this.minWidth
+            );
+            const height = Math.min(
+                Math.abs(topleft.y - bottomright.y),
+                this.minWidth
+            );
+
+            // the center of the overlay magnifier is at whatever
+            // is in the center of its display region, on the main
+            // viewer. We're using layers, but they are all the same
+            // size for this purpose, so just pick one.
+
+            // This is in coordinates relative to the main viewer.
+            const bounds_rect = new $.Rect(topleft.x, topleft.y, width, height);
+
+            // Translate those into viewport coordinates for the inline viewer.
+            const center =
+                this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                    bounds_rect.getCenter()
+                );
+
+            return center;
         }
 
         updateDisplayRegionStyle(top, left, width, height) {
@@ -360,12 +399,66 @@
             );
         }
 
-        update(pinOverlay = false, refPoint = null) {
-            const viewerSize = $.getElementSize(this.viewer.element);
-            const inlineViewerSize = $.getElementSize(
-                this.inlineViewer.element
-            );
+        mainViewerZoom(refPoint = null) {
+            const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
 
+            this.viewer.viewport.zoomTo(zoomTarget, refPoint);
+            this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
+
+            let bounds, center;
+
+            if (this.showInViewer) {
+                // Event handing for when the inline magnifier is active
+                bounds = this.inlineViewer.viewport.getBounds(true);
+                center = this.getCenterFromBounds(bounds);
+                this.inlineViewer.viewport.panTo(center);
+                this.viewer.viewport.fitBounds(bounds);
+            } else {
+                // inline / overlay viewer is invisibly pinned to the sidebar viewer
+                bounds = this.viewer.viewport.getBounds(true);
+                this.updateDisplayRegionFromBounds(bounds);
+                center = this.mainViewer.viewport.getCenter();
+                this.viewer.viewport.panTo(center);
+                this.inlineViewer.viewport.panTo(center);
+            }
+        }
+
+        mainViewerPan(event) {
+            const panDelta = event.delta.times(-1);
+            const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
+                event.delta.times(-1)
+            );
+            let bounds, center;
+
+            if (this.showInViewer) {
+                const top = parseInt(this.displayRegion.style.top, 10);
+                const left = parseInt(this.displayRegion.style.left, 10);
+
+                this.updateDisplayRegionStyle(
+                    top - panDelta.y,
+                    left - panDelta.x
+                );
+
+                this.inlineViewer.viewport.panBy(panBy);
+                bounds = this.inlineViewer.viewport.getBounds();
+            } else {
+                this.viewer.viewport.panBy(panBy);
+                bounds = this.viewer.viewport.getBounds();
+            }
+
+            center = this.getCenterFromBounds(bounds);
+
+            this.viewer.viewport.panTo(center);
+
+            if (this.showInViewer) {
+                this.inlineViewer.viewport.panTo(center);
+                this.viewer.viewport.fitBounds(bounds, true);
+            } else {
+                this.updateDisplayRegionFromBounds(bounds);
+            }
+        }
+
+        update() {
             if (
                 this.mainViewer.viewport &&
                 this.viewer.viewport &&
@@ -375,63 +468,20 @@
                 const zoomTarget =
                     this.mainViewer.viewport.getZoom() * this.ratio;
 
-                this.viewer.viewport.zoomTo(zoomTarget, refPoint);
-                this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
+                this.viewer.viewport.zoomTo(zoomTarget);
+                this.inlineViewer.viewport.zoomTo(zoomTarget);
 
-                let bounds, center;
+                let bounds;
 
                 if (this.showInViewer) {
                     // Event handing for when the inline magnifier is active
                     bounds = this.inlineViewer.viewport.getBounds(true);
-
-                    const bottomright = this.mainViewer.viewport
-                        .pixelFromPoint(bounds.getBottomRight(), true)
-                        .plus(this.totalBorderWidths);
-
-                    const topleft = this.mainViewer.viewport.pixelFromPoint(
-                        bounds.getTopLeft(),
-                        true
-                    );
-
-                    const width = Math.min(
-                        Math.abs(topleft.x - bottomright.x),
-                        this.minWidth
-                    );
-                    const height = Math.min(
-                        Math.abs(topleft.y - bottomright.y),
-                        this.minWidth
-                    );
-
-                    if (pinOverlay) {
-                        center = this.mainViewer.viewport.getCenter();
-                    } else {
-                        // the center of the overlay magnifier is at whatever
-                        // is in the center of its display region, on the main
-                        // viewer. We're using layers, but they are all the same
-                        // size for this purpose, so just pick one.
-
-                        // This is in coordinates relative to the main viewer.
-                        var bounds_rect = new $.Rect(
-                            topleft.x,
-                            topleft.y,
-                            width,
-                            height
-                        );
-
-                        // Translate those into viewport coordinates for the inline viewer.
-                        center =
-                            this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                                bounds_rect.getCenter()
-                            );
-                    }
+                    this.viewer.viewport.fitBounds(bounds);
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds(true);
                     this.updateDisplayRegionFromBounds(bounds);
-                    center = this.mainViewer.viewport.getCenter();
                 }
-                this.viewer.viewport.panTo(center);
-                this.inlineViewer.viewport.panTo(center);
             }
         }
 
@@ -577,13 +627,12 @@
             const bounds = viewport.getBounds();
             Object.keys(this.markers).forEach(function (k) {
                 if (markerUtils._checkBoxes[k].checked) {
-                    self.visibleMarkers[k] = self.markers[k].reduceRight(function (
-                        prev,
-                        curr
-                    ) {
-                        return bounds.containsPoint(curr) ? prev + 1 : prev;
-                    },
-                    0);
+                    self.visibleMarkers[k] = self.markers[k].reduceRight(
+                        function (prev, curr) {
+                            return bounds.containsPoint(curr) ? prev + 1 : prev;
+                        },
+                        0
+                    );
                 }
             });
             Object.keys(this.visibleMarkers).forEach(function (k) {
