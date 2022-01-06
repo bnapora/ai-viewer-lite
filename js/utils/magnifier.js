@@ -158,7 +158,7 @@
                 self.mainViewerZoom(event.refPoint);
             });
             this.mainViewer.addHandler("pan", function () {
-                self.update(); // bring the overlay viewer along if you pan the underlying main viewer
+                self.mainViewerPan();
             });
 
             this.mainViewer.addHandler("update-level", function () {
@@ -360,12 +360,7 @@
             );
         }
 
-        mainViewerZoom(refPoint=null) {
-            const viewerSize = $.getElementSize(this.viewer.element);
-            const inlineViewerSize = $.getElementSize(
-                this.inlineViewer.element
-            );
-
+        mainViewerZoom(refPoint = null) {
             if (
                 this.mainViewer.viewport &&
                 this.viewer.viewport &&
@@ -384,9 +379,10 @@
                     // Event handing for when the inline magnifier is active
                     bounds = this.inlineViewer.viewport.getBounds(true);
 
-                    const bottomright = this.mainViewer.viewport
-                        .pixelFromPoint(bounds.getBottomRight(), true)
-                        .plus(this.totalBorderWidths);
+                    const bottomright = this.mainViewer.viewport.pixelFromPoint(
+                        bounds.getBottomRight(),
+                        true
+                    );
 
                     const topleft = this.mainViewer.viewport.pixelFromPoint(
                         bounds.getTopLeft(),
@@ -422,7 +418,6 @@
                         );
                     this.inlineViewer.viewport.panTo(center);
                     this.viewer.viewport.fitBounds(bounds);
-
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds(true);
@@ -431,12 +426,60 @@
             }
         }
 
-        update() {
-            const viewerSize = $.getElementSize(this.viewer.element);
-            const inlineViewerSize = $.getElementSize(
-                this.inlineViewer.element
-            );
+        mainViewerPan() {
+            if (
+                this.mainViewer.viewport &&
+                this.viewer.viewport &&
+                this.inlineViewer.viewport
+            ) {
+                let bounds, center;
 
+                if (this.showInViewer) {
+                    // Event handing for when the inline magnifier is active
+                    bounds = this.inlineViewer.viewport.getBounds(true);
+                } else {
+                    // inline / overlay viewer is invisibly pinned to the sidebar viewer
+                    bounds = this.viewer.viewport.getBounds(true);
+                }
+
+                const bottomright = this.mainViewer.viewport.pixelFromPoint(
+                    bounds.getBottomRight(),
+                    true
+                );
+
+                const topleft = this.mainViewer.viewport.pixelFromPoint(
+                    bounds.getTopLeft(),
+                    true
+                );
+
+                const width = Math.abs(topleft.x - bottomright.x);
+                const height = Math.abs(topleft.y - bottomright.y);
+
+                // the center of the overlay magnifier is at whatever
+                // is in the center of its display region, on the main
+                // viewer. We're using layers, but they are all the same
+                // size for this purpose, so just pick one.
+
+                // This is in coordinates relative to the main viewer.
+                var bounds_rect = new $.Rect(
+                    topleft.x,
+                    topleft.y,
+                    width,
+                    height
+                );
+
+                // Translate those into viewport coordinates for the inline viewer.
+                center =
+                    this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                        bounds_rect.getCenter()
+                    );
+
+                this.inlineViewer.viewport.panTo(center);
+                this.viewer.viewport.panTo(center);
+            }
+        }
+
+        update() {
             if (
                 this.mainViewer.viewport &&
                 this.viewer.viewport &&
@@ -449,38 +492,19 @@
                 this.viewer.viewport.zoomTo(zoomTarget);
                 this.inlineViewer.viewport.zoomTo(zoomTarget);
 
-                let bounds, center;
+                let bounds;
 
                 if (this.showInViewer) {
                     // Event handing for when the inline magnifier is active
                     bounds = this.inlineViewer.viewport.getBounds(true);
-
-                    const bottomright = this.mainViewer.viewport
-                        .pixelFromPoint(bounds.getBottomRight(), true)
-                        .plus(this.totalBorderWidths);
-
-                    const topleft = this.mainViewer.viewport.pixelFromPoint(
-                        bounds.getTopLeft(),
-                        true
-                    );
-
-                    const width = Math.min(
-                        Math.abs(topleft.x - bottomright.x),
-                        this.minWidth
-                    );
-                    const height = Math.min(
-                        Math.abs(topleft.y - bottomright.y),
-                        this.minWidth
-                    );
-
-                    center = this.mainViewer.viewport.getCenter();
-
+                    this.viewer.viewport.fitBounds(bounds);
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds(true);
                     this.updateDisplayRegionFromBounds(bounds);
-                    center = this.mainViewer.viewport.getCenter();
                 }
+
+                const center = this.mainViewer.viewport.getCenter();
                 this.viewer.viewport.panTo(center);
                 this.inlineViewer.viewport.panTo(center);
             }
