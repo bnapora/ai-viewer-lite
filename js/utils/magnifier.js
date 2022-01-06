@@ -360,7 +360,7 @@
             );
         }
 
-        mainViewerZoom(refPoint) {
+        mainViewerZoom(refPoint=null) {
             const viewerSize = $.getElementSize(this.viewer.element);
             const inlineViewerSize = $.getElementSize(
                 this.inlineViewer.element
@@ -420,14 +420,14 @@
                         this.mainViewer.viewport.viewerElementToViewportCoordinates(
                             bounds_rect.getCenter()
                         );
+                    this.inlineViewer.viewport.panTo(center);
+                    this.viewer.viewport.fitBounds(bounds);
+
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds(true);
                     this.updateDisplayRegionFromBounds(bounds);
-                    center = this.mainViewer.viewport.getCenter();
                 }
-                this.viewer.viewport.panTo(center);
-                this.inlineViewer.viewport.panTo(center);
             }
         }
 
