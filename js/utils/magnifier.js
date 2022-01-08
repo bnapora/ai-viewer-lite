@@ -73,13 +73,14 @@
             this.regionMoveHangle = $.makeNeutralElement("div");
             this.regionMoveHangle.className = "displayregion__move";
             this.regionMoveHangle.style.position = "absolute";
-            this.regionMoveHangle.style.top = "-20px";
-            this.regionMoveHangle.style.left = "-20px";
+            this.regionMoveHangle.style.top = "0";
+            this.regionMoveHangle.style.left = "0";
             this.regionMoveHangle.style.width = "20px";
             this.regionMoveHangle.style.height = "20px";
             this.regionMoveHangle.style.cursor = "move";
             this.regionMoveHangle.style.background = "rgba(0, 0, 0, 0.5)";
             this.regionMoveHangle.style.border = "1px solid #000";
+            this.regionMoveHangle.style.zIndex = "99";
 
             this.regionResizeHangle = $.makeNeutralElement("div");
             this.regionResizeHangle.className = "displayregion__resize";
