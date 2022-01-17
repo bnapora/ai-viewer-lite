@@ -23,9 +23,49 @@ from the viewer underneath it */
     z-index: 99;
 }
 
+.displayregion__move {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width:  20px;
+    height:  20px;
+    cursor:  move;
+    background:  rgba(0, 0, 0, 0.5);
+    border:  1px solid #000;
+    z-index: 99;
+}
+
+.displayregion__resize {
+    position: absolute;
+    bottom:  -5px;
+    right:  -5px;
+    width:  10%;
+    height:  10%;
+    max-width: 50px;
+    max-height: 50px;
+    cursor: se-resize;
+    background: #ccc;
+    z-index: auto;
+}
+
 .round {
     border-radius: 100%;
     overflow: clip;
+}
+
+.round .displayregion__move {
+    top: 8%;
+    left: 8%;
+    width:  40px;
+    height:  40px;
+}
+
+.round .displayregion__resize {
+    bottom: 8%;
+    right:  8%;
+    width:  40px;
+    height:  40px;
+    z-index: 99;
 }
 
 .displayregioncontainer {
