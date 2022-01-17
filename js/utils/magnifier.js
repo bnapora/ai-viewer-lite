@@ -94,23 +94,6 @@
             this.inViewerElement.className =
                 "magnifier magnifier--square magnifier--inline";
 
-            if (this.showInViewer) {
-                $.addClass(this.inViewerElement, activeClass);
-                $.addClass(this.element, inactiveClass);
-                $.addClass(this.regionResizeHangle, activeClass);
-                $.addClass(this.regionMoveHangle, activeClass);
-            } else {
-                $.addClass(this.inViewerElement, inactiveClass);
-                $.addClass(this.element, activeClass);
-                $.addClass(this.regionResizeHangle, inactiveClass);
-                $.addClass(this.regionMoveHangle, inactiveClass);
-            }
-
-            if (this.round) {
-                $.addClass(this.element, "round");
-                $.addClass(this.displayRegion, "round");
-            }
-
             this.displayRegion.appendChild(this.regionMoveHangle);
             this.displayRegion.appendChild(this.regionResizeHangle);
             this.displayRegion.appendChild(this.inViewerElement);
@@ -128,6 +111,20 @@
                     element: this.inViewerElement,
                 })
             );
+
+            if (this.showInViewer) {
+               this.initializeInlineMagnifier();
+            } else {
+                $.addClass(this.inViewerElement, inactiveClass);
+                $.addClass(this.element, activeClass);
+                $.addClass(this.regionResizeHangle, inactiveClass);
+                $.addClass(this.regionMoveHangle, inactiveClass);
+            }
+
+            if (this.round) {
+                $.addClass(this.element, "round");
+                $.addClass(this.displayRegion, "round");
+            }
 
             // Move and resize handlers
             new $.MouseTracker({
@@ -473,6 +470,53 @@
             }
         }
 
+        initializeInlineMagnifier() {
+            // make it a bit bigger so it shows the same things,
+            // just on top of the main viewer
+            const bounds = this.viewer.viewport.getBounds(true);
+
+            var bottomright = this.mainViewer.viewport
+                .pixelFromPoint(bounds.getBottomRight(), true)
+                .plus(this.totalBorderWidths);
+
+            var topleft = this.mainViewer.viewport.pixelFromPoint(
+                bounds.getTopLeft(),
+                true
+            );
+
+            const width = Math.min(Math.abs(topleft.x - bottomright.x), 100);
+            const height = Math.min(Math.abs(topleft.y - bottomright.y), 100);
+
+            // How much bigger does each side of the square
+            // need to be in order to accommodate an overlay
+            // magnifier at the same zoom level?
+            const factor = Math.log2(this.ratio);
+
+            const expandedWidth = width * factor;
+            const expandedHeight = height * factor;
+
+            this.updateDisplayRegionStyle(
+                topleft.y - expandedHeight / 4,
+                topleft.x - expandedWidth / 4,
+                expandedWidth,
+                expandedHeight
+            );
+
+            this.inlineViewer.viewport.panTo(bounds.getCenter());
+
+            this.displayRegion.style.display = null;
+            $.addClass(this.regionResizeHangle, activeClass);
+            $.addClass(this.regionMoveHangle, activeClass);
+            $.removeClass(this.regionResizeHangle, inactiveClass);
+            $.removeClass(this.regionMoveHangle, inactiveClass);
+            $.removeClass(this.inViewerElement, inactiveClass);
+            $.addClass(this.inViewerElement, activeClass);
+            this.inlineViewer.setVisible(true);
+            this.inlineViewer.forceRedraw();
+            $.removeClass(this.element, activeClass);
+            $.addClass(this.element, inactiveClass);
+        }
+
         toggleInViewer() {
             if (this.showInViewer) {
                 this.showInViewer = false;
@@ -493,50 +537,7 @@
                 this.inlineViewer.viewport.panTo(bounds.getCenter());
             } else {
                 this.showInViewer = true;
-
-                // make it a bit bigger so it shows the same things,
-                // just on top of the main viewer
-                const bounds = this.viewer.viewport.getBounds(true);
-
-                var bottomright = this.mainViewer.viewport
-                    .pixelFromPoint(bounds.getBottomRight(), true)
-                    .plus(this.totalBorderWidths);
-
-                var topleft = this.mainViewer.viewport.pixelFromPoint(
-                    bounds.getTopLeft(),
-                    true
-                );
-
-                const width = Math.abs(topleft.x - bottomright.x);
-                const height = Math.abs(topleft.y - bottomright.y);
-
-                // How much bigger does each side of the square
-                // need to be in order to accommodate an overlay
-                // magnifier at the same zoom level?
-                const factor = Math.log2(this.ratio);
-
-                const expandedWidth = width * factor;
-                const expandedHeight = height * factor;
-
-                this.updateDisplayRegionStyle(
-                    topleft.y - expandedHeight / 4,
-                    topleft.x - expandedWidth / 4,
-                    expandedWidth,
-                    expandedHeight
-                );
-
-                this.inlineViewer.viewport.panTo(bounds.getCenter());
-
-                $.addClass(this.regionResizeHangle, activeClass);
-                $.addClass(this.regionMoveHangle, activeClass);
-                $.removeClass(this.regionResizeHangle, inactiveClass);
-                $.removeClass(this.regionMoveHangle, inactiveClass);
-                $.removeClass(this.inViewerElement, inactiveClass);
-                $.addClass(this.inViewerElement, activeClass);
-                this.inlineViewer.setVisible(true);
-                this.inlineViewer.forceRedraw();
-                $.removeClass(this.element, activeClass);
-                $.addClass(this.element, inactiveClass);
+                this.initializeInlineMagnifier();
             }
         }
 
