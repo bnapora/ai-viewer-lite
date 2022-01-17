@@ -409,6 +409,11 @@
         }
 
         mainViewerPan(event) {
+            // Don't pan if the main viewer wouldn't pan normally
+            const mainBounds = this.mainViewer.viewport.getBounds();
+            if(mainBounds.width === 1 || mainBounds.height === 1) {
+                return;
+            }
             const panDelta = event.delta.times(-1);
             const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
                 event.delta.times(-1)
