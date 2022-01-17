@@ -68,30 +68,17 @@
             this.displayRegion.style.padding = "0";
 
             // Move and resize controls for the overlay magnifier.
-            // Styles for both of these have to be here or they will be
-            // overridden.
+            // Position and color tyles for both of these have to
+            // be here or they will be overridden.
             this.regionMoveHangle = $.makeNeutralElement("div");
             this.regionMoveHangle.className = "displayregion__move";
             this.regionMoveHangle.style.position = "absolute";
-            this.regionMoveHangle.style.top = "0";
-            this.regionMoveHangle.style.left = "0";
-            this.regionMoveHangle.style.width = "20px";
-            this.regionMoveHangle.style.height = "20px";
-            this.regionMoveHangle.style.cursor = "move";
             this.regionMoveHangle.style.background = "rgba(0, 0, 0, 0.5)";
             this.regionMoveHangle.style.border = "1px solid #000";
-            this.regionMoveHangle.style.zIndex = "99";
 
             this.regionResizeHangle = $.makeNeutralElement("div");
             this.regionResizeHangle.className = "displayregion__resize";
             this.regionResizeHangle.style.position = "absolute";
-            this.regionResizeHangle.style.bottom = "-5px";
-            this.regionResizeHangle.style.right = "-5px";
-            this.regionResizeHangle.style.width = "10%";
-            this.regionResizeHangle.style.height = "10%";
-            this.regionResizeHangle.style.maxWidth = "50px";
-            this.regionResizeHangle.style.maxHeight = "50px";
-            this.regionResizeHangle.style.cursor = "se-resize";
             this.regionResizeHangle.style.background = "#ccc";
 
             // Invisible container for the overlay magnifier and controls
