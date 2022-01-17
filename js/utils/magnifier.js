@@ -68,7 +68,7 @@
             this.displayRegion.style.padding = "0";
 
             // Move and resize controls for the overlay magnifier.
-            // Position and color tyles for both of these have to
+            // Position and color styles for both of these have to
             // be here or they will be overridden.
             this.regionMoveHangle = $.makeNeutralElement("div");
             this.regionMoveHangle.className = "displayregion__move";
