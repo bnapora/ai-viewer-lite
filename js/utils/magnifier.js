@@ -13,11 +13,12 @@
     const activeClass = "magnifier--active";
     const inactiveClass = "magnifier--inactive";
     const roundId = "magnifier__round";
+    const ratioId = "magnifier__ratio";
 
     class Magnifier {
         constructor(mainViewer, options) {
             this.mainViewer = mainViewer;
-            this.ratio = options.magnificationRatio;
+            this.ratio = document.getElementById(ratioId).value;
             this.element = document.getElementById(options.id);
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
@@ -113,7 +114,7 @@
             );
 
             if (this.showInViewer) {
-               this.initializeInlineMagnifier();
+                this.initializeInlineMagnifier();
             } else {
                 $.addClass(this.inViewerElement, inactiveClass);
                 $.addClass(this.element, activeClass);
@@ -185,6 +186,13 @@
                     input.addEventListener("change", function () {
                         self.toggleShape();
                     });
+                });
+
+            document
+                .getElementById(ratioId)
+                .addEventListener("change", function () {
+                    self.ratio = event.target.value;
+                    self.update();
                 });
 
             this.update();
@@ -411,7 +419,7 @@
         mainViewerPan(event) {
             // Don't pan if the main viewer wouldn't pan normally
             const mainBounds = this.mainViewer.viewport.getBounds();
-            if(mainBounds.width === 1 || mainBounds.height === 1) {
+            if (mainBounds.width === 1 || mainBounds.height === 1) {
                 return;
             }
             const panDelta = event.delta.times(-1);
@@ -465,11 +473,11 @@
 
                 if (this.showInViewer) {
                     // Event handing for when the inline magnifier is active
-                    bounds = this.inlineViewer.viewport.getBounds(true);
+                    bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
-                    bounds = this.viewer.viewport.getBounds(true);
+                    bounds = this.viewer.viewport.getBounds();
                     this.updateDisplayRegionFromBounds(bounds);
                 }
             }
