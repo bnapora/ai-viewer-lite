@@ -489,12 +489,13 @@
                                         <div id="ISS_magnifier" class="magnifier">
                                         </div>
                                         <h4>Settings</h4>
-                                        <div>
+                                        <div class="magnifier__setting">
                                             <label>
                                                 <input type="checkbox" id="magnifier__show-in-viewer">
                                                 Show magnifier in viewer
                                             </label>
-
+                                        </div>
+                                        <div class="magnifier__setting">
                                             <h5>Magnifier shape</h5>
                                             <label>
                                                 <input type="radio" name="magnifier__shape" id="magnifier__square" checked>
@@ -503,6 +504,12 @@
                                             <label>
                                                 <input type="radio" name="magnifier__shape" id="magnifier__round">
                                                 Round
+                                            </label>
+                                        </div>
+                                        <div class="magnifier__setting">
+                                            <label>
+                                                Magnification Ratio
+                                                <input type="range" min="2" max="20" value="8" step="1" id="magnifier__ratio">
                                             </label>
                                         </div>
                                         <h4>Markers in Magnifier</h4>

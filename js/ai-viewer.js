@@ -253,5 +253,4 @@ tmapp.options_magnifier= {
     panHorizontal: false,
     panVertical: false,
     mouseNavEnabled: false,
-    magnificationRatio: 8
 }
