@@ -209,14 +209,8 @@
                 true
             );
 
-            const width = Math.min(
-                Math.abs(topleft.x - bottomright.x),
-                this.minWidth
-            );
-            const height = Math.min(
-                Math.abs(topleft.y - bottomright.y),
-                this.minWidth
-            );
+            const width = Math.abs(topleft.x - bottomright.x);
+            const height = Math.abs(topleft.y - bottomright.y);
 
             // the center of the overlay magnifier is at whatever
             // is in the center of its display region, on the main
