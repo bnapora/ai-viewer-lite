@@ -321,6 +321,7 @@
 
                 this.viewer.viewport.fitBounds(bounds);
                 this.updateDisplayRegionStyle(top, left, width, height);
+                this.updateCenterMarkerStyle(bounds.getTopLeft());
             } else {
                 bounds = this.viewer.viewport.getBounds();
 
@@ -340,10 +341,12 @@
             this.inlineViewer.viewport.panBy(
                 this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
             );
+            var bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(
-                this.inlineViewer.viewport.getBounds(),
+                bounds,
                 true
             );
+            this.updateCenterMarkerStyle(bounds.getTopLeft());
         }
 
         resizeRegion(event) {
@@ -411,6 +414,7 @@
             this.viewer.viewport.fitBounds(
                 this.inlineViewer.viewport.getBounds()
             );
+            this.updateCenterMarkerStyle(newBounds.getTopLeft());
         }
 
         mainViewerZoom(refPoint = null) {
@@ -427,6 +431,7 @@
                 center = this.getCenterFromBounds(bounds);
                 this.inlineViewer.viewport.panTo(center);
                 this.viewer.viewport.fitBounds(bounds);
+                this.updateCenterMarkerStyle(bounds.getTopLeft());
             } else {
                 // inline / overlay viewer is invisibly pinned to the sidebar viewer
                 bounds = this.viewer.viewport.getBounds(true);
@@ -479,6 +484,7 @@
                 this.viewer.viewport.fitBounds(
                     this.inlineViewer.viewport.getBounds()
                 );
+                this.updateCenterMarkerStyle(bounds.getTopLeft());
             } else {
                 this.viewer.viewport.panBy(panBy);
                 this.viewer.viewport.applyConstraints(true);
@@ -507,6 +513,7 @@
                     // Event handing for when the inline magnifier is active
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
+                    this.updateCenterMarkerStyle(bounds.getTopLeft());
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds();
