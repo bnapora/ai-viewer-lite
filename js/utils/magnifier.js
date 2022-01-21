@@ -411,42 +411,29 @@
         }
 
         mainViewerPan(event) {
-            // Don't pan if the main viewer wouldn't pan normally
-            const mainBounds = this.mainViewer.viewport.getBounds();
-            if (mainBounds.width >= 1 || mainBounds.height >= 1) {
-                return;
-            }
             const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
                 event.delta.negate()
             );
-            let bounds, center, constrainedBounds;
 
-            if (this.showInViewer) {
-                const top = parseInt(this.displayRegion.style.top, 10);
-                const left = parseInt(this.displayRegion.style.left, 10);
-
-                bounds = this.inlineViewer.viewport.getBounds();
-                constrainedBounds = this.inlineViewer.viewport.getConstrainedBounds();
-                if (bounds.x !== constrainedBounds.x) {
-                    panBy.x = 0;
-                }
-                if (bounds.y !== constrainedBounds.y) {
-                    panBy.y = 0;
-                }
-                this.inlineViewer.viewport.panBy(panBy);
-                bounds = this.inlineViewer.viewport.getBounds();
-            } else {
-                this.viewer.viewport.panBy(panBy);
-                bounds = this.viewer.viewport.getBounds();
+            // if the main viewer couldn't actually go anywhere in one direction,
+            // do not pan in that direction
+            const mainBounds = this.mainViewer.viewport.getBounds();
+            const constrainedBounds = this.mainViewer.viewport.getConstrainedBounds();
+            if(mainBounds.x !== constrainedBounds.x) {
+                panBy.x = 0;
+            }
+            if(mainBounds.y !== constrainedBounds.y) {
+                panBy.y = 0;
             }
 
-            center = this.getCenterFromBounds(bounds);
-
-            this.viewer.viewport.panTo(center);
+            this.viewer.viewport.panBy(panBy);
+            this.viewer.viewport.applyConstraints(true);
+            const bounds = this.viewer.viewport.getBounds();
+            const center = this.getCenterFromBounds(bounds);
 
             if (this.showInViewer) {
                 this.inlineViewer.viewport.panTo(center);
-                this.viewer.viewport.fitBounds(bounds, true);
+                this.inlineViewer.viewport.applyConstraints(true);
             } else {
                 this.updateDisplayRegionFromBounds(bounds);
             }
