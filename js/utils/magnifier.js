@@ -53,7 +53,7 @@
                     autoResize: options.autoResize,
                     // prevent resizing the magnifier from adding unwanted space around the image
                     minZoomImageRatio: 1,
-                }
+                    mouseNavEnabled: false,                }
             );
 
             // The magnifier outline and overlay magnifier
@@ -413,24 +413,26 @@
         mainViewerPan(event) {
             // Don't pan if the main viewer wouldn't pan normally
             const mainBounds = this.mainViewer.viewport.getBounds();
-            if (mainBounds.width === 1 || mainBounds.height === 1) {
+            if (mainBounds.width >= 1 || mainBounds.height >= 1) {
                 return;
             }
-            const panDelta = event.delta.times(-1);
             const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
-                event.delta.times(-1)
+                event.delta.negate()
             );
-            let bounds, center;
+            let bounds, center, constrainedBounds;
 
             if (this.showInViewer) {
                 const top = parseInt(this.displayRegion.style.top, 10);
                 const left = parseInt(this.displayRegion.style.left, 10);
 
-                this.updateDisplayRegionStyle(
-                    top - panDelta.y,
-                    left - panDelta.x
-                );
-
+                bounds = this.inlineViewer.viewport.getBounds();
+                constrainedBounds = this.inlineViewer.viewport.getConstrainedBounds();
+                if (bounds.x !== constrainedBounds.x) {
+                    panBy.x = 0;
+                }
+                if (bounds.y !== constrainedBounds.y) {
+                    panBy.y = 0;
+                }
                 this.inlineViewer.viewport.panBy(panBy);
                 bounds = this.inlineViewer.viewport.getBounds();
             } else {
