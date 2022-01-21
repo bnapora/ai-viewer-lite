@@ -102,6 +102,19 @@
             this.displayRegionContainer.appendChild(this.displayRegion);
             this.mainViewer.canvas.appendChild(this.displayRegionContainer);
 
+            // A marker / crosshair icon in the OSD navigator for the main
+            // viewer to show where the center of the magnifier is, in the image
+            this.displayRegionCenterMarker = $.makeNeutralElement("div");
+            this.displayRegionCenterMarker.className = "displayregion__center";
+            this.displayRegionCenterMarker.style.position = "absolute";
+            this.displayRegionCenterMarker.style.background = "transparent";
+            this.displayRegionCenterMarker.style.width = "10px";
+            this.displayRegionCenterMarker.style.height = "10px";
+            this.displayRegionCenterMarker.innerHTML = "&#9678;";
+            this.mainViewer.navigator.displayRegionContainer.appendChild(
+                this.displayRegionCenterMarker
+            );
+
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
 
@@ -232,7 +245,6 @@
 
         updateDisplayRegionStyle(top, left, width, height) {
             var style = this.displayRegion.style;
-            style.display = this.viewer.world.getItemCount() ? "block" : "none";
 
             // make sure these are non-negative so IE doesn't throw
             if (top) {
@@ -247,6 +259,19 @@
             if (height) {
                 style.height = Math.round(Math.max(height, 0)) + "px";
             }
+        }
+
+        updateCenterMarkerStyle(topleft) {
+            var navigatorTopLeft =
+                this.mainViewer.navigator.viewport.pixelFromPoint(
+                    topleft,
+                    true
+                );
+            var style = this.displayRegionCenterMarker.style;
+
+            // make sure these are non-negative so IE doesn't throw.
+            style.top = Math.round(Math.max(navigatorTopLeft.y, 0)) + "px";
+            style.left = Math.round(Math.max(navigatorTopLeft.x, 0)) + "px";
         }
 
         updateDisplayRegionFromBounds(bounds) {
@@ -268,6 +293,7 @@
             }
 
             this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
+            this.updateCenterMarkerStyle(bounds.getTopLeft());
         }
 
         clickToZoom(event) {

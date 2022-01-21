@@ -77,6 +77,11 @@ from the viewer underneath it */
     height:  0;
 }
 
+.displayregion__center {
+    font-size: 10px;
+    line-height: 1;
+}
+
 .metrics__name {
     font-weight: 800;
 }
