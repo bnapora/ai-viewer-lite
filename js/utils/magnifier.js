@@ -53,7 +53,8 @@
                     autoResize: options.autoResize,
                     // prevent resizing the magnifier from adding unwanted space around the image
                     minZoomImageRatio: 1,
-                    mouseNavEnabled: false,                }
+                    mouseNavEnabled: false,
+                }
             );
 
             // The magnifier outline and overlay magnifier
@@ -411,18 +412,23 @@
         }
 
         mainViewerPan(event) {
+            // Don't pan if the main viewer wouldn't pan normally
+            const mainBounds = this.mainViewer.viewport.getBounds();
+            if (mainBounds.width >= 1 || mainBounds.height >= 1) {
+                return;
+            }
             const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
                 event.delta.negate()
             );
 
             // if the main viewer couldn't actually go anywhere in one direction,
             // do not pan in that direction
-            const mainBounds = this.mainViewer.viewport.getBounds();
-            const constrainedBounds = this.mainViewer.viewport.getConstrainedBounds();
-            if(mainBounds.x !== constrainedBounds.x) {
+            const constrainedBounds =
+                this.mainViewer.viewport.getConstrainedBounds();
+            if (mainBounds.x !== constrainedBounds.x) {
                 panBy.x = 0;
             }
-            if(mainBounds.y !== constrainedBounds.y) {
+            if (mainBounds.y !== constrainedBounds.y) {
                 panBy.y = 0;
             }
 
@@ -432,8 +438,21 @@
             const center = this.getCenterFromBounds(bounds);
 
             if (this.showInViewer) {
+                var left = parseInt(this.displayRegion.style.left, 10);
+                var top = parseInt(this.displayRegion.style.top, 10);
+                var width = parseInt(this.displayRegion.style.width, 10);
+                var height = parseInt(this.displayRegion.style.width, 10);
+
+                // This is in coordinates relative to the main viewer.
+                var bounds_rect = new $.Rect(left, top, width, height);
+                const center =
+                    this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                        bounds_rect.getCenter()
+                    );
                 this.inlineViewer.viewport.panTo(center);
-                this.inlineViewer.viewport.applyConstraints(true);
+                this.viewer.viewport.fitBounds(
+                    this.inlineViewer.viewport.getBounds()
+                );
             } else {
                 this.updateDisplayRegionFromBounds(bounds);
             }
