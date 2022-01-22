@@ -432,12 +432,12 @@
                 panBy.y = 0;
             }
 
-            this.viewer.viewport.panBy(panBy);
-            this.viewer.viewport.applyConstraints(true);
-            const bounds = this.viewer.viewport.getBounds();
-            const center = this.getCenterFromBounds(bounds);
+            let center;
 
             if (this.showInViewer) {
+                // Similar to when we resize the overlay / inline viewer,
+                // display exactly what is underneath its boundaries in
+                // the main viewer.
                 var left = parseInt(this.displayRegion.style.left, 10);
                 var top = parseInt(this.displayRegion.style.top, 10);
                 var width = parseInt(this.displayRegion.style.width, 10);
@@ -445,7 +445,7 @@
 
                 // This is in coordinates relative to the main viewer.
                 var bounds_rect = new $.Rect(left, top, width, height);
-                const center =
+                center =
                     this.mainViewer.viewport.viewerElementToViewportCoordinates(
                         bounds_rect.getCenter()
                     );
@@ -454,6 +454,10 @@
                     this.inlineViewer.viewport.getBounds()
                 );
             } else {
+                this.viewer.viewport.panBy(panBy);
+                this.viewer.viewport.applyConstraints(true);
+                const bounds = this.viewer.viewport.getBounds();
+                const center = this.getCenterFromBounds(bounds);
                 this.updateDisplayRegionFromBounds(bounds);
             }
         }
