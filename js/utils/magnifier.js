@@ -53,6 +53,7 @@
                     autoResize: options.autoResize,
                     // prevent resizing the magnifier from adding unwanted space around the image
                     minZoomImageRatio: 1,
+                    mouseNavEnabled: false,
                 }
             );
 
@@ -413,39 +414,50 @@
         mainViewerPan(event) {
             // Don't pan if the main viewer wouldn't pan normally
             const mainBounds = this.mainViewer.viewport.getBounds();
-            if (mainBounds.width === 1 || mainBounds.height === 1) {
+            if (mainBounds.width >= 1 || mainBounds.height >= 1) {
                 return;
             }
-            const panDelta = event.delta.times(-1);
             const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
-                event.delta.times(-1)
+                event.delta.negate()
             );
-            let bounds, center;
 
-            if (this.showInViewer) {
-                const top = parseInt(this.displayRegion.style.top, 10);
-                const left = parseInt(this.displayRegion.style.left, 10);
-
-                this.updateDisplayRegionStyle(
-                    top - panDelta.y,
-                    left - panDelta.x
-                );
-
-                this.inlineViewer.viewport.panBy(panBy);
-                bounds = this.inlineViewer.viewport.getBounds();
-            } else {
-                this.viewer.viewport.panBy(panBy);
-                bounds = this.viewer.viewport.getBounds();
+            // if the main viewer couldn't actually go anywhere in one direction,
+            // do not pan in that direction
+            const constrainedBounds =
+                this.mainViewer.viewport.getConstrainedBounds();
+            if (mainBounds.x !== constrainedBounds.x) {
+                panBy.x = 0;
+            }
+            if (mainBounds.y !== constrainedBounds.y) {
+                panBy.y = 0;
             }
 
-            center = this.getCenterFromBounds(bounds);
-
-            this.viewer.viewport.panTo(center);
+            let center;
 
             if (this.showInViewer) {
+                // Similar to when we resize the overlay / inline viewer,
+                // display exactly what is underneath its boundaries in
+                // the main viewer.
+                var left = parseInt(this.displayRegion.style.left, 10);
+                var top = parseInt(this.displayRegion.style.top, 10);
+                var width = parseInt(this.displayRegion.style.width, 10);
+                var height = parseInt(this.displayRegion.style.width, 10);
+
+                // This is in coordinates relative to the main viewer.
+                var bounds_rect = new $.Rect(left, top, width, height);
+                center =
+                    this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                        bounds_rect.getCenter()
+                    );
                 this.inlineViewer.viewport.panTo(center);
-                this.viewer.viewport.fitBounds(bounds, true);
+                this.viewer.viewport.fitBounds(
+                    this.inlineViewer.viewport.getBounds()
+                );
             } else {
+                this.viewer.viewport.panBy(panBy);
+                this.viewer.viewport.applyConstraints(true);
+                const bounds = this.viewer.viewport.getBounds();
+                const center = this.getCenterFromBounds(bounds);
                 this.updateDisplayRegionFromBounds(bounds);
             }
         }
