@@ -78,8 +78,9 @@ from the viewer underneath it */
 }
 
 .displayregion__center {
+    color: rgb(153, 0, 0);
     font-size: 10px;
-    line-height: 1;
+    line-height: 0;
 }
 
 .metrics__name {
