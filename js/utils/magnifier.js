@@ -102,6 +102,20 @@
             this.displayRegionContainer.appendChild(this.displayRegion);
             this.mainViewer.canvas.appendChild(this.displayRegionContainer);
 
+            // A marker / crosshair icon in the OSD navigator for the main
+            // viewer to show where the center of the magnifier is, in the image
+            this.displayRegionCenterMarker = $.makeNeutralElement("div");
+            this.displayRegionCenterMarker.className = "displayregion__center";
+            this.displayRegionCenterMarker.style.position = "absolute";
+            this.displayRegionCenterMarker.style.background = "transparent";
+            this.displayRegionCenterMarker.style.width = "10px";
+            this.displayRegionCenterMarker.style.height = "10px";
+            this.displayRegionCenterMarker.style.margin = "0 0 0 -5px";
+            this.displayRegionCenterMarker.innerHTML = "&#9678;";
+            this.mainViewer.navigator.displayRegionContainer.appendChild(
+                this.displayRegionCenterMarker
+            );
+
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
 
@@ -232,7 +246,6 @@
 
         updateDisplayRegionStyle(top, left, width, height) {
             var style = this.displayRegion.style;
-            style.display = this.viewer.world.getItemCount() ? "block" : "none";
 
             // make sure these are non-negative so IE doesn't throw
             if (top) {
@@ -247,6 +260,19 @@
             if (height) {
                 style.height = Math.round(Math.max(height, 0)) + "px";
             }
+        }
+
+        updateCenterMarkerStyle(center) {
+            var navigatorCenter =
+                this.mainViewer.navigator.viewport.pixelFromPoint(
+                    center,
+                    true
+                );
+            var style = this.displayRegionCenterMarker.style;
+
+            // make sure these are non-negative so IE doesn't throw.
+            style.top = Math.round(Math.max(navigatorCenter.y, 0)) + "px";
+            style.left = Math.round(Math.max(navigatorCenter.x, 0)) + "px";
         }
 
         updateDisplayRegionFromBounds(bounds) {
@@ -268,6 +294,7 @@
             }
 
             this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
+            this.updateCenterMarkerStyle(bounds.getCenter());
         }
 
         clickToZoom(event) {
@@ -295,6 +322,7 @@
 
                 this.viewer.viewport.fitBounds(bounds);
                 this.updateDisplayRegionStyle(top, left, width, height);
+                this.updateCenterMarkerStyle(bounds.getCenter());
             } else {
                 bounds = this.viewer.viewport.getBounds();
 
@@ -314,10 +342,12 @@
             this.inlineViewer.viewport.panBy(
                 this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
             );
+            var bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(
-                this.inlineViewer.viewport.getBounds(),
+                bounds,
                 true
             );
+            this.updateCenterMarkerStyle(bounds.getCenter());
         }
 
         resizeRegion(event) {
@@ -385,6 +415,7 @@
             this.viewer.viewport.fitBounds(
                 this.inlineViewer.viewport.getBounds()
             );
+            this.updateCenterMarkerStyle(newBounds.getTopLeft());
         }
 
         mainViewerZoom(refPoint = null) {
@@ -401,6 +432,7 @@
                 center = this.getCenterFromBounds(bounds);
                 this.inlineViewer.viewport.panTo(center);
                 this.viewer.viewport.fitBounds(bounds);
+                this.updateCenterMarkerStyle(bounds.getCenter());
             } else {
                 // inline / overlay viewer is invisibly pinned to the sidebar viewer
                 bounds = this.viewer.viewport.getBounds(true);
@@ -453,6 +485,7 @@
                 this.viewer.viewport.fitBounds(
                     this.inlineViewer.viewport.getBounds()
                 );
+                this.updateCenterMarkerStyle(bounds.getCenter());
             } else {
                 this.viewer.viewport.panBy(panBy);
                 this.viewer.viewport.applyConstraints(true);
@@ -481,6 +514,7 @@
                     // Event handing for when the inline magnifier is active
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
+                    this.updateCenterMarkerStyle(bounds.getCenter());
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds();
