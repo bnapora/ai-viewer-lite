@@ -332,17 +332,26 @@
         }
 
         moveRegion(event) {
-            var top = parseInt(this.displayRegion.style.top, 10);
-            var left = parseInt(this.displayRegion.style.left, 10);
+            const top = parseInt(this.displayRegion.style.top, 10);
+            const left = parseInt(this.displayRegion.style.left, 10);
+
+            const newTop = top + event.delta.y
+            const newLeft = left + event.delta.x
+
+            const mainViewerBounds = this.mainViewer.viewport.viewportToViewerElementRectangle(this.mainViewer.viewport.getBounds())
+
+            if(!mainViewerBounds.containsPoint(new $.Point(newLeft + 20, newTop + 20))) {
+                return;
+            }
 
             this.updateDisplayRegionStyle(
-                top + event.delta.y,
-                left + event.delta.x
+                newTop,
+                newLeft
             );
             this.inlineViewer.viewport.panBy(
                 this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
             );
-            var bounds = this.inlineViewer.viewport.getBounds();
+            const bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(
                 bounds,
                 true
