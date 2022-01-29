@@ -431,24 +431,6 @@
 
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
-
-            let bounds, center;
-
-            if (this.showInViewer) {
-                // Event handing for when the inline magnifier is active
-                bounds = this.inlineViewer.viewport.getBounds(true);
-                center = this.getCenterFromBounds(bounds);
-                this.inlineViewer.viewport.panTo(center);
-                this.viewer.viewport.fitBounds(bounds);
-                this.updateCenterMarkerStyle(bounds.getCenter());
-            } else {
-                // inline / overlay viewer is invisibly pinned to the sidebar viewer
-                bounds = this.viewer.viewport.getBounds(true);
-                this.updateDisplayRegionFromBounds(bounds);
-                center = this.mainViewer.viewport.getCenter();
-                this.viewer.viewport.panTo(center);
-                this.inlineViewer.viewport.panTo(center);
-            }
         }
 
         mainViewerPan(event) {
