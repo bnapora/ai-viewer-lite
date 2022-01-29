@@ -81,7 +81,8 @@
             this.regionResizeHangle = $.makeNeutralElement("div");
             this.regionResizeHangle.className = "displayregion__resize";
             this.regionResizeHangle.style.position = "absolute";
-            this.regionResizeHangle.style.background = "rgba(255, 255, 255, 0.5)";
+            this.regionResizeHangle.style.background =
+                "rgba(255, 255, 255, 0.5)";
 
             // Invisible container for the overlay magnifier and controls
             this.displayRegionContainer = $.makeNeutralElement("div");
@@ -118,6 +119,8 @@
 
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
+
+            this.recordPreviousDisplayRegionPosition();
 
             // Actually instantiate the magnifier viewers now
             this.viewer = $(options);
@@ -157,6 +160,10 @@
             const self = this;
             this.mainViewer.addHandler("zoom", function (event) {
                 self.mainViewerZoom(event.refPoint);
+            });
+
+            this.mainViewer.addHandler("viewport-change", function (event) {
+                self.recordPreviousDisplayRegionPosition();
             });
 
             this.mainViewer.addHandler("pan", function (event) {
@@ -261,12 +268,17 @@
             }
         }
 
+        recordPreviousDisplayRegionPosition() {
+            this.displayRegionTop = parseInt(this.displayRegion.style.top, 10);
+            this.displayRegionLeft = parseInt(
+                this.displayRegion.style.left,
+                10
+            );
+        }
+
         updateCenterMarkerStyle(center) {
             var navigatorCenter =
-                this.mainViewer.navigator.viewport.pixelFromPoint(
-                    center,
-                    true
-                );
+                this.mainViewer.navigator.viewport.pixelFromPoint(center, true);
             var style = this.displayRegionCenterMarker.style;
 
             // make sure these are non-negative so IE doesn't throw.
@@ -334,27 +346,28 @@
             const top = parseInt(this.displayRegion.style.top, 10);
             const left = parseInt(this.displayRegion.style.left, 10);
 
-            const newTop = top + event.delta.y
-            const newLeft = left + event.delta.x
+            const newTop = top + event.delta.y;
+            const newLeft = left + event.delta.x;
 
-            const mainViewerBounds = this.mainViewer.viewport.viewportToViewerElementRectangle(this.mainViewer.viewport.getBounds())
+            const mainViewerBounds =
+                this.mainViewer.viewport.viewportToViewerElementRectangle(
+                    this.mainViewer.viewport.getBounds()
+                );
 
-            if(!mainViewerBounds.containsPoint(new $.Point(newLeft + 20, newTop + 20))) {
+            if (
+                !mainViewerBounds.containsPoint(
+                    new $.Point(newLeft + 20, newTop + 20)
+                )
+            ) {
                 return;
             }
 
-            this.updateDisplayRegionStyle(
-                newTop,
-                newLeft
-            );
+            this.updateDisplayRegionStyle(newTop, newLeft);
             this.inlineViewer.viewport.panBy(
                 this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
             );
             const bounds = this.inlineViewer.viewport.getBounds();
-            this.viewer.viewport.fitBounds(
-                bounds,
-                true
-            );
+            this.viewer.viewport.fitBounds(bounds, true);
             this.updateCenterMarkerStyle(bounds.getCenter());
         }
 
@@ -455,7 +468,18 @@
                 this.viewer.viewport.fitBounds(bounds);
                 this.updateCenterMarkerStyle(bounds.getCenter());
             } else {
-                console.log(bounds_rect);
+                const delta = new $.Point(
+                    this.displayRegionLeft - left,
+                    this.displayRegionTop - top
+                );
+                this.viewer.viewport.panBy(
+                    this.mainViewer.viewport.deltaPointsFromPixels(delta)
+                );
+                this.viewer.viewport.applyConstraints();
+
+                const bounds = this.viewer.viewport.getBounds();
+                this.inlineViewer.viewport.fitBounds(bounds);
+                this.updateDisplayRegionFromBounds(bounds);
             }
         }
 
