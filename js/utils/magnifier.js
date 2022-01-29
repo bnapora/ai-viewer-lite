@@ -81,7 +81,7 @@
             this.regionResizeHangle = $.makeNeutralElement("div");
             this.regionResizeHangle.className = "displayregion__resize";
             this.regionResizeHangle.style.position = "absolute";
-            this.regionResizeHangle.style.background = "#ccc";
+            this.regionResizeHangle.style.background = "rgba(255, 255, 255, 0.5)";
 
             // Invisible container for the overlay magnifier and controls
             this.displayRegionContainer = $.makeNeutralElement("div");
