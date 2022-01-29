@@ -158,9 +158,8 @@
             this.mainViewer.addHandler("zoom", function (event) {
                 self.mainViewerZoom(event.refPoint);
             });
-            this.mainViewer.addHandler("canvas-drag", function (event) {
-                // I'd listen to pan, but this gives us a delta, which gives
-                // more information about how to position the display region.
+
+            this.mainViewer.addHandler("pan", function (event) {
                 self.mainViewerPan(event);
             });
 
@@ -453,54 +452,28 @@
         }
 
         mainViewerPan(event) {
-            // Don't pan if the main viewer wouldn't pan normally
-            const mainBounds = this.mainViewer.viewport.getBounds();
-            if (mainBounds.width >= 1 || mainBounds.height >= 1) {
-                return;
-            }
-            const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
-                event.delta.negate()
-            );
+            // Similar to when we resize the overlay / inline viewer,
+            // display exactly what is underneath its boundaries in
+            // the main viewer.
+            const left = parseInt(this.displayRegion.style.left, 10);
+            const top = parseInt(this.displayRegion.style.top, 10);
+            const width = parseInt(this.displayRegion.style.width, 10);
+            const height = parseInt(this.displayRegion.style.width, 10);
 
-            // if the main viewer couldn't actually go anywhere in one direction,
-            // do not pan in that direction
-            const constrainedBounds =
-                this.mainViewer.viewport.getConstrainedBounds();
-            if (mainBounds.x !== constrainedBounds.x) {
-                panBy.x = 0;
-            }
-            if (mainBounds.y !== constrainedBounds.y) {
-                panBy.y = 0;
-            }
-
-            let center;
+            // This is in coordinates relative to the main viewer.
+            const bounds_rect = new $.Rect(left, top, width, height);
+            const center =
+                this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                    bounds_rect.getCenter()
+                );
 
             if (this.showInViewer) {
-                // Similar to when we resize the overlay / inline viewer,
-                // display exactly what is underneath its boundaries in
-                // the main viewer.
-                var left = parseInt(this.displayRegion.style.left, 10);
-                var top = parseInt(this.displayRegion.style.top, 10);
-                var width = parseInt(this.displayRegion.style.width, 10);
-                var height = parseInt(this.displayRegion.style.width, 10);
-
-                // This is in coordinates relative to the main viewer.
-                var bounds_rect = new $.Rect(left, top, width, height);
-                center =
-                    this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                        bounds_rect.getCenter()
-                    );
-                this.inlineViewer.viewport.panTo(center);
-                this.viewer.viewport.fitBounds(
-                    this.inlineViewer.viewport.getBounds()
-                );
+                this.inlineViewer.viewport.panTo(center, event.immediately);
+                const bounds = this.inlineViewer.viewport.getBounds();
+                this.viewer.viewport.fitBounds(bounds);
                 this.updateCenterMarkerStyle(bounds.getCenter());
             } else {
-                this.viewer.viewport.panBy(panBy);
-                this.viewer.viewport.applyConstraints(true);
-                const bounds = this.viewer.viewport.getBounds();
-                const center = this.getCenterFromBounds(bounds);
-                this.updateDisplayRegionFromBounds(bounds);
+                console.log(bounds_rect);
             }
         }
 
