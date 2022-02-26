@@ -558,6 +558,13 @@
             $.addClass(this.element, inactiveClass);
         }
 
+        toggle10HPF() {
+            // The formula I need to use here is that the magnifier will be at max zoom always,
+            // and it has this many pixels per side:
+            // sqrt(2377 / mppX * mppY)
+            // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
+        }
+
         toggleInViewer() {
             if (this.showInViewer) {
                 this.showInViewer = false;
