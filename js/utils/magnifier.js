@@ -14,6 +14,10 @@
     const inactiveClass = "magnifier--inactive";
     const roundId = "magnifier__round";
     const ratioId = "magnifier__ratio";
+    const hpfSettingsId = "magnifier__hpf-settings";
+    const toggle10HpfId = "magnifier__10hpf";
+    const mpp_xId = "magnifier__10hpf-mpp-x";
+    const mpp_yId = "magnifier__10hpf-mpp-y";
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -23,6 +27,8 @@
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
+            this.hpf = document.getElementById(toggle10HpfId).checked;
+            this.hpfSettings = document.getElementById(hpfSettingsId);
             this.markers = {};
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
@@ -132,6 +138,9 @@
             );
 
             if (this.showInViewer) {
+                document.getElementById(toggle10HpfId).value = false;
+                this.hpf = false;
+                this.hpfSettings.setAttribute("disabled", true);
                 this.initializeInlineMagnifier();
             } else {
                 $.addClass(this.inViewerElement, inactiveClass);
@@ -143,6 +152,12 @@
             if (this.round) {
                 $.addClass(this.element, "round");
                 $.addClass(this.displayRegion, "round");
+            }
+
+            if (this.hpf) {
+                document.getElementById(ratioId).setAttribute("disabled", true);
+                document.getElementById(checkboxId).setAttribute("disabled", true);
+                this.initializeHpf();
             }
 
             // Move and resize handlers
@@ -214,6 +229,12 @@
                 .addEventListener("change", function () {
                     self.ratio = event.target.value;
                     self.update();
+                });
+
+            document
+                .getElementById(toggle10HpfId)
+                .addEventListener("change", function () {
+                    self.toggle10HPF();
                 });
 
             this.update();
@@ -340,6 +361,7 @@
                 this.updateDisplayRegionFromBounds(bounds);
                 this.inlineViewer.viewport.fitBounds(bounds);
             }
+            this.recordPreviousDisplayRegionPosition()
         }
 
         moveRegion(event) {
@@ -369,6 +391,7 @@
             const bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(bounds, true);
             this.updateCenterMarkerStyle(bounds.getCenter());
+            this.recordPreviousDisplayRegionPosition()
         }
 
         resizeRegion(event) {
@@ -440,10 +463,16 @@
         }
 
         mainViewerZoom(refPoint = null) {
-            const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
+            let zoomTarget;
+            if(this.hpf){
+                zoomTarget = this.hpfZoom;
+            } else {
+                zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
+            }
 
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
+            this.recordPreviousDisplayRegionPosition();
         }
 
         mainViewerPan(event) {
@@ -490,8 +519,12 @@
                 this.inlineViewer.viewport
             ) {
                 // things we always want to do
-                const zoomTarget =
-                    this.mainViewer.viewport.getZoom() * this.ratio;
+                let zoomTarget;
+                if(this.hpf){
+                    zoomTarget = this.hpfZoom;
+                } else {
+                    zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
+                }
 
                 this.viewer.viewport.zoomTo(zoomTarget);
                 this.inlineViewer.viewport.zoomTo(zoomTarget);
@@ -558,9 +591,66 @@
             $.addClass(this.element, inactiveClass);
         }
 
+        initializeHpf() {
+            // The formula I need to use here is that the region visible in the magnifier
+            // has this many pixels per side at its maximum zoom level:
+            // sqrt(2377 / mppX * mppY)
+            // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
+            // We are assuming a square viewer for now.
+            const mppX = document.getElementById(mpp_xId).value;
+            const mppY = document.getElementById(mpp_yId).value;
+            const side = Math.sqrt(2377 / (mppX * mppY));
+            // where is the viewport on the actual image right now?
+            const bounds = this.viewer.world
+                .getItemAt(0)
+                .viewportToImageRectangle(
+                    this.viewer.viewport.getBounds(true)
+                );
+
+            // where should the bounds be, then?
+            const hpfBounds = this.viewer.world
+                .getItemAt(0)
+                .imageToViewportRectangle(bounds.x, bounds.y, side, side);
+
+            this.viewer.viewport.fitBounds(hpfBounds);
+            this.updateDisplayRegionFromBounds(hpfBounds);
+
+            this.hpfZoom = this.viewer.viewport.getZoom();
+        }
+
+        toggle10HPF() {
+            if (this.hpf) {
+                this.hpf = false;
+
+                // disable mutually exclusive UI
+                document.getElementById(ratioId).removeAttribute("disabled");
+                document.getElementById(checkboxId).removeAttribute("disabled");
+
+                // If we are showing the overlay, get out of it
+                if (this.showInViewer) {
+                    this.toggleInViewer();
+                }
+
+                const bounds = this.viewer.viewport.getBounds(true);
+
+                this.updateDisplayRegionFromBounds(bounds);
+                //re-sync the inline viewer to this, invisibly
+                this.inlineViewer.viewport.panTo(bounds.getCenter());
+                this.update();
+            } else {
+                this.hpf = true;
+                document.getElementById(ratioId).setAttribute("disabled", true);
+                document
+                    .getElementById(checkboxId)
+                    .setAttribute("disabled", true);
+                this.initializeHpf();
+            }
+        }
+
         toggleInViewer() {
             if (this.showInViewer) {
                 this.showInViewer = false;
+                this.hpfSettings.removeAttribute("disabled");
                 $.removeClass(this.inViewerElement, activeClass);
                 $.addClass(this.inViewerElement, inactiveClass);
                 this.inlineViewer.setVisible(false);
@@ -577,6 +667,10 @@
                 //re-sync the inline viewer to this, invisibly
                 this.inlineViewer.viewport.panTo(bounds.getCenter());
             } else {
+                // This is mutually exclusive with HPF
+                document.getElementById(toggle10HpfId).value = false;
+                this.hpf = false;
+                this.hpfSettings.setAttribute("disabled", true);
                 this.showInViewer = true;
                 this.initializeInlineMagnifier();
             }

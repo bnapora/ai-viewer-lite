@@ -488,15 +488,30 @@
                                     <div class="panel-body">
                                         <div id="ISS_magnifier" class="magnifier">
                                         </div>
-                                        <h4>Settings</h4>
+                                        <h3>Settings</h3>
                                         <div class="magnifier__setting">
+                                            <fieldset id="magnifier__hpf-settings">
+                                                <legend><h4>10 High Powered Field Settings</h4></legend>
+                                                <label>
+                                                    <input type="checkbox" id="magnifier__10hpf">
+                                                    Pin magnification to 10HPF
+                                                </label>
+                                                <label>
+                                                    <input type="number" id="magnifier__10hpf-mpp-x" value="0.235">
+                                                    Base image microns per pixel (x-axis)
+                                                </label>
+                                                <label>
+                                                    <input type="number" id="magnifier__10hpf-mpp-y" value="0.235">
+                                                    Base image microns per pixel (y-axis)
+                                                </label>
+                                            </fieldset>
                                             <label>
                                                 <input type="checkbox" id="magnifier__show-in-viewer">
                                                 Show magnifier in viewer
                                             </label>
                                         </div>
                                         <div class="magnifier__setting">
-                                            <h5>Magnifier shape</h5>
+                                            <h4>Magnifier shape</h4>
                                             <label>
                                                 <input type="radio" name="magnifier__shape" id="magnifier__square" checked>
                                                 Square
