@@ -14,6 +14,7 @@
     const inactiveClass = "magnifier--inactive";
     const roundId = "magnifier__round";
     const ratioId = "magnifier__ratio";
+    const hpfSettingsId = "magnifier__hpf-settings";
     const toggle10HpfId = "magnifier__10hpf";
     const mpp_xId = "magnifier__10hpf-mpp-x";
     const mpp_yId = "magnifier__10hpf-mpp-y";
@@ -27,6 +28,7 @@
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
             this.hpf = document.getElementById(toggle10HpfId).checked;
+            this.hpfSettings = document.getElementById(hpfSettingsId);
             this.markers = {};
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
@@ -136,6 +138,9 @@
             );
 
             if (this.showInViewer) {
+                document.getElementById(toggle10HpfId).value = false;
+                this.hpf = false;
+                this.hpfSettings.setAttribute("disabled", true);
                 this.initializeInlineMagnifier();
             } else {
                 $.addClass(this.inViewerElement, inactiveClass);
@@ -151,6 +156,7 @@
 
             if (this.hpf) {
                 document.getElementById(ratioId).setAttribute("disabled");
+                document.getElementById(checkboxId).setAttribute("disabled");
             }
 
             // Move and resize handlers
@@ -224,9 +230,11 @@
                     self.update();
                 });
 
-            document.getElementById(toggle10HpfId).addEventListener("change", function() {
-                self.toggle10HPF();
-            });
+            document
+                .getElementById(toggle10HpfId)
+                .addEventListener("change", function () {
+                    self.toggle10HPF();
+                });
 
             this.update();
         }
@@ -571,9 +579,18 @@
         }
 
         toggle10HPF() {
-            if(this.hpf) {
+            if (this.hpf) {
                 this.hpf = false;
-                document.getElementById(ratioId).disabled = false;
+
+                // disable mutually exclusive UI
+                document.getElementById(ratioId).removeAttribute("disabled");
+                document.getElementById(checkboxId).removeAttribute("disabled");
+
+                // If we are showing the overlay, get out of it
+                if (this.showInViewer) {
+                    this.toggleInViewer();
+                }
+
                 this.ratio = document.getElementById(ratioId).value;
 
                 const bounds = this.viewer.viewport.getBounds(true);
@@ -585,6 +602,9 @@
             } else {
                 this.hpf = true;
                 document.getElementById(ratioId).setAttribute("disabled", true);
+                document
+                    .getElementById(checkboxId)
+                    .setAttribute("disabled", true);
 
                 // The formula I need to use here is that the region visible in the magnifier
                 // has this many pixels per side at its maximum zoom level:
@@ -595,21 +615,29 @@
                 const mppY = document.getElementById(mpp_yId).value;
                 const side = Math.sqrt(2377 / (mppX * mppY));
                 // where is the viewport on the actual image right now?
-                const bounds = this.inlineViewer.world.getItemAt(0).viewportToImageRectangle(this.inlineViewer.viewport.getBounds(true));
+                const bounds = this.viewer.world
+                    .getItemAt(0)
+                    .viewportToImageRectangle(
+                        this.viewer.viewport.getBounds(true)
+                    );
 
                 // where should the bounds be, then?
-                const hpfBounds = this.inlineViewer.world.getItemAt(0).imageToViewportRectangle(bounds.x, bounds.y, side, side);
+                const hpfBounds = this.viewer.world
+                    .getItemAt(0)
+                    .imageToViewportRectangle(bounds.x, bounds.y, side, side);
 
-                if (this.showInViewer) {
-                    this.inlineViewer.viewport.fitBounds(hpfBounds);
-                    this.inlineViewer.viewport.panTo(hpfBounds.getCenter());
-                    this.viewer.viewport.fitBounds(this.inlineViewer.viewport.getBounds());
-                } else {
-                    this.viewer.viewport.fitBounds(hpfBounds);
-                    this.updateDisplayRegionFromBounds(hpfBounds);
-                }
-                const hpfRatio = this.inlineViewer.viewport.getZoom(true) / this.mainViewer.viewport.getZoom(true);
-                console.log("hpf ratio", hpfRatio, this.inlineViewer.viewport.getZoom(true), this.mainViewer.viewport.getZoom(true));
+                this.viewer.viewport.fitBounds(hpfBounds);
+                this.updateDisplayRegionFromBounds(hpfBounds);
+
+                const hpfRatio =
+                    this.viewer.viewport.getZoom(true) /
+                    this.mainViewer.viewport.getZoom(true);
+                console.log(
+                    "hpf ratio",
+                    hpfRatio,
+                    this.viewer.viewport.getZoom(true),
+                    this.mainViewer.viewport.getZoom(true)
+                );
                 this.ratio = hpfRatio;
             }
         }
@@ -617,6 +645,7 @@
         toggleInViewer() {
             if (this.showInViewer) {
                 this.showInViewer = false;
+                this.hpfSettings.removeAttribute("disabled");
                 $.removeClass(this.inViewerElement, activeClass);
                 $.addClass(this.inViewerElement, inactiveClass);
                 this.inlineViewer.setVisible(false);
@@ -633,6 +662,10 @@
                 //re-sync the inline viewer to this, invisibly
                 this.inlineViewer.viewport.panTo(bounds.getCenter());
             } else {
+                // This is mutually exclusive with HPF
+                document.getElementById(toggle10HpfId).value = false;
+                this.hpf = false;
+                this.hpfSettings.setAttribute("disabled", true);
                 this.showInViewer = true;
                 this.initializeInlineMagnifier();
             }
