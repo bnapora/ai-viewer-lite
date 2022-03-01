@@ -361,6 +361,7 @@
                 this.updateDisplayRegionFromBounds(bounds);
                 this.inlineViewer.viewport.fitBounds(bounds);
             }
+            this.recordPreviousDisplayRegionPosition()
         }
 
         moveRegion(event) {
@@ -390,6 +391,7 @@
             const bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(bounds, true);
             this.updateCenterMarkerStyle(bounds.getCenter());
+            this.recordPreviousDisplayRegionPosition()
         }
 
         resizeRegion(event) {
@@ -464,13 +466,13 @@
             let zoomTarget;
             if(this.hpf){
                 zoomTarget = this.hpfZoom;
-                console.log(zoomTarget, refPoint)
             } else {
                 zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
             }
 
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
+            this.recordPreviousDisplayRegionPosition();
         }
 
         mainViewerPan(event) {
