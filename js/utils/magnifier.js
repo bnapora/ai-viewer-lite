@@ -155,8 +155,9 @@
             }
 
             if (this.hpf) {
-                document.getElementById(ratioId).setAttribute("disabled");
-                document.getElementById(checkboxId).setAttribute("disabled");
+                document.getElementById(ratioId).setAttribute("disabled", true);
+                document.getElementById(checkboxId).setAttribute("disabled", true);
+                this.initializeHpf();
             }
 
             // Move and resize handlers
@@ -460,7 +461,13 @@
         }
 
         mainViewerZoom(refPoint = null) {
-            const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
+            let zoomTarget;
+            if(this.hpf){
+                zoomTarget = this.hpfZoom;
+                console.log(zoomTarget, refPoint)
+            } else {
+                zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
+            }
 
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
@@ -510,8 +517,12 @@
                 this.inlineViewer.viewport
             ) {
                 // things we always want to do
-                const zoomTarget =
-                    this.mainViewer.viewport.getZoom() * this.ratio;
+                let zoomTarget;
+                if(this.hpf){
+                    zoomTarget = this.hpfZoom;
+                } else {
+                    zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
+                }
 
                 this.viewer.viewport.zoomTo(zoomTarget);
                 this.inlineViewer.viewport.zoomTo(zoomTarget);
@@ -578,6 +589,33 @@
             $.addClass(this.element, inactiveClass);
         }
 
+        initializeHpf() {
+            // The formula I need to use here is that the region visible in the magnifier
+            // has this many pixels per side at its maximum zoom level:
+            // sqrt(2377 / mppX * mppY)
+            // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
+            // We are assuming a square viewer for now.
+            const mppX = document.getElementById(mpp_xId).value;
+            const mppY = document.getElementById(mpp_yId).value;
+            const side = Math.sqrt(2377 / (mppX * mppY));
+            // where is the viewport on the actual image right now?
+            const bounds = this.viewer.world
+                .getItemAt(0)
+                .viewportToImageRectangle(
+                    this.viewer.viewport.getBounds(true)
+                );
+
+            // where should the bounds be, then?
+            const hpfBounds = this.viewer.world
+                .getItemAt(0)
+                .imageToViewportRectangle(bounds.x, bounds.y, side, side);
+
+            this.viewer.viewport.fitBounds(hpfBounds);
+            this.updateDisplayRegionFromBounds(hpfBounds);
+
+            this.hpfZoom = this.viewer.viewport.getZoom();
+        }
+
         toggle10HPF() {
             if (this.hpf) {
                 this.hpf = false;
@@ -591,8 +629,6 @@
                     this.toggleInViewer();
                 }
 
-                this.ratio = document.getElementById(ratioId).value;
-
                 const bounds = this.viewer.viewport.getBounds(true);
 
                 this.updateDisplayRegionFromBounds(bounds);
@@ -605,40 +641,7 @@
                 document
                     .getElementById(checkboxId)
                     .setAttribute("disabled", true);
-
-                // The formula I need to use here is that the region visible in the magnifier
-                // has this many pixels per side at its maximum zoom level:
-                // sqrt(2377 / mppX * mppY)
-                // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
-                // We are assuming a square viewer for now.
-                const mppX = document.getElementById(mpp_xId).value;
-                const mppY = document.getElementById(mpp_yId).value;
-                const side = Math.sqrt(2377 / (mppX * mppY));
-                // where is the viewport on the actual image right now?
-                const bounds = this.viewer.world
-                    .getItemAt(0)
-                    .viewportToImageRectangle(
-                        this.viewer.viewport.getBounds(true)
-                    );
-
-                // where should the bounds be, then?
-                const hpfBounds = this.viewer.world
-                    .getItemAt(0)
-                    .imageToViewportRectangle(bounds.x, bounds.y, side, side);
-
-                this.viewer.viewport.fitBounds(hpfBounds);
-                this.updateDisplayRegionFromBounds(hpfBounds);
-
-                const hpfRatio =
-                    this.viewer.viewport.getZoom(true) /
-                    this.mainViewer.viewport.getZoom(true);
-                console.log(
-                    "hpf ratio",
-                    hpfRatio,
-                    this.viewer.viewport.getZoom(true),
-                    this.mainViewer.viewport.getZoom(true)
-                );
-                this.ratio = hpfRatio;
+                this.initializeHpf();
             }
         }
 
