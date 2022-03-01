@@ -16,8 +16,9 @@
     const ratioId = "magnifier__ratio";
     const hpfSettingsId = "magnifier__hpf-settings";
     const toggle10HpfId = "magnifier__10hpf";
-    const mpp_xId = "magnifier__10hpf-mpp-x";
-    const mpp_yId = "magnifier__10hpf-mpp-y";
+    const mppId = "magnifier__10hpf-mpp";
+    const hpf_magFactorId = "magnifier__10hpf-magnification";
+    const hpf_fieldId = "magnifier__10hpf-field-number"
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -597,18 +598,26 @@
             // sqrt(2377 / mppX * mppY)
             // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
             // We are assuming a square viewer for now.
-            const mppX = document.getElementById(mpp_xId).value;
-            const mppY = document.getElementById(mpp_yId).value;
-            const side = Math.sqrt(2377 / (mppX * mppY));
+            const mppX = document.getElementById(mppId).value;
+            // this field number is in millimeters; convert to microns, but
+            // divide by 2, because we need a radius to calculate area, and this is
+            // the diameter of a round ocular field.
+            const field = document.getElementById(hpf_fieldId).value * (1000 / 2);
+            const mag = document.getElementById(hpf_magFactorId).value;
+
+            const hpfAreaRadius = field / mag;
+            // To simulate a 10 HPF field of view, multiply the area covered by 10.
+            const hpfArea = Math.PI * (hpfAreaRadius * hpfAreaRadius) * mag;
+            const side = Math.sqrt(hpfArea / (mppX * mppX));
+
             // where is the viewport on the actual image right now?
-            const bounds = this.viewer.world
+            const bounds = this.mainViewer.world
                 .getItemAt(0)
                 .viewportToImageRectangle(
                     this.viewer.viewport.getBounds(true)
                 );
-
             // where should the bounds be, then?
-            const hpfBounds = this.viewer.world
+            const hpfBounds = this.mainViewer.world
                 .getItemAt(0)
                 .imageToViewportRectangle(bounds.x, bounds.y, side, side);
 
