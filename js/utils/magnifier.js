@@ -581,6 +581,7 @@
                 this.updateDisplayRegionFromBounds(bounds);
                 //re-sync the inline viewer to this, invisibly
                 this.inlineViewer.viewport.panTo(bounds.getCenter());
+                this.update();
             } else {
                 this.hpf = true;
                 document.getElementById(ratioId).setAttribute("disabled", true);
@@ -593,7 +594,6 @@
                 const mppX = document.getElementById(mpp_xId).value;
                 const mppY = document.getElementById(mpp_yId).value;
                 const side = Math.sqrt(2377 / (mppX * mppY));
-                console.log(this.viewer.viewport.getZoom(), this.mainViewer.viewport.getZoom())
                 // where is the viewport on the actual image right now?
                 const bounds = this.inlineViewer.world.getItemAt(0).viewportToImageRectangle(this.inlineViewer.viewport.getBounds(true));
 
@@ -608,8 +608,8 @@
                     this.viewer.viewport.fitBounds(hpfBounds);
                     this.updateDisplayRegionFromBounds(hpfBounds);
                 }
-                const hpfRatio = this.inlineViewer.viewport.getZoom(true) / this.mainViewer.viewport.getZoom();
-                console.log("hpf ratio", hpfRatio, this.inlineViewer.viewport.getZoom(true), this.mainViewer.viewport.getZoom());
+                const hpfRatio = this.inlineViewer.viewport.getZoom(true) / this.mainViewer.viewport.getZoom(true);
+                console.log("hpf ratio", hpfRatio, this.inlineViewer.viewport.getZoom(true), this.mainViewer.viewport.getZoom(true));
                 this.ratio = hpfRatio;
             }
         }
