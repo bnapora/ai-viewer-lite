@@ -14,6 +14,9 @@
     const inactiveClass = "magnifier--inactive";
     const roundId = "magnifier__round";
     const ratioId = "magnifier__ratio";
+    const toggle10HpfId = "magnifier__10hpf";
+    const mpp_xId = "magnifier__10hpf-mpp-x";
+    const mpp_yId = "magnifier__10hpf-mpp-y";
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -23,6 +26,7 @@
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
+            this.hpf = document.getElementById(toggle10HpfId).checked;
             this.markers = {};
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
@@ -145,6 +149,10 @@
                 $.addClass(this.displayRegion, "round");
             }
 
+            if (this.hpf) {
+                document.getElementById(ratioId).setAttribute("disabled");
+            }
+
             // Move and resize handlers
             new $.MouseTracker({
                 element: this.regionMoveHangle,
@@ -215,6 +223,10 @@
                     self.ratio = event.target.value;
                     self.update();
                 });
+
+            document.getElementById(toggle10HpfId).addEventListener("change", function() {
+                self.toggle10HPF();
+            });
 
             this.update();
         }
@@ -559,10 +571,47 @@
         }
 
         toggle10HPF() {
-            // The formula I need to use here is that the magnifier will be at max zoom always,
-            // and it has this many pixels per side:
-            // sqrt(2377 / mppX * mppY)
-            // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
+            if(this.hpf) {
+                this.hpf = false;
+                document.getElementById(ratioId).disabled = false;
+                this.ratio = document.getElementById(ratioId).value;
+
+                const bounds = this.viewer.viewport.getBounds(true);
+
+                this.updateDisplayRegionFromBounds(bounds);
+                //re-sync the inline viewer to this, invisibly
+                this.inlineViewer.viewport.panTo(bounds.getCenter());
+            } else {
+                this.hpf = true;
+                document.getElementById(ratioId).setAttribute("disabled", true);
+
+                // The formula I need to use here is that the region visible in the magnifier
+                // has this many pixels per side at its maximum zoom level:
+                // sqrt(2377 / mppX * mppY)
+                // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
+                // We are assuming a square viewer for now.
+                const mppX = document.getElementById(mpp_xId).value;
+                const mppY = document.getElementById(mpp_yId).value;
+                const side = Math.sqrt(2377 / (mppX * mppY));
+                console.log(this.viewer.viewport.getZoom(), this.mainViewer.viewport.getZoom())
+                // where is the viewport on the actual image right now?
+                const bounds = this.inlineViewer.world.getItemAt(0).viewportToImageRectangle(this.inlineViewer.viewport.getBounds(true));
+
+                // where should the bounds be, then?
+                const hpfBounds = this.inlineViewer.world.getItemAt(0).imageToViewportRectangle(bounds.x, bounds.y, side, side);
+
+                if (this.showInViewer) {
+                    this.inlineViewer.viewport.fitBounds(hpfBounds);
+                    this.inlineViewer.viewport.panTo(hpfBounds.getCenter());
+                    this.viewer.viewport.fitBounds(this.inlineViewer.viewport.getBounds());
+                } else {
+                    this.viewer.viewport.fitBounds(hpfBounds);
+                    this.updateDisplayRegionFromBounds(hpfBounds);
+                }
+                const hpfRatio = this.inlineViewer.viewport.getZoom(true) / this.mainViewer.viewport.getZoom();
+                console.log("hpf ratio", hpfRatio, this.inlineViewer.viewport.getZoom(true), this.mainViewer.viewport.getZoom());
+                this.ratio = hpfRatio;
+            }
         }
 
         toggleInViewer() {
