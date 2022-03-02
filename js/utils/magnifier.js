@@ -607,19 +607,23 @@
         initializeHpf() {
             // The formula I need to use here is that the region visible in the magnifier
             // has this many pixels per side at its maximum zoom level:
-            // sqrt(2377 / mppX * mppY)
-            // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
-            // We are assuming a square viewer for now.
+            // sqrt(HPF field area / mppX * mppY)
+            // HPF field area is the area, in square microns, of a standard 10HPF field of view.
+            // We are assuming a square viewer for now and equal horizontal and vertical
+            // microns per pixel.
             const mppX = document.getElementById(mppId).value;
-            // this field number is in millimeters; convert to microns, but
-            // divide by 2, because we need a radius to calculate area, and this is
-            // the diameter of a round ocular field.
+            // this field number is in millimeters in the UI; convert to microns, but
+            // divide by 2, because we need a radius to calculate area, since number is commmonly
+            // used in the sciences to represent the diameter of a round ocular field.
             const field = document.getElementById(hpf_fieldId).value * (1000 / 2);
             const mag = document.getElementById(hpf_magFactorId).value;
 
             const hpfAreaRadius = field / mag;
             // To simulate a 10 HPF field of view, multiply the area covered by 10.
             const hpfArea = Math.PI * (hpfAreaRadius * hpfAreaRadius) * mag;
+
+            // Now, take the area of a round ocular field, and make it a square one, so we are comparing
+            // apples to apples.
             this.hpfSideLength = Math.sqrt(hpfArea / (mppX * mppX));
 
             this.fitHpfBounds();
