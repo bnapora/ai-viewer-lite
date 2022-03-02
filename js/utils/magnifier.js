@@ -16,8 +16,9 @@
     const ratioId = "magnifier__ratio";
     const hpfSettingsId = "magnifier__hpf-settings";
     const toggle10HpfId = "magnifier__10hpf";
-    const mpp_xId = "magnifier__10hpf-mpp-x";
-    const mpp_yId = "magnifier__10hpf-mpp-y";
+    const mppId = "magnifier__10hpf-mpp";
+    const hpf_magFactorId = "magnifier__10hpf-magnification";
+    const hpf_fieldId = "magnifier__10hpf-field-number"
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -463,15 +464,14 @@
         }
 
         mainViewerZoom(refPoint = null) {
-            let zoomTarget;
-            if(this.hpf){
-                zoomTarget = this.hpfZoom;
-            } else {
-                zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
-            }
+            const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
 
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
+
+            if(this.hpf) {
+                this.fitHpfBounds();
+            }
             this.recordPreviousDisplayRegionPosition();
         }
 
@@ -484,14 +484,14 @@
             const width = parseInt(this.displayRegion.style.width, 10);
             const height = parseInt(this.displayRegion.style.width, 10);
 
-            // This is in coordinates relative to the main viewer.
-            const bounds_rect = new $.Rect(left, top, width, height);
-            const center =
-                this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                    bounds_rect.getCenter()
-                );
-
             if (this.showInViewer) {
+                // This is in coordinates relative to the main viewer.
+                const bounds_rect = new $.Rect(left, top, width, height);
+                const center =
+                    this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                        bounds_rect.getCenter()
+                    );
+
                 this.inlineViewer.viewport.panTo(center, event.immediately);
                 const bounds = this.inlineViewer.viewport.getBounds();
                 this.viewer.viewport.fitBounds(bounds);
@@ -519,12 +519,7 @@
                 this.inlineViewer.viewport
             ) {
                 // things we always want to do
-                let zoomTarget;
-                if(this.hpf){
-                    zoomTarget = this.hpfZoom;
-                } else {
-                    zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
-                }
+                const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
                 this.inlineViewer.viewport.zoomTo(zoomTarget);
@@ -536,6 +531,8 @@
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
                     this.updateCenterMarkerStyle(bounds.getCenter());
+                } else if(this.hpf) {
+                    this.fitHpfBounds()
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds();
@@ -591,31 +588,45 @@
             $.addClass(this.element, inactiveClass);
         }
 
-        initializeHpf() {
-            // The formula I need to use here is that the region visible in the magnifier
-            // has this many pixels per side at its maximum zoom level:
-            // sqrt(2377 / mppX * mppY)
-            // 2377 is the area, in millimeters squared, of a standard 10HPF field of view.
-            // We are assuming a square viewer for now.
-            const mppX = document.getElementById(mpp_xId).value;
-            const mppY = document.getElementById(mpp_yId).value;
-            const side = Math.sqrt(2377 / (mppX * mppY));
+        fitHpfBounds() {
             // where is the viewport on the actual image right now?
-            const bounds = this.viewer.world
+            const bounds = this.mainViewer.world
                 .getItemAt(0)
                 .viewportToImageRectangle(
                     this.viewer.viewport.getBounds(true)
                 );
-
             // where should the bounds be, then?
-            const hpfBounds = this.viewer.world
+            const hpfBounds = this.mainViewer.world
                 .getItemAt(0)
-                .imageToViewportRectangle(bounds.x, bounds.y, side, side);
+                .imageToViewportRectangle(bounds.x, bounds.y, this.hpfSideLength, this.hpfSideLength);
 
             this.viewer.viewport.fitBounds(hpfBounds);
             this.updateDisplayRegionFromBounds(hpfBounds);
+        }
 
-            this.hpfZoom = this.viewer.viewport.getZoom();
+        initializeHpf() {
+            // The formula I need to use here is that the region visible in the magnifier
+            // has this many pixels per side at its maximum zoom level:
+            // sqrt(HPF field area / mppX * mppY)
+            // HPF field area is the area, in square microns, of a standard 10HPF field of view.
+            // We are assuming a square viewer for now and equal horizontal and vertical
+            // microns per pixel.
+            const mppX = document.getElementById(mppId).value;
+            // this field number is in millimeters in the UI; convert to microns, but
+            // divide by 2, because we need a radius to calculate area, since number is commmonly
+            // used in the sciences to represent the diameter of a round ocular field.
+            const field = document.getElementById(hpf_fieldId).value * (1000 / 2);
+            const mag = document.getElementById(hpf_magFactorId).value;
+
+            const hpfAreaRadius = field / mag;
+            // To simulate a 10 HPF field of view, multiply the area covered by 10.
+            const hpfArea = Math.PI * (hpfAreaRadius * hpfAreaRadius) * mag;
+
+            // Now, take the area of a round ocular field, and make it a square one, so we are comparing
+            // apples to apples.
+            this.hpfSideLength = Math.sqrt(hpfArea / (mppX * mppX));
+
+            this.fitHpfBounds();
         }
 
         toggle10HPF() {
