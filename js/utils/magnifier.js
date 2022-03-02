@@ -464,15 +464,14 @@
         }
 
         mainViewerZoom(refPoint = null) {
-            let zoomTarget;
-            if(this.hpf){
-                zoomTarget = this.hpfZoom;
-            } else {
-                zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
-            }
+            const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
 
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
+
+            if(this.hpf) {
+                this.fitHpfBounds();
+            }
             this.recordPreviousDisplayRegionPosition();
         }
 
@@ -485,14 +484,14 @@
             const width = parseInt(this.displayRegion.style.width, 10);
             const height = parseInt(this.displayRegion.style.width, 10);
 
-            // This is in coordinates relative to the main viewer.
-            const bounds_rect = new $.Rect(left, top, width, height);
-            const center =
-                this.mainViewer.viewport.viewerElementToViewportCoordinates(
-                    bounds_rect.getCenter()
-                );
-
             if (this.showInViewer) {
+                // This is in coordinates relative to the main viewer.
+                const bounds_rect = new $.Rect(left, top, width, height);
+                const center =
+                    this.mainViewer.viewport.viewerElementToViewportCoordinates(
+                        bounds_rect.getCenter()
+                    );
+
                 this.inlineViewer.viewport.panTo(center, event.immediately);
                 const bounds = this.inlineViewer.viewport.getBounds();
                 this.viewer.viewport.fitBounds(bounds);
@@ -520,12 +519,7 @@
                 this.inlineViewer.viewport
             ) {
                 // things we always want to do
-                let zoomTarget;
-                if(this.hpf){
-                    zoomTarget = this.hpfZoom;
-                } else {
-                    zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
-                }
+                const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
                 this.inlineViewer.viewport.zoomTo(zoomTarget);
@@ -537,6 +531,8 @@
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
                     this.updateCenterMarkerStyle(bounds.getCenter());
+                } else if(this.hpf) {
+                    this.fitHpfBounds()
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds();
@@ -592,6 +588,22 @@
             $.addClass(this.element, inactiveClass);
         }
 
+        fitHpfBounds() {
+            // where is the viewport on the actual image right now?
+            const bounds = this.mainViewer.world
+                .getItemAt(0)
+                .viewportToImageRectangle(
+                    this.viewer.viewport.getBounds(true)
+                );
+            // where should the bounds be, then?
+            const hpfBounds = this.mainViewer.world
+                .getItemAt(0)
+                .imageToViewportRectangle(bounds.x, bounds.y, this.hpfSideLength, this.hpfSideLength);
+
+            this.viewer.viewport.fitBounds(hpfBounds);
+            this.updateDisplayRegionFromBounds(hpfBounds);
+        }
+
         initializeHpf() {
             // The formula I need to use here is that the region visible in the magnifier
             // has this many pixels per side at its maximum zoom level:
@@ -608,23 +620,9 @@
             const hpfAreaRadius = field / mag;
             // To simulate a 10 HPF field of view, multiply the area covered by 10.
             const hpfArea = Math.PI * (hpfAreaRadius * hpfAreaRadius) * mag;
-            const side = Math.sqrt(hpfArea / (mppX * mppX));
+            this.hpfSideLength = Math.sqrt(hpfArea / (mppX * mppX));
 
-            // where is the viewport on the actual image right now?
-            const bounds = this.mainViewer.world
-                .getItemAt(0)
-                .viewportToImageRectangle(
-                    this.viewer.viewport.getBounds(true)
-                );
-            // where should the bounds be, then?
-            const hpfBounds = this.mainViewer.world
-                .getItemAt(0)
-                .imageToViewportRectangle(bounds.x, bounds.y, side, side);
-
-            this.viewer.viewport.fitBounds(hpfBounds);
-            this.updateDisplayRegionFromBounds(hpfBounds);
-
-            this.hpfZoom = this.viewer.viewport.getZoom();
+            this.fitHpfBounds();
         }
 
         toggle10HPF() {
