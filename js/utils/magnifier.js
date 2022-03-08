@@ -238,6 +238,25 @@
                     self.toggle10HPF();
                 });
 
+            document
+                .getElementById(mppId)
+                .addEventListener("change", function () {
+                    self.initializeHpf();
+                });
+
+            document
+                .getElementById(hpf_magFactorId)
+                .addEventListener("change", function () {
+                    self.initializeHpf();
+                });
+
+            document
+                .getElementById(hpf_fieldId)
+                .addEventListener("change", function () {
+                    self.initializeHpf();
+                });
+
+
             this.update();
         }
 
