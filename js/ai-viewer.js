@@ -197,16 +197,16 @@ tmapp.init = function () {
     filterUtils.initFilters();
     // Check for WebGL support and report the result.
 
-    if (window.hasOwnProperty("glUtils") && interfaceUtils.supportsWebGL()) {
-        console.log("Using GPU-based marker drawing (WebGL canvas)")
-        // todo: should I make GL an attribute on each OSD viewer instead?
-        tmapp['viewerGl'] = new glUtils(tmapp[vname]);
-        tmapp['magGl'] = new glUtils(tmapp[mname].viewer, 0.25);
-        tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer, 0.25);
+    // if (window.hasOwnProperty("glUtils") && interfaceUtils.supportsWebGL()) {
+    //     console.log("Using GPU-based marker drawing (WebGL canvas)")
+    //     // todo: should I make GL an attribute on each OSD viewer instead?
+    //     tmapp['viewerGl'] = new glUtils(tmapp[vname]);
+    //     tmapp['magGl'] = new glUtils(tmapp[mname].viewer, 0.25);
+    //     tmapp['inlineMagGl'] = new glUtils(tmapp[mname].inlineViewer, 0.25);
 
-    } else {
-        console.log("Using CPU-based marker drawing (SVG canvas)")
-    }
+    // } else {
+    //     console.log("Using CPU-based marker drawing (SVG canvas)")
+    // }
 } //finish init
 
 // //initialize exact_image_id from template (Use only when deployed in Exact application)

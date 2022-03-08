@@ -14,6 +14,11 @@
     const inactiveClass = "magnifier--inactive";
     const roundId = "magnifier__round";
     const ratioId = "magnifier__ratio";
+    const hpfSettingsId = "magnifier__hpf-settings";
+    const toggle10HpfId = "magnifier__10hpf";
+    const mppId = "magnifier__10hpf-mpp";
+    const hpf_magFactorId = "magnifier__10hpf-magnification";
+    const hpf_fieldId = "magnifier__10hpf-field-number"
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -23,6 +28,8 @@
             this.element.id = options.id;
             this.showInViewer = document.getElementById(checkboxId).checked;
             this.round = document.getElementById(roundId).checked;
+            this.hpf = document.getElementById(toggle10HpfId).checked;
+            this.hpfSettings = document.getElementById(hpfSettingsId);
             this.markers = {};
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
@@ -81,7 +88,8 @@
             this.regionResizeHangle = $.makeNeutralElement("div");
             this.regionResizeHangle.className = "displayregion__resize";
             this.regionResizeHangle.style.position = "absolute";
-            this.regionResizeHangle.style.background = "#ccc";
+            this.regionResizeHangle.style.background =
+                "rgba(255, 255, 255, 0.5)";
 
             // Invisible container for the overlay magnifier and controls
             this.displayRegionContainer = $.makeNeutralElement("div");
@@ -119,6 +127,8 @@
             $.setElementTouchActionNone(this.element);
             $.setElementTouchActionNone(this.inViewerElement);
 
+            this.recordPreviousDisplayRegionPosition();
+
             // Actually instantiate the magnifier viewers now
             this.viewer = $(options);
             // The same thing again, but inside the viewer instead of outside.
@@ -129,6 +139,9 @@
             );
 
             if (this.showInViewer) {
+                document.getElementById(toggle10HpfId).value = false;
+                this.hpf = false;
+                this.hpfSettings.setAttribute("disabled", true);
                 this.initializeInlineMagnifier();
             } else {
                 $.addClass(this.inViewerElement, inactiveClass);
@@ -140,6 +153,12 @@
             if (this.round) {
                 $.addClass(this.element, "round");
                 $.addClass(this.displayRegion, "round");
+            }
+
+            if (this.hpf) {
+                document.getElementById(ratioId).setAttribute("disabled", true);
+                document.getElementById(checkboxId).setAttribute("disabled", true);
+                this.initializeHpf();
             }
 
             // Move and resize handlers
@@ -158,9 +177,12 @@
             this.mainViewer.addHandler("zoom", function (event) {
                 self.mainViewerZoom(event.refPoint);
             });
-            this.mainViewer.addHandler("canvas-drag", function (event) {
-                // I'd listen to pan, but this gives us a delta, which gives
-                // more information about how to position the display region.
+
+            this.mainViewer.addHandler("viewport-change", function (event) {
+                self.recordPreviousDisplayRegionPosition();
+            });
+
+            this.mainViewer.addHandler("pan", function (event) {
                 self.mainViewerPan(event);
             });
 
@@ -208,6 +230,12 @@
                 .addEventListener("change", function () {
                     self.ratio = event.target.value;
                     self.update();
+                });
+
+            document
+                .getElementById(toggle10HpfId)
+                .addEventListener("change", function () {
+                    self.toggle10HPF();
                 });
 
             this.update();
@@ -262,12 +290,17 @@
             }
         }
 
+        recordPreviousDisplayRegionPosition() {
+            this.displayRegionTop = parseInt(this.displayRegion.style.top, 10);
+            this.displayRegionLeft = parseInt(
+                this.displayRegion.style.left,
+                10
+            );
+        }
+
         updateCenterMarkerStyle(center) {
             var navigatorCenter =
-                this.mainViewer.navigator.viewport.pixelFromPoint(
-                    center,
-                    true
-                );
+                this.mainViewer.navigator.viewport.pixelFromPoint(center, true);
             var style = this.displayRegionCenterMarker.style;
 
             // make sure these are non-negative so IE doesn't throw.
@@ -329,25 +362,37 @@
                 this.updateDisplayRegionFromBounds(bounds);
                 this.inlineViewer.viewport.fitBounds(bounds);
             }
+            this.recordPreviousDisplayRegionPosition()
         }
 
         moveRegion(event) {
-            var top = parseInt(this.displayRegion.style.top, 10);
-            var left = parseInt(this.displayRegion.style.left, 10);
+            const top = parseInt(this.displayRegion.style.top, 10);
+            const left = parseInt(this.displayRegion.style.left, 10);
 
-            this.updateDisplayRegionStyle(
-                top + event.delta.y,
-                left + event.delta.x
-            );
+            const newTop = top + event.delta.y;
+            const newLeft = left + event.delta.x;
+
+            const mainViewerBounds =
+                this.mainViewer.viewport.viewportToViewerElementRectangle(
+                    this.mainViewer.viewport.getBounds()
+                );
+
+            if (
+                !mainViewerBounds.containsPoint(
+                    new $.Point(newLeft + 20, newTop + 20)
+                )
+            ) {
+                return;
+            }
+
+            this.updateDisplayRegionStyle(newTop, newLeft);
             this.inlineViewer.viewport.panBy(
                 this.mainViewer.viewport.deltaPointsFromPixels(event.delta)
             );
-            var bounds = this.inlineViewer.viewport.getBounds();
-            this.viewer.viewport.fitBounds(
-                bounds,
-                true
-            );
+            const bounds = this.inlineViewer.viewport.getBounds();
+            this.viewer.viewport.fitBounds(bounds, true);
             this.updateCenterMarkerStyle(bounds.getCenter());
+            this.recordPreviousDisplayRegionPosition()
         }
 
         resizeRegion(event) {
@@ -424,73 +469,45 @@
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
 
-            let bounds, center;
-
-            if (this.showInViewer) {
-                // Event handing for when the inline magnifier is active
-                bounds = this.inlineViewer.viewport.getBounds(true);
-                center = this.getCenterFromBounds(bounds);
-                this.inlineViewer.viewport.panTo(center);
-                this.viewer.viewport.fitBounds(bounds);
-                this.updateCenterMarkerStyle(bounds.getCenter());
-            } else {
-                // inline / overlay viewer is invisibly pinned to the sidebar viewer
-                bounds = this.viewer.viewport.getBounds(true);
-                this.updateDisplayRegionFromBounds(bounds);
-                center = this.mainViewer.viewport.getCenter();
-                this.viewer.viewport.panTo(center);
-                this.inlineViewer.viewport.panTo(center);
+            if(this.hpf) {
+                this.fitHpfBounds();
             }
+            this.recordPreviousDisplayRegionPosition();
         }
 
         mainViewerPan(event) {
-            // Don't pan if the main viewer wouldn't pan normally
-            const mainBounds = this.mainViewer.viewport.getBounds();
-            if (mainBounds.width >= 1 || mainBounds.height >= 1) {
-                return;
-            }
-            const panBy = this.mainViewer.viewport.deltaPointsFromPixels(
-                event.delta.negate()
-            );
-
-            // if the main viewer couldn't actually go anywhere in one direction,
-            // do not pan in that direction
-            const constrainedBounds =
-                this.mainViewer.viewport.getConstrainedBounds();
-            if (mainBounds.x !== constrainedBounds.x) {
-                panBy.x = 0;
-            }
-            if (mainBounds.y !== constrainedBounds.y) {
-                panBy.y = 0;
-            }
-
-            let center;
+            // Similar to when we resize the overlay / inline viewer,
+            // display exactly what is underneath its boundaries in
+            // the main viewer.
+            const left = parseInt(this.displayRegion.style.left, 10);
+            const top = parseInt(this.displayRegion.style.top, 10);
+            const width = parseInt(this.displayRegion.style.width, 10);
+            const height = parseInt(this.displayRegion.style.width, 10);
 
             if (this.showInViewer) {
-                // Similar to when we resize the overlay / inline viewer,
-                // display exactly what is underneath its boundaries in
-                // the main viewer.
-                var left = parseInt(this.displayRegion.style.left, 10);
-                var top = parseInt(this.displayRegion.style.top, 10);
-                var width = parseInt(this.displayRegion.style.width, 10);
-                var height = parseInt(this.displayRegion.style.width, 10);
-
                 // This is in coordinates relative to the main viewer.
-                var bounds_rect = new $.Rect(left, top, width, height);
-                center =
+                const bounds_rect = new $.Rect(left, top, width, height);
+                const center =
                     this.mainViewer.viewport.viewerElementToViewportCoordinates(
                         bounds_rect.getCenter()
                     );
-                this.inlineViewer.viewport.panTo(center);
-                this.viewer.viewport.fitBounds(
-                    this.inlineViewer.viewport.getBounds()
-                );
+
+                this.inlineViewer.viewport.panTo(center, event.immediately);
+                const bounds = this.inlineViewer.viewport.getBounds();
+                this.viewer.viewport.fitBounds(bounds);
                 this.updateCenterMarkerStyle(bounds.getCenter());
             } else {
-                this.viewer.viewport.panBy(panBy);
-                this.viewer.viewport.applyConstraints(true);
+                const delta = new $.Point(
+                    this.displayRegionLeft - left,
+                    this.displayRegionTop - top
+                );
+                this.viewer.viewport.panBy(
+                    this.mainViewer.viewport.deltaPointsFromPixels(delta)
+                );
+                this.viewer.viewport.applyConstraints();
+
                 const bounds = this.viewer.viewport.getBounds();
-                const center = this.getCenterFromBounds(bounds);
+                this.inlineViewer.viewport.fitBounds(bounds);
                 this.updateDisplayRegionFromBounds(bounds);
             }
         }
@@ -502,8 +519,7 @@
                 this.inlineViewer.viewport
             ) {
                 // things we always want to do
-                const zoomTarget =
-                    this.mainViewer.viewport.getZoom() * this.ratio;
+                const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
                 this.inlineViewer.viewport.zoomTo(zoomTarget);
@@ -515,6 +531,8 @@
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
                     this.updateCenterMarkerStyle(bounds.getCenter());
+                } else if(this.hpf) {
+                    this.fitHpfBounds()
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds();
@@ -570,9 +588,80 @@
             $.addClass(this.element, inactiveClass);
         }
 
+        fitHpfBounds() {
+            // where is the viewport on the actual image right now?
+            const bounds = this.mainViewer.world
+                .getItemAt(0)
+                .viewportToImageRectangle(
+                    this.viewer.viewport.getBounds(true)
+                );
+            // where should the bounds be, then?
+            const hpfBounds = this.mainViewer.world
+                .getItemAt(0)
+                .imageToViewportRectangle(bounds.x, bounds.y, this.hpfSideLength, this.hpfSideLength);
+
+            this.viewer.viewport.fitBounds(hpfBounds);
+            this.updateDisplayRegionFromBounds(hpfBounds);
+        }
+
+        initializeHpf() {
+            // The formula I need to use here is that the region visible in the magnifier
+            // has this many pixels per side at its maximum zoom level:
+            // sqrt(HPF field area / mppX * mppY)
+            // HPF field area is the area, in square microns, of a standard 10HPF field of view.
+            // We are assuming a square viewer for now and equal horizontal and vertical
+            // microns per pixel.
+            const mppX = document.getElementById(mppId).value;
+            // this field number is in millimeters in the UI; convert to microns, but
+            // divide by 2, because we need a radius to calculate area, since number is commmonly
+            // used in the sciences to represent the diameter of a round ocular field.
+            const field = document.getElementById(hpf_fieldId).value * (1000 / 2);
+            const mag = document.getElementById(hpf_magFactorId).value;
+
+            const hpfAreaRadius = field / mag;
+            // To simulate a 10 HPF field of view, multiply the area covered by 10.
+            const hpfArea = Math.PI * (hpfAreaRadius * hpfAreaRadius) * mag;
+
+            // Now, take the area of a round ocular field, and make it a square one, so we are comparing
+            // apples to apples.
+            this.hpfSideLength = Math.sqrt(hpfArea / (mppX * mppX));
+
+            this.fitHpfBounds();
+        }
+
+        toggle10HPF() {
+            if (this.hpf) {
+                this.hpf = false;
+
+                // disable mutually exclusive UI
+                document.getElementById(ratioId).removeAttribute("disabled");
+                document.getElementById(checkboxId).removeAttribute("disabled");
+
+                // If we are showing the overlay, get out of it
+                if (this.showInViewer) {
+                    this.toggleInViewer();
+                }
+
+                const bounds = this.viewer.viewport.getBounds(true);
+
+                this.updateDisplayRegionFromBounds(bounds);
+                //re-sync the inline viewer to this, invisibly
+                this.inlineViewer.viewport.panTo(bounds.getCenter());
+                this.update();
+            } else {
+                this.hpf = true;
+                document.getElementById(ratioId).setAttribute("disabled", true);
+                document
+                    .getElementById(checkboxId)
+                    .setAttribute("disabled", true);
+                this.initializeHpf();
+            }
+        }
+
         toggleInViewer() {
             if (this.showInViewer) {
                 this.showInViewer = false;
+                this.hpfSettings.removeAttribute("disabled");
                 $.removeClass(this.inViewerElement, activeClass);
                 $.addClass(this.inViewerElement, inactiveClass);
                 this.inlineViewer.setVisible(false);
@@ -589,6 +678,10 @@
                 //re-sync the inline viewer to this, invisibly
                 this.inlineViewer.viewport.panTo(bounds.getCenter());
             } else {
+                // This is mutually exclusive with HPF
+                document.getElementById(toggle10HpfId).value = false;
+                this.hpf = false;
+                this.hpfSettings.setAttribute("disabled", true);
                 this.showInViewer = true;
                 this.initializeInlineMagnifier();
             }
