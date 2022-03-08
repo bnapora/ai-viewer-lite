@@ -18,7 +18,9 @@
     const toggle10HpfId = "magnifier__10hpf";
     const mppId = "magnifier__10hpf-mpp";
     const hpf_magFactorId = "magnifier__10hpf-magnification";
-    const hpf_fieldId = "magnifier__10hpf-field-number"
+    const hpf_fieldId = "magnifier__10hpf-field-number";
+    const hpf_gridId = "magnifier__10hpf-grid";
+    const hpfGridOverlayId = "grid-overlay";
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -30,6 +32,7 @@
             this.round = document.getElementById(roundId).checked;
             this.hpf = document.getElementById(toggle10HpfId).checked;
             this.hpfSettings = document.getElementById(hpfSettingsId);
+            this.hpfGrid = document.getElementById(hpf_gridId).checked;
             this.markers = {};
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
@@ -161,6 +164,10 @@
                 this.initializeHpf();
             }
 
+            if (this.hpfGrid) {
+                this.showHpfGrid();
+            }
+
             // Move and resize handlers
             new $.MouseTracker({
                 element: this.regionMoveHangle,
@@ -254,6 +261,12 @@
                 .getElementById(hpf_fieldId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                });
+
+            document
+                .getElementById(hpf_gridId)
+                .addEventListener("change", function () {
+                    self.toggleHpfGrid();
                 });
 
 
@@ -623,7 +636,7 @@
             this.updateDisplayRegionFromBounds(hpfBounds);
         }
 
-        initializeHpf() {
+        storeHpfSideLength() {
             // The formula I need to use here is that the region visible in the magnifier
             // has this many pixels per side at its maximum zoom level:
             // sqrt(HPF field area / mppX * mppY)
@@ -644,7 +657,10 @@
             // Now, take the area of a round ocular field, and make it a square one, so we are comparing
             // apples to apples.
             this.hpfSideLength = Math.sqrt(hpfArea / (mppX * mppX));
+        }
 
+        initializeHpf() {
+            this.storeHpfSideLength();
             this.fitHpfBounds();
         }
 
@@ -674,6 +690,111 @@
                     .getElementById(checkboxId)
                     .setAttribute("disabled", true);
                 this.initializeHpf();
+            }
+        }
+
+        updateHpfGrid() {
+            const hpfBounds = this.mainViewer.world
+                .getItemAt(0)
+                // we just want a relative length / distance, not a whole point
+                .imageToWindowCoordinates(new $.Point(this.hpfSideLength, 0));
+
+            var data = new Array();
+            var xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
+            var ypos = 1;
+            var width = hpfBounds.x;
+            var height = hpfBounds.x;
+
+            // iterate for rows
+            for (var row = 0; row < 10; row++) {
+                data.push( new Array() );
+
+                // iterate for cells/columns inside rows
+                for (var column = 0; column < 10; column++) {
+                    data[row].push({
+                        x: xpos,
+                        y: ypos,
+                        width: width,
+                        height: height,
+                    })
+                    // increment the x position. I.e. move it over by the width
+                    xpos += width;
+                }
+                // reset the x position after a row is complete
+                xpos = 1;
+                // increment the y position for the next row. Move it down by the height
+                ypos += height;
+            }
+
+            var grid = d3.select("#" + hpfGridOverlayId)
+                .append("svg")
+                .attr("width","100%")
+                .attr("height","100%");
+
+            var row = grid.selectAll(".row")
+                .data(data)
+                .enter().append("g")
+                .attr("class", "row");
+
+            var column = row.selectAll(".square")
+                .data(function(d) { return d; })
+                .enter().append("rect")
+                .attr("class","square")
+                .attr("x", function(d) { return d.x; })
+                .attr("y", function(d) { return d.y; })
+                .attr("width", function(d) { return d.width; })
+                .attr("height", function(d) { return d.height; })
+                .style("fill", "#fff")
+                .style("fill-opacity", 0.0)
+                .style("stroke", "#222")
+                .on('click', function(d) {
+                    console.log("HELLO");
+                   d3.select(this).style("fill","#fff");
+                    // Snap the bounds of the magnifier to this grid.
+                    const height = parseInt(d3.select(this).style.height, 10);
+                    const width = parseInt(d3.select(this).style.width, 10);
+                    const top = parseInt(d3.select(this).style.top, 10);
+                    const left = parseInt(d3.select(this).style.left, 10);
+
+                    let bounds = this.mainViewer.viewerElementToViewportRectangle($.Rect(left, top, width, height));
+
+                    if (this.showInViewer) {
+                        this.viewer.viewport.fitBounds(bounds);
+                        this.updateDisplayRegionStyle(top, left, width, height);
+                        this.updateCenterMarkerStyle(bounds.getCenter());
+                    } else {
+                        this.updateDisplayRegionFromBounds(bounds);
+                        this.inlineViewer.viewport.fitBounds(bounds);
+                    }
+                    this.recordPreviousDisplayRegionPosition();
+                    return false;
+                });
+        }
+
+        destroyHpfGrid() {
+            var elt = document.getElementById(hpfGridOverlayId);
+            this.mainViewer.removeOverlay(elt);
+            elt.remove();
+        }
+
+        showHpfGrid() {
+            this.storeHpfSideLength();
+            var elt = document.createElement("div");
+            elt.id = hpfGridOverlayId;
+            this.mainViewer.addOverlay({
+                element: elt,
+                location: new $.Rect(0, 0, 1, 1)
+            });
+            this.updateHpfGrid();
+        }
+
+        toggleHpfGrid() {
+            if (this.hpfGrid) {
+                this.hpfGrid = false;
+                this.destroyHpfGrid();
+            } else {
+                this.hpfGrid = true;
+                this.showHpfGrid();
             }
         }
 
