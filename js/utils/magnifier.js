@@ -38,6 +38,8 @@
             this.metrics = document.getElementById(options.id + "__metrics");
             this.borderWidth = 4; // in pixels
             this.minWidth = 100;
+            this.mnameMain = options.mnameMain;
+            this.mnameInline = options.mnameInline;
 
             this.totalBorderWidths = new $.Point(
                 this.borderWidth * 2,
@@ -212,6 +214,9 @@
                 if (event.quick) {
                     event.preventDefaultAction = true;
                     self.clickToZoom(event);
+
+                    overlayUtils.modifyDisplayIfAny(self.mnameMain);
+                    overlayUtils.modifyDisplayIfAny(self.mnameInline);
                 }
             });
 
@@ -395,6 +400,8 @@
                 this.updateDisplayRegionFromBounds(bounds);
                 this.inlineViewer.viewport.fitBounds(bounds);
             }
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.recordPreviousDisplayRegionPosition();
         }
 
@@ -424,6 +431,8 @@
             );
             const bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(bounds, true);
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.updateCenterMarkerStyle(bounds.getCenter());
             this.recordPreviousDisplayRegionPosition();
         }
@@ -493,6 +502,8 @@
             this.viewer.viewport.fitBounds(
                 this.inlineViewer.viewport.getBounds()
             );
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.updateCenterMarkerStyle(newBounds.getTopLeft());
         }
 
@@ -502,9 +513,15 @@
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
 
+            this.storeHpfSideLength();
             if (this.hpf) {
                 this.fitHpfBounds();
             }
+            if (this.hpfGrid) {
+                this.updateHpfGrid();
+            }
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.recordPreviousDisplayRegionPosition();
         }
 

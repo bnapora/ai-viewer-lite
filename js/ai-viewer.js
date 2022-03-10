@@ -76,10 +76,12 @@ tmapp.init = function () {
     tmapp[vname].addHandler("tile-drawn", OSDViewerUtils.pixelateAtMaximumZoomHandler);
 
     // Create a new Magnifier, and get its viewer to do things like add annotations
-    tmapp[mname] = new Magnifier(tmapp[vname], tmapp['options_magnifier']);
-
     const mnameMain = mname + "_main";
     const mnameInline = mname + "_inline";
+    tmapp['options_magnifier']['mnameMain'] = mnameMain;
+    tmapp['options_magnifier']['mnameInline'] = mnameInline;
+    tmapp[mname] = new Magnifier(tmapp[vname], tmapp['options_magnifier']);
+
     tmapp[mnameMain] = tmapp[mname].viewer;
     tmapp[mnameInline] = tmapp[mname].inlineViewer;
 
@@ -138,6 +140,7 @@ tmapp.init = function () {
                 //call region creator and drawer
                 regionUtils.manager(event);
             }
+
         } else { //if it is not quick then its panning
             scroll_handler();
         }
@@ -157,8 +160,8 @@ tmapp.init = function () {
             console.log('Scrolling has stopped.');
             //
             overlayUtils.modifyDisplayIfAny(vname);
-            overlayUtils.modifyDisplayIfAny(mname + "_main");
-            overlayUtils.modifyDisplayIfAny(mname + "_inline");
+            overlayUtils.modifyDisplayIfAny(mnameMain);
+            overlayUtils.modifyDisplayIfAny(mnameInline);
         }, tmapp._scrollDelay);
     }
 
@@ -252,5 +255,5 @@ tmapp.options_magnifier= {
     preload: true,
     panHorizontal: false,
     panVertical: false,
-    mouseNavEnabled: false,
+    mouseNavEnabled: false
 }
