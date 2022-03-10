@@ -256,18 +256,21 @@
                 .getElementById(mppId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    self.updateHpfGrid();
                 });
 
             document
                 .getElementById(hpf_magFactorId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    self.updateHpfGrid();
                 });
 
             document
                 .getElementById(hpf_fieldId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    self.updateHpfGrid();
                 });
 
             document
@@ -588,6 +591,13 @@
                     bounds = this.viewer.viewport.getBounds();
                     this.updateDisplayRegionFromBounds(bounds);
                 }
+
+                if (this.hpf) {
+                    this.fitHpfBounds();
+                }
+                if (this.hpfGrid) {
+                    this.updateHpfGrid();
+                }
             }
         }
 
@@ -682,8 +692,10 @@
         }
 
         initializeHpf() {
-            this.storeHpfSideLength();
-            this.fitHpfBounds();
+            if(this.hpf) {
+                this.storeHpfSideLength();
+                this.fitHpfBounds();
+            }
         }
 
         toggle10HPF() {
@@ -716,6 +728,9 @@
         }
 
         updateHpfGrid() {
+            if(!this.hpfGrid) {
+                return;
+            }
             const hpfBounds = this.mainViewer.world
                 .getItemAt(0)
                 // we just want a relative length / distance, not a whole point
@@ -751,7 +766,7 @@
                 // increment the y position for the next row. Move it down by the height
                 ypos += height;
             }
-
+            d3.select("#" + hpfGridOverlayId).selectAll("svg").remove();
             const grid = d3
                 .select("#" + hpfGridOverlayId)
                 .append("svg")
@@ -821,7 +836,9 @@
         destroyHpfGrid() {
             var elt = document.getElementById(hpfGridOverlayId);
             this.mainViewer.removeOverlay(elt);
-            elt.remove();
+            if(elt) {
+                elt.remove();
+            }
         }
 
         showHpfGrid() {
@@ -841,8 +858,11 @@
             if (this.hpfGrid) {
                 this.hpfGrid = false;
                 this.destroyHpfGrid();
+                document.getElementById(checkboxId).removeAttribute("disabled");
             } else {
                 this.hpfGrid = true;
+                this.showInViewer = false;
+                document.getElementById(checkboxId).setAttribute("disabled", true);
                 this.showHpfGrid();
             }
         }
@@ -870,6 +890,8 @@
                 // This is mutually exclusive with HPF
                 document.getElementById(toggle10HpfId).value = false;
                 this.hpf = false;
+                this.hpfGrid = false;
+                this.destroyHpfGrid();
                 this.hpfSettings.setAttribute("disabled", true);
                 this.showInViewer = true;
                 this.initializeInlineMagnifier();
