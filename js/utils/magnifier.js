@@ -18,7 +18,9 @@
     const toggle10HpfId = "magnifier__10hpf";
     const mppId = "magnifier__10hpf-mpp";
     const hpf_magFactorId = "magnifier__10hpf-magnification";
-    const hpf_fieldId = "magnifier__10hpf-field-number"
+    const hpf_fieldId = "magnifier__10hpf-field-number";
+    const hpf_gridId = "magnifier__10hpf-grid";
+    const hpfGridOverlayId = "grid-overlay";
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -30,11 +32,14 @@
             this.round = document.getElementById(roundId).checked;
             this.hpf = document.getElementById(toggle10HpfId).checked;
             this.hpfSettings = document.getElementById(hpfSettingsId);
+            this.hpfGrid = document.getElementById(hpf_gridId).checked;
             this.markers = {};
             this.visibleMarkers = {};
             this.metrics = document.getElementById(options.id + "__metrics");
             this.borderWidth = 4; // in pixels
             this.minWidth = 100;
+            this.mnameMain = options.mnameMain;
+            this.mnameInline = options.mnameInline;
 
             this.totalBorderWidths = new $.Point(
                 this.borderWidth * 2,
@@ -157,8 +162,14 @@
 
             if (this.hpf) {
                 document.getElementById(ratioId).setAttribute("disabled", true);
-                document.getElementById(checkboxId).setAttribute("disabled", true);
+                document
+                    .getElementById(checkboxId)
+                    .setAttribute("disabled", true);
                 this.initializeHpf();
+            }
+
+            if (this.hpfGrid) {
+                this.showHpfGrid();
             }
 
             // Move and resize handlers
@@ -203,6 +214,9 @@
                 if (event.quick) {
                     event.preventDefaultAction = true;
                     self.clickToZoom(event);
+
+                    overlayUtils.modifyDisplayIfAny(self.mnameMain);
+                    overlayUtils.modifyDisplayIfAny(self.mnameInline);
                 }
             });
 
@@ -242,20 +256,28 @@
                 .getElementById(mppId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    self.updateHpfGrid();
                 });
 
             document
                 .getElementById(hpf_magFactorId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    self.updateHpfGrid();
                 });
 
             document
                 .getElementById(hpf_fieldId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    self.updateHpfGrid();
                 });
 
+            document
+                .getElementById(hpf_gridId)
+                .addEventListener("change", function () {
+                    self.toggleHpfGrid();
+                });
 
             this.update();
         }
@@ -381,7 +403,9 @@
                 this.updateDisplayRegionFromBounds(bounds);
                 this.inlineViewer.viewport.fitBounds(bounds);
             }
-            this.recordPreviousDisplayRegionPosition()
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
+            this.recordPreviousDisplayRegionPosition();
         }
 
         moveRegion(event) {
@@ -410,8 +434,10 @@
             );
             const bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(bounds, true);
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.updateCenterMarkerStyle(bounds.getCenter());
-            this.recordPreviousDisplayRegionPosition()
+            this.recordPreviousDisplayRegionPosition();
         }
 
         resizeRegion(event) {
@@ -479,6 +505,8 @@
             this.viewer.viewport.fitBounds(
                 this.inlineViewer.viewport.getBounds()
             );
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.updateCenterMarkerStyle(newBounds.getTopLeft());
         }
 
@@ -488,9 +516,14 @@
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
 
-            if(this.hpf) {
+            if (this.hpf) {
                 this.fitHpfBounds();
             }
+            if (this.hpfGrid) {
+                this.updateHpfGrid();
+            }
+            overlayUtils.modifyDisplayIfAny(this.mnameMain);
+            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.recordPreviousDisplayRegionPosition();
         }
 
@@ -538,7 +571,8 @@
                 this.inlineViewer.viewport
             ) {
                 // things we always want to do
-                const zoomTarget = this.mainViewer.viewport.getZoom() * this.ratio;
+                const zoomTarget =
+                    this.mainViewer.viewport.getZoom() * this.ratio;
 
                 this.viewer.viewport.zoomTo(zoomTarget);
                 this.inlineViewer.viewport.zoomTo(zoomTarget);
@@ -550,12 +584,19 @@
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
                     this.updateCenterMarkerStyle(bounds.getCenter());
-                } else if(this.hpf) {
-                    this.fitHpfBounds()
+                } else if (this.hpf) {
+                    this.fitHpfBounds();
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds();
                     this.updateDisplayRegionFromBounds(bounds);
+                }
+
+                if (this.hpf) {
+                    this.fitHpfBounds();
+                }
+                if (this.hpfGrid) {
+                    this.updateHpfGrid();
                 }
             }
         }
@@ -611,19 +652,22 @@
             // where is the viewport on the actual image right now?
             const bounds = this.mainViewer.world
                 .getItemAt(0)
-                .viewportToImageRectangle(
-                    this.viewer.viewport.getBounds(true)
-                );
+                .viewportToImageRectangle(this.viewer.viewport.getBounds(true));
             // where should the bounds be, then?
             const hpfBounds = this.mainViewer.world
                 .getItemAt(0)
-                .imageToViewportRectangle(bounds.x, bounds.y, this.hpfSideLength, this.hpfSideLength);
+                .imageToViewportRectangle(
+                    bounds.x,
+                    bounds.y,
+                    this.hpfSideLength,
+                    this.hpfSideLength
+                );
 
             this.viewer.viewport.fitBounds(hpfBounds);
             this.updateDisplayRegionFromBounds(hpfBounds);
         }
 
-        initializeHpf() {
+        storeHpfSideLength() {
             // The formula I need to use here is that the region visible in the magnifier
             // has this many pixels per side at its maximum zoom level:
             // sqrt(HPF field area / mppX * mppY)
@@ -634,7 +678,8 @@
             // this field number is in millimeters in the UI; convert to microns, but
             // divide by 2, because we need a radius to calculate area, since number is commmonly
             // used in the sciences to represent the diameter of a round ocular field.
-            const field = document.getElementById(hpf_fieldId).value * (1000 / 2);
+            const field =
+                document.getElementById(hpf_fieldId).value * (1000 / 2);
             const mag = document.getElementById(hpf_magFactorId).value;
 
             const hpfAreaRadius = field / mag;
@@ -644,8 +689,13 @@
             // Now, take the area of a round ocular field, and make it a square one, so we are comparing
             // apples to apples.
             this.hpfSideLength = Math.sqrt(hpfArea / (mppX * mppX));
+        }
 
-            this.fitHpfBounds();
+        initializeHpf() {
+            if(this.hpf) {
+                this.storeHpfSideLength();
+                this.fitHpfBounds();
+            }
         }
 
         toggle10HPF() {
@@ -677,6 +727,146 @@
             }
         }
 
+        updateHpfGrid() {
+            if(!this.hpfGrid) {
+                return;
+            }
+            const hpfBounds = this.mainViewer.world
+                .getItemAt(0)
+                // we just want a relative length / distance, not a whole point
+                .imageToWindowCoordinates(new $.Point(this.hpfSideLength, 0));
+
+            let data = new Array();
+            let xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
+            let ypos = 1;
+            const width = Math.abs(hpfBounds.x);
+            const height = width; // These are square for now
+            const imageDimensions =
+                this.mainViewer.world.getItemAt(0).source.dimensions;
+            const numRows = imageDimensions.y / this.hpfSideLength;
+            const numColumns = imageDimensions.x / this.hpfSideLength;
+
+            // iterate for rows
+            for (var row = 0; row < numRows; row++) {
+                data.push(new Array());
+
+                // iterate for cells/columns inside rows
+                for (var column = 0; column < numColumns; column++) {
+                    data[row].push({
+                        x: xpos,
+                        y: ypos,
+                        width: width,
+                        height: height,
+                    });
+                    // increment the x position. I.e. move it over by the width
+                    xpos += width;
+                }
+                // reset the x position after a row is complete
+                xpos = 1;
+                // increment the y position for the next row. Move it down by the height
+                ypos += height;
+            }
+            d3.select("#" + hpfGridOverlayId).selectAll("svg").remove();
+            const grid = d3
+                .select("#" + hpfGridOverlayId)
+                .append("svg")
+                .attr("width", "100%")
+                .attr("height", "100%");
+
+            const gridRow = grid
+                .selectAll(".row")
+                .data(data)
+                .enter()
+                .append("g")
+                .attr("class", "row");
+
+            const self = this;
+            const gridOverlayStyles =
+                document.getElementById(hpfGridOverlayId).style;
+            const gridOffset = new $.Point(
+                parseInt(gridOverlayStyles.left, 10),
+                parseInt(gridOverlayStyles.top, 10)
+            );
+            gridRow
+                .selectAll(".square")
+                .data(function (d) {
+                    return d;
+                })
+                .enter()
+                .append("rect")
+                .attr("class", "square")
+                .attr("x", function (d) {
+                    return d.x;
+                })
+                .attr("y", function (d) {
+                    return d.y;
+                })
+                .attr("width", function (d) {
+                    return d.width;
+                })
+                .attr("height", function (d) {
+                    return d.height;
+                })
+                .style("fill", "#fff")
+                .style("fill-opacity", 0.0)
+                .style("stroke", "#222")
+                .on("click", function (d) {
+                    // Snap the bounds of the magnifier to this grid.
+                    const rect = new $.Rect(
+                        d.x + gridOffset.x,
+                        d.y + gridOffset.y,
+                        d.width - self.totalBorderWidths.x,
+                        d.height - self.totalBorderWidths.y
+                    );
+
+                    let bounds =
+                        self.mainViewer.viewport.viewerElementToViewportRectangle(
+                            rect
+                        );
+
+                    self.viewer.viewport.fitBounds(bounds);
+                    self.updateDisplayRegionFromBounds(bounds);
+                    self.inlineViewer.viewport.fitBounds(bounds);
+
+                    self.recordPreviousDisplayRegionPosition();
+                    return false;
+                });
+        }
+
+        destroyHpfGrid() {
+            var elt = document.getElementById(hpfGridOverlayId);
+            this.mainViewer.removeOverlay(elt);
+            if(elt) {
+                elt.remove();
+            }
+        }
+
+        showHpfGrid() {
+            this.storeHpfSideLength();
+            let elt = document.createElement("div");
+            elt.id = hpfGridOverlayId;
+            elt.style.zIndex = 20;
+
+            this.mainViewer.addOverlay({
+                element: elt,
+                location: new $.Rect(0, 0, 1, 1),
+            });
+            this.updateHpfGrid();
+        }
+
+        toggleHpfGrid() {
+            if (this.hpfGrid) {
+                this.hpfGrid = false;
+                this.destroyHpfGrid();
+                document.getElementById(checkboxId).removeAttribute("disabled");
+            } else {
+                this.hpfGrid = true;
+                this.showInViewer = false;
+                document.getElementById(checkboxId).setAttribute("disabled", true);
+                this.showHpfGrid();
+            }
+        }
+
         toggleInViewer() {
             if (this.showInViewer) {
                 this.showInViewer = false;
@@ -700,6 +890,8 @@
                 // This is mutually exclusive with HPF
                 document.getElementById(toggle10HpfId).value = false;
                 this.hpf = false;
+                this.hpfGrid = false;
+                this.destroyHpfGrid();
                 this.hpfSettings.setAttribute("disabled", true);
                 this.showInViewer = true;
                 this.initializeInlineMagnifier();
