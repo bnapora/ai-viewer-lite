@@ -513,7 +513,6 @@
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
 
-            this.storeHpfSideLength();
             if (this.hpf) {
                 this.fitHpfBounds();
             }
@@ -725,8 +724,8 @@
             let data = new Array();
             let xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
             let ypos = 1;
-            const width = hpfBounds.x;
-            const height = hpfBounds.x;
+            const width = Math.abs(hpfBounds.x);
+            const height = width; // These are square for now
             const imageDimensions =
                 this.mainViewer.world.getItemAt(0).source.dimensions;
             const numRows = imageDimensions.y / this.hpfSideLength;
