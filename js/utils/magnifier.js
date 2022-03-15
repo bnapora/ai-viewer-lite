@@ -788,7 +788,7 @@
             const gridOffset = new $.Point(
                 parseInt(gridOverlayStyles.left, 10),
                 parseInt(gridOverlayStyles.top, 10)
-            );
+            ).minus(fudge);
             gridRow
                 .selectAll(".square")
                 .data(function (d) {
@@ -817,8 +817,8 @@
                     const rect = new $.Rect(
                         d.x + gridOffset.x,
                         d.y + gridOffset.y,
-                        d.width - self.borderWidth * 2 + 2,
-                        d.height - self.borderWidth * 2 + 2
+                        d.width - self.borderWidth,
+                        d.height - self.borderWidth
                     );
 
                     let bounds =
