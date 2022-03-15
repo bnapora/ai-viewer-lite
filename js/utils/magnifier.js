@@ -693,7 +693,7 @@
 
         initializeHpf() {
             this.storeHpfSideLength();
-            if(this.hpf) {
+            if (this.hpf) {
                 this.fitHpfBounds();
             }
         }
@@ -728,7 +728,7 @@
         }
 
         updateHpfGrid() {
-            if(!this.hpfGrid) {
+            if (!this.hpfGrid) {
                 return;
             }
             const hpfBounds = this.mainViewer.world
@@ -739,12 +739,12 @@
             let data = new Array();
             let xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
             let ypos = 1;
-            const width = Math.abs(hpfBounds.x);
+            const width = Math.ceil(Math.abs(hpfBounds.x));
             const height = width; // These are square for now
             const imageDimensions =
                 this.mainViewer.world.getItemAt(0).source.dimensions;
-            const numRows = imageDimensions.y / this.hpfSideLength;
-            const numColumns = imageDimensions.x / this.hpfSideLength;
+            const numRows = Math.ceil(imageDimensions.y / this.hpfSideLength);
+            const numColumns = Math.ceil(imageDimensions.x / this.hpfSideLength);
 
             // iterate for rows
             for (var row = 0; row < numRows; row++) {
@@ -766,7 +766,9 @@
                 // increment the y position for the next row. Move it down by the height
                 ypos += height;
             }
-            d3.select("#" + hpfGridOverlayId).selectAll("svg").remove();
+            d3.select("#" + hpfGridOverlayId)
+                .selectAll("svg")
+                .remove();
             const grid = d3
                 .select("#" + hpfGridOverlayId)
                 .append("svg")
@@ -815,8 +817,8 @@
                     const rect = new $.Rect(
                         d.x + gridOffset.x,
                         d.y + gridOffset.y,
-                        d.width - self.totalBorderWidths.x,
-                        d.height - self.totalBorderWidths.y
+                        d.width - self.borderWidth * 2 + 2,
+                        d.height - self.borderWidth * 2 + 2
                     );
 
                     let bounds =
@@ -836,7 +838,7 @@
         destroyHpfGrid() {
             var elt = document.getElementById(hpfGridOverlayId);
             this.mainViewer.removeOverlay(elt);
-            if(elt) {
+            if (elt) {
                 elt.remove();
             }
         }
@@ -862,7 +864,9 @@
             } else {
                 this.hpfGrid = true;
                 this.showInViewer = false;
-                document.getElementById(checkboxId).setAttribute("disabled", true);
+                document
+                    .getElementById(checkboxId)
+                    .setAttribute("disabled", true);
                 this.showHpfGrid();
             }
         }
