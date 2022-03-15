@@ -520,6 +520,7 @@
                 this.fitHpfBounds();
             }
             if (this.hpfGrid) {
+                console.log("Updating grid from zoom handler")
                 this.updateHpfGrid();
             }
             overlayUtils.modifyDisplayIfAny(this.mnameMain);
@@ -596,6 +597,7 @@
                     this.fitHpfBounds();
                 }
                 if (this.hpfGrid) {
+                    console.log("Updating grid from generic update handler")
                     this.updateHpfGrid();
                 }
             }
