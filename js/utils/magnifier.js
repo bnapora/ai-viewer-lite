@@ -692,8 +692,8 @@
         }
 
         initializeHpf() {
+            this.storeHpfSideLength();
             if(this.hpf) {
-                this.storeHpfSideLength();
                 this.fitHpfBounds();
             }
         }
