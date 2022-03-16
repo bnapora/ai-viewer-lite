@@ -203,17 +203,44 @@
 
             this.mainViewer.addHandler("resize", function () {
                 self.update();
+                if (self.hpf) {
+                    self.fitHpfBounds();
+                }
+                if (self.hpfGrid) {
+                    console.log("Updating grid from resize handler");
+                    self.updateHpfGrid();
+                }
             });
 
             this.mainViewer.world.addHandler("update-viewport", function () {
                 self.update();
+                if (self.hpf) {
+                    self.fitHpfBounds();
+                }
+                if (self.hpfGrid) {
+                    console.log("Updating grid from viewport update handler");
+                    self.updateHpfGrid();
+                }
             });
 
             this.mainViewer.addHandler("canvas-click", function (event) {
                 // we want to catch clicks, not drags
                 if (event.quick) {
                     event.preventDefaultAction = true;
-                    self.clickToZoom(event);
+
+                    // we want to let the grid handle clicks and
+                    // snapping the overlay to itself
+                    if (self.hpfGrid) {
+                        var d3target = d3.select(event.originalEvent.target);
+                        var click = d3target.on("click");
+                        if (click) {
+                            click();
+                        }
+                        // adding a return statement here breaks it.
+                        // negating self.hpfGrid in the next if statement breaks it.
+                    } else {
+                        self.clickToZoom(event);
+                    }
 
                     overlayUtils.modifyDisplayIfAny(self.mnameMain);
                     overlayUtils.modifyDisplayIfAny(self.mnameInline);
@@ -372,6 +399,11 @@
         }
 
         clickToZoom(event) {
+            if (this.hpfGrid) {
+                // We should let the grid event handlers snap the magnifier
+                // to a grid square instead.
+                return;
+            }
             // Center the magnifiers on a click target, to make
             // it easy to look at annotated cells.
             const target =
@@ -515,12 +547,10 @@
 
             this.viewer.viewport.zoomTo(zoomTarget, refPoint);
             this.inlineViewer.viewport.zoomTo(zoomTarget, refPoint);
-
             if (this.hpf) {
                 this.fitHpfBounds();
             }
             if (this.hpfGrid) {
-                console.log("Updating grid from zoom handler")
                 this.updateHpfGrid();
             }
             overlayUtils.modifyDisplayIfAny(this.mnameMain);
@@ -592,14 +622,6 @@
                     bounds = this.viewer.viewport.getBounds();
                     this.updateDisplayRegionFromBounds(bounds);
                 }
-
-                if (this.hpf) {
-                    this.fitHpfBounds();
-                }
-                if (this.hpfGrid) {
-                    console.log("Updating grid from generic update handler")
-                    this.updateHpfGrid();
-                }
             }
         }
 
@@ -651,6 +673,8 @@
         }
 
         fitHpfBounds() {
+            this.storeHpfSideLength();
+
             // where is the viewport on the actual image right now?
             const bounds = this.mainViewer.world
                 .getItemAt(0)
@@ -694,7 +718,6 @@
         }
 
         initializeHpf() {
-            this.storeHpfSideLength();
             if (this.hpf) {
                 this.fitHpfBounds();
             }
@@ -733,6 +756,8 @@
             if (!this.hpfGrid) {
                 return;
             }
+            this.storeHpfSideLength();
+
             const hpfBounds = this.mainViewer.world
                 .getItemAt(0)
                 // we just want a relative length / distance, not a whole point
@@ -741,12 +766,14 @@
             let data = new Array();
             let xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
             let ypos = 1;
-            const width = Math.ceil(Math.abs(hpfBounds.x));
+            const width = Math.floor(Math.abs(hpfBounds.x));
             const height = width; // These are square for now
             const imageDimensions =
                 this.mainViewer.world.getItemAt(0).source.dimensions;
             const numRows = Math.ceil(imageDimensions.y / this.hpfSideLength);
-            const numColumns = Math.ceil(imageDimensions.x / this.hpfSideLength);
+            const numColumns = Math.ceil(
+                imageDimensions.x / this.hpfSideLength
+            );
 
             // iterate for rows
             for (var row = 0; row < numRows; row++) {
@@ -785,12 +812,7 @@
                 .attr("class", "row");
 
             const self = this;
-            const gridOverlayStyles =
-                document.getElementById(hpfGridOverlayId).style;
-            const gridOffset = new $.Point(
-                parseInt(gridOverlayStyles.left, 10),
-                parseInt(gridOverlayStyles.top, 10)
-            ).minus(fudge);
+
             gridRow
                 .selectAll(".square")
                 .data(function (d) {
@@ -815,12 +837,19 @@
                 .style("fill-opacity", 0.0)
                 .style("stroke", "#222")
                 .on("click", function (d) {
+                    const gridOverlayStyles =
+                        document.getElementById(hpfGridOverlayId).style;
+                    const gridOffset = new $.Point(
+                        parseInt(gridOverlayStyles.left, 10) - self.borderWidth,
+                        parseInt(gridOverlayStyles.top, 10) - self.borderWidth
+                    )
+
                     // Snap the bounds of the magnifier to this grid.
                     const rect = new $.Rect(
                         d.x + gridOffset.x,
                         d.y + gridOffset.y,
-                        d.width - self.borderWidth,
-                        d.height - self.borderWidth
+                        d.width,
+                        d.height
                     );
 
                     let bounds =
@@ -833,7 +862,6 @@
                     self.inlineViewer.viewport.fitBounds(bounds);
 
                     self.recordPreviousDisplayRegionPosition();
-                    return false;
                 });
         }
 
@@ -849,7 +877,7 @@
             this.storeHpfSideLength();
             let elt = document.createElement("div");
             elt.id = hpfGridOverlayId;
-            elt.style.zIndex = 20;
+            elt.style.zIndex = 99;
 
             this.mainViewer.addOverlay({
                 element: elt,
