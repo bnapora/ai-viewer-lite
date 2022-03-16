@@ -20,7 +20,6 @@
     const hpf_magFactorId = "magnifier__10hpf-magnification";
     const hpf_fieldId = "magnifier__10hpf-field-number";
     const hpf_gridId = "magnifier__10hpf-grid";
-    const hpfGridOverlayId = "grid-overlay";
 
     class Magnifier {
         constructor(mainViewer, options) {
@@ -673,8 +672,6 @@
         }
 
         fitHpfBounds() {
-            this.storeHpfSideLength();
-
             // where is the viewport on the actual image right now?
             const bounds = this.mainViewer.world
                 .getItemAt(0)
@@ -718,6 +715,7 @@
         }
 
         initializeHpf() {
+            this.storeHpfSideLength();
             if (this.hpf) {
                 this.fitHpfBounds();
             }
@@ -756,18 +754,14 @@
             if (!this.hpfGrid) {
                 return;
             }
-            this.storeHpfSideLength();
-
-            const hpfBounds = this.mainViewer.world
-                .getItemAt(0)
-                // we just want a relative length / distance, not a whole point
-                .imageToWindowCoordinates(new $.Point(this.hpfSideLength, 0));
+            if (!this.hpfSideLength) {
+                this.storeHpfSideLength();
+            }
 
             let data = new Array();
-            let xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
-            let ypos = 1;
-            const width = Math.floor(Math.abs(hpfBounds.x));
-            const height = width; // These are square for now
+            let xpos = 0;
+            let ypos = 0;
+
             const imageDimensions =
                 this.mainViewer.world.getItemAt(0).source.dimensions;
             const numRows = Math.ceil(imageDimensions.y / this.hpfSideLength);
@@ -782,34 +776,33 @@
                 // iterate for cells/columns inside rows
                 for (var column = 0; column < numColumns; column++) {
                     data[row].push({
-                        x: xpos,
-                        y: ypos,
-                        width: width,
-                        height: height,
-                    });
+                        bounds: this.mainViewer.world
+                            .getItemAt(0)
+                            .imageToViewportRectangle(
+                                xpos,
+                                ypos,
+                                this.hpfSideLength,
+                                this.hpfSideLength
+                            )
+                    })
                     // increment the x position. I.e. move it over by the width
-                    xpos += width;
+                    xpos += this.hpfSideLength;
                 }
                 // reset the x position after a row is complete
-                xpos = 1;
+                xpos = 0;
                 // increment the y position for the next row. Move it down by the height
-                ypos += height;
+                ypos += this.hpfSideLength;
             }
-            d3.select("#" + hpfGridOverlayId)
-                .selectAll("svg")
-                .remove();
+            d3.select('.grid').selectAll(".grid-row").remove();
             const grid = d3
-                .select("#" + hpfGridOverlayId)
-                .append("svg")
-                .attr("width", "100%")
-                .attr("height", "100%");
+                .select('.grid')
 
             const gridRow = grid
-                .selectAll(".row")
+                .selectAll(".grid-row")
                 .data(data)
                 .enter()
                 .append("g")
-                .attr("class", "row");
+                .attr("class", "grid-row");
 
             const self = this;
 
@@ -822,27 +815,27 @@
                 .append("rect")
                 .attr("class", "square")
                 .attr("x", function (d) {
-                    return d.x;
+                    console.log(d)
+                    return d.bounds.x;
                 })
                 .attr("y", function (d) {
-                    return d.y;
+                    return d.bounds.y;
                 })
                 .attr("width", function (d) {
-                    return d.width;
+                    return d.bounds.width;
                 })
                 .attr("height", function (d) {
-                    return d.height;
+                    return d.bounds.height;
                 })
                 .style("fill", "#fff")
                 .style("fill-opacity", 0.0)
                 .style("stroke", "#222")
                 .on("click", function (d) {
-                    const gridOverlayStyles =
-                        document.getElementById(hpfGridOverlayId).style;
+                    const gridOverlayStyles = this.hpfGridOverlay.style;
                     const gridOffset = new $.Point(
                         parseInt(gridOverlayStyles.left, 10) - self.borderWidth,
                         parseInt(gridOverlayStyles.top, 10) - self.borderWidth
-                    )
+                    );
 
                     // Snap the bounds of the magnifier to this grid.
                     const rect = new $.Rect(
@@ -866,23 +859,11 @@
         }
 
         destroyHpfGrid() {
-            var elt = document.getElementById(hpfGridOverlayId);
-            this.mainViewer.removeOverlay(elt);
-            if (elt) {
-                elt.remove();
-            }
+            d3.select('.grid').remove();
         }
 
         showHpfGrid() {
-            this.storeHpfSideLength();
-            let elt = document.createElement("div");
-            elt.id = hpfGridOverlayId;
-            elt.style.zIndex = 99;
-
-            this.mainViewer.addOverlay({
-                element: elt,
-                location: new $.Rect(0, 0, 1, 1),
-            });
+            this.hpfGridOverlay = d3.select(this.mainViewer.svgOverlay().node()).append('g').attr("class", 'grid');
             this.updateHpfGrid();
         }
 
