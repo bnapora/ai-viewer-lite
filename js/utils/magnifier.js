@@ -811,29 +811,11 @@
                 .attr("height", function (d) {
                     return d.bounds.height;
                 })
-                // .style("fill", "#fff")
                 .style("fill-opacity", 0.0)
                 .style("stroke", "#222")
                 .style("stroke-width", 0.001)
                 .on("click", function (d) {
-                    const gridOverlayStyles = this.hpfGridOverlay.style;
-                    const gridOffset = new $.Point(
-                        parseInt(gridOverlayStyles.left, 10) - self.borderWidth,
-                        parseInt(gridOverlayStyles.top, 10) - self.borderWidth
-                    );
-
-                    // Snap the bounds of the magnifier to this grid.
-                    const rect = new $.Rect(
-                        d.x + gridOffset.x,
-                        d.y + gridOffset.y,
-                        d.width,
-                        d.height
-                    );
-
-                    let bounds =
-                        self.mainViewer.viewport.viewerElementToViewportRectangle(
-                            rect
-                        );
+                    let bounds = d.bounds.clone();
 
                     self.viewer.viewport.fitBounds(bounds);
                     self.updateDisplayRegionFromBounds(bounds);
