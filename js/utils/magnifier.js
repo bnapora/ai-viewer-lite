@@ -205,20 +205,12 @@
                 if (self.hpf) {
                     self.fitHpfBounds();
                 }
-                if (self.hpfGrid) {
-                    console.log("Updating grid from resize handler");
-                    self.updateHpfGrid();
-                }
             });
 
             this.mainViewer.world.addHandler("update-viewport", function () {
                 self.update();
                 if (self.hpf) {
                     self.fitHpfBounds();
-                }
-                if (self.hpfGrid) {
-                    console.log("Updating grid from viewport update handler");
-                    self.updateHpfGrid();
                 }
             });
 
@@ -282,21 +274,18 @@
                 .getElementById(mppId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
-                    self.updateHpfGrid();
                 });
 
             document
                 .getElementById(hpf_magFactorId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
-                    self.updateHpfGrid();
                 });
 
             document
                 .getElementById(hpf_fieldId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
-                    self.updateHpfGrid();
                 });
 
             document
@@ -549,9 +538,6 @@
             if (this.hpf) {
                 this.fitHpfBounds();
             }
-            if (this.hpfGrid) {
-                this.updateHpfGrid();
-            }
             overlayUtils.modifyDisplayIfAny(this.mnameMain);
             overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.recordPreviousDisplayRegionPosition();
@@ -759,50 +745,49 @@
             }
 
             let data = new Array();
-            let xpos = 0;
-            let ypos = 0;
 
-            const imageDimensions =
-                this.mainViewer.world.getItemAt(0).source.dimensions;
-            const numRows = Math.ceil(imageDimensions.y / this.hpfSideLength);
-            const numColumns = Math.ceil(
-                imageDimensions.x / this.hpfSideLength
+            let xpos = 0.001;
+            let ypos = 0.001;
+
+            let rectBounds = this.mainViewer.world
+                .getItemAt(0)
+                .imageToViewportRectangle(
+                    0.001,
+                    0.001,
+                    this.hpfSideLength,
+                    this.hpfSideLength
             );
+            let row = 0;
 
             // iterate for rows
-            for (var row = 0; row < numRows; row++) {
+            for (ypos; ypos < 1; ypos += rectBounds.height) {
                 data.push(new Array());
+                rectBounds.y = ypos;
 
                 // iterate for cells/columns inside rows
-                for (var column = 0; column < numColumns; column++) {
+                for (xpos; xpos < 1; xpos += rectBounds.width) {
+                    rectBounds.x = xpos;
                     data[row].push({
-                        bounds: this.mainViewer.world
-                            .getItemAt(0)
-                            .imageToViewportRectangle(
-                                xpos,
-                                ypos,
-                                this.hpfSideLength,
-                                this.hpfSideLength
-                            )
-                    })
-                    // increment the x position. I.e. move it over by the width
-                    xpos += this.hpfSideLength;
+                        bounds: rectBounds.clone(),
+                    });
                 }
-                // reset the x position after a row is complete
-                xpos = 0;
-                // increment the y position for the next row. Move it down by the height
-                ypos += this.hpfSideLength;
+                xpos = 0.001;
+                row++;
             }
-            d3.select('.grid').selectAll(".grid-row").remove();
-            const grid = d3
-                .select('.grid')
+
+            const grid = d3.select(".grid");
+
+            // get rid of any old grid
+            grid.selectAll(".grid-row").remove();
 
             const gridRow = grid
                 .selectAll(".grid-row")
                 .data(data)
                 .enter()
                 .append("g")
-                .attr("class", "grid-row");
+                .attr("class", "grid-row")
+                // .style("fill", "#fff")
+                .style("fill-opacity", 0.0);
 
             const self = this;
 
@@ -815,7 +800,6 @@
                 .append("rect")
                 .attr("class", "square")
                 .attr("x", function (d) {
-                    console.log(d)
                     return d.bounds.x;
                 })
                 .attr("y", function (d) {
@@ -827,9 +811,10 @@
                 .attr("height", function (d) {
                     return d.bounds.height;
                 })
-                .style("fill", "#fff")
+                // .style("fill", "#fff")
                 .style("fill-opacity", 0.0)
                 .style("stroke", "#222")
+                .style("stroke-width", 0.001)
                 .on("click", function (d) {
                     const gridOverlayStyles = this.hpfGridOverlay.style;
                     const gridOffset = new $.Point(
@@ -859,11 +844,14 @@
         }
 
         destroyHpfGrid() {
-            d3.select('.grid').remove();
+            d3.select(".grid").remove();
         }
 
         showHpfGrid() {
-            this.hpfGridOverlay = d3.select(this.mainViewer.svgOverlay().node()).append('g').attr("class", 'grid');
+            this.hpfGridOverlay = d3
+                .select(this.mainViewer.svgOverlay().node())
+                .append("g")
+                .attr("class", "grid");
             this.updateHpfGrid();
         }
 
