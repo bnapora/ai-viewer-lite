@@ -218,23 +218,7 @@
                 // we want to catch clicks, not drags
                 if (event.quick) {
                     event.preventDefaultAction = true;
-
-                    // we want to let the grid handle clicks and
-                    // snapping the overlay to itself
-                    if (self.hpfGrid) {
-                        var d3target = d3.select(event.originalEvent.target);
-                        var click = d3target.on("click");
-                        if (click) {
-                            click();
-                        }
-                        // adding a return statement here breaks it.
-                        // negating self.hpfGrid in the next if statement breaks it.
-                    } else {
-                        self.clickToZoom(event);
-                    }
-
-                    overlayUtils.modifyDisplayIfAny(self.mnameMain);
-                    overlayUtils.modifyDisplayIfAny(self.mnameInline);
+                    self.clickToZoom(event);
                 }
             });
 
@@ -736,10 +720,15 @@
             }
         }
 
-        updateHpfGrid() {
-            if (!this.hpfGrid) {
-                return;
-            }
+        destroyHpfGrid() {
+            d3.select(".grid").remove();
+        }
+
+        showHpfGrid() {
+            this.hpfGridOverlay = d3
+                .select(this.mainViewer.svgOverlay().node())
+                .append("g")
+                .attr("class", "grid");
             if (!this.hpfSideLength) {
                 this.storeHpfSideLength();
             }
@@ -791,8 +780,7 @@
 
             const self = this;
             const strokeWidth = 0.001;
-
-            gridRow
+            const squares = gridRow
                 .selectAll(".square")
                 .data(function (d) {
                     return d;
@@ -814,35 +802,27 @@
                 })
                 .style("fill-opacity", 0.0)
                 .style("stroke", "#222")
-                .style("stroke-width", strokeWidth)
-                .on("click", function (d) {
-                    const topleft = d.bounds.getTopLeft();
+                .style("stroke-width", strokeWidth);
 
-                    const bounds = new $.Rect(
-                        topleft.x,
-                        topleft.y,
-                        d.bounds.width - (strokeWidth * 2),
-                        d.bounds.height - (strokeWidth * 2)
-                    );
-                    self.viewer.viewport.fitBounds(bounds);
-                    self.updateDisplayRegionFromBounds(bounds);
-                    self.inlineViewer.viewport.fitBounds(bounds);
-                    overlayUtils.modifyDisplayIfAny(self.mnameMain);
+            squares.nodes().forEach(function(node) {
+                self.mainViewer.svgOverlay().onClick(node, function(event) {
+                const d = d3.select(event.originalTarget).data()[0];
+                const topleft = d.bounds.getTopLeft();
 
-                    self.recordPreviousDisplayRegionPosition();
-                });
-        }
+                const bounds = new $.Rect(
+                    topleft.x,
+                    topleft.y,
+                    d.bounds.width - strokeWidth * 2,
+                    d.bounds.height - strokeWidth * 2
+                );
+                self.viewer.viewport.fitBounds(bounds);
+                self.updateDisplayRegionFromBounds(bounds);
+                self.inlineViewer.viewport.fitBounds(bounds);
+                overlayUtils.modifyDisplayIfAny(self.mnameMain);
 
-        destroyHpfGrid() {
-            d3.select(".grid").remove();
-        }
-
-        showHpfGrid() {
-            this.hpfGridOverlay = d3
-                .select(this.mainViewer.svgOverlay().node())
-                .append("g")
-                .attr("class", "grid");
-            this.updateHpfGrid();
+                self.recordPreviousDisplayRegionPosition();
+                })
+            });
         }
 
         toggleHpfGrid() {
