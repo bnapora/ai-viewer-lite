@@ -756,7 +756,7 @@
                     0.001,
                     this.hpfSideLength,
                     this.hpfSideLength
-            );
+                );
             let row = 0;
 
             // iterate for rows
@@ -790,6 +790,7 @@
                 .style("fill-opacity", 0.0);
 
             const self = this;
+            const strokeWidth = 0.001;
 
             gridRow
                 .selectAll(".square")
@@ -813,13 +814,20 @@
                 })
                 .style("fill-opacity", 0.0)
                 .style("stroke", "#222")
-                .style("stroke-width", 0.001)
+                .style("stroke-width", strokeWidth)
                 .on("click", function (d) {
-                    let bounds = d.bounds.clone();
+                    const topleft = d.bounds.getTopLeft();
 
+                    const bounds = new $.Rect(
+                        topleft.x,
+                        topleft.y,
+                        d.bounds.width - (strokeWidth * 2),
+                        d.bounds.height - (strokeWidth * 2)
+                    );
                     self.viewer.viewport.fitBounds(bounds);
                     self.updateDisplayRegionFromBounds(bounds);
                     self.inlineViewer.viewport.fitBounds(bounds);
+                    overlayUtils.modifyDisplayIfAny(self.mnameMain);
 
                     self.recordPreviousDisplayRegionPosition();
                 });
