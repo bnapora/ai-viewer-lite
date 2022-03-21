@@ -810,8 +810,8 @@
                 const topleft = d.bounds.getTopLeft();
 
                 const bounds = new $.Rect(
-                    topleft.x,
-                    topleft.y,
+                    topleft.x - strokeWidth,
+                    topleft.y - strokeWidth,
                     d.bounds.width - strokeWidth * 2,
                     d.bounds.height - strokeWidth * 2
                 );
