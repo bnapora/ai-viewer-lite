@@ -775,7 +775,6 @@
                 .enter()
                 .append("g")
                 .attr("class", "grid-row")
-                // .style("fill", "#fff")
                 .style("fill-opacity", 0.0);
 
             const self = this;
