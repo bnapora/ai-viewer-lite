@@ -129,10 +129,6 @@ tmapp.init = function () {
     overlayUtils._d3nodes[magInline_regions] = overlayUtils._d3nodes[magInline_svgnodeName].append("g")
         .attr("id", magInline_regions);
 
-    //overlay for CP data
-    var cpop="CP";                                   //main node;
-    overlayUtils._d3nodes[cpop + "_svgnode"] = overlayUtils._d3nodes[viewer_svgnodeName].append("g")
-        .attr("id", cpop +"_svgnode");
 
     var click_handler = function (event) {
         if (event.quick) {
