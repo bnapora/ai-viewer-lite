@@ -741,8 +741,8 @@
             let rectBounds = this.mainViewer.world
                 .getItemAt(0)
                 .imageToViewportRectangle(
-                    0.001,
-                    0.001,
+                    xpos,
+                    ypos,
                     this.hpfSideLength,
                     this.hpfSideLength
                 );
