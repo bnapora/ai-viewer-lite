@@ -968,12 +968,17 @@
                         },
                         0
                     );
+                } else {
+                    document.getElementById(
+                        "metrics__count--" + k
+                    ).style.display = "none";
                 }
             });
             Object.keys(this.visibleMarkers).forEach(function (k) {
                 const countElement = document.getElementById(
                     "metrics__count--" + k
                 );
+                countElement.style.display = "block";
                 countElement.innerText = self.visibleMarkers[k];
             });
         }
