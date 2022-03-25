@@ -258,18 +258,30 @@
                 .getElementById(mppId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    if (self.hpfGrid) {
+                        self.destroyHpfGrid();
+                        self.showHpfGrid();
+                    }
                 });
 
             document
                 .getElementById(hpf_magFactorId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    if (self.hpfGrid) {
+                        self.destroyHpfGrid();
+                        self.showHpfGrid();
+                    }
                 });
 
             document
                 .getElementById(hpf_fieldId)
                 .addEventListener("change", function () {
                     self.initializeHpf();
+                    if (self.hpfGrid) {
+                        self.destroyHpfGrid();
+                        self.showHpfGrid();
+                    }
                 });
 
             document
