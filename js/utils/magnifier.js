@@ -803,24 +803,29 @@
                 .style("stroke", "#222")
                 .style("stroke-width", strokeWidth);
 
-            squares.nodes().forEach(function(node) {
-                self.mainViewer.svgOverlay().onClick(node, function(event) {
-                const d = d3.select(event.originalTarget).data()[0];
-                const topleft = d.bounds.getTopLeft();
+            squares.nodes().forEach(function (node) {
+                self.mainViewer.svgOverlay().onClick(node, function (event) {
+                    // we want to catch clicks, not drags
+                    if (event.quick) {
+                        event.preventDefaultAction = true;
 
-                const bounds = new $.Rect(
-                    topleft.x - strokeWidth,
-                    topleft.y - strokeWidth,
-                    d.bounds.width - strokeWidth * 2,
-                    d.bounds.height - strokeWidth * 2
-                );
-                self.viewer.viewport.fitBounds(bounds);
-                self.updateDisplayRegionFromBounds(bounds);
-                self.inlineViewer.viewport.fitBounds(bounds);
-                overlayUtils.modifyDisplayIfAny(self.mnameMain);
+                        const d = d3.select(event.originalTarget).data()[0];
+                        const topleft = d.bounds.getTopLeft();
 
-                self.recordPreviousDisplayRegionPosition();
-                })
+                        const bounds = new $.Rect(
+                            topleft.x - strokeWidth,
+                            topleft.y - strokeWidth,
+                            d.bounds.width - strokeWidth * 2,
+                            d.bounds.height - strokeWidth * 2
+                        );
+                        self.viewer.viewport.fitBounds(bounds);
+                        self.updateDisplayRegionFromBounds(bounds);
+                        self.inlineViewer.viewport.fitBounds(bounds);
+                        overlayUtils.modifyDisplayIfAny(self.mnameMain);
+
+                        self.recordPreviousDisplayRegionPosition();
+                    }
+                });
             });
         }
 
