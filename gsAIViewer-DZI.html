@@ -118,7 +118,7 @@
 
                         </ul>
 
-                        <div id="TM-tabs" class="tab-content extended-height">
+                        <div id="TM-tabs" class="tab-content extended-height" style="min-height: 100%; overflow: scroll;">
                             <!-- TAB 1.1 ISS data  -------------------------------------------------------------------------------- -->
                             <div class="tab-pane active" id="markers-iss-gui" style="height:100%;">
                                 <div class="panel panel-default" style="height:100%;">
@@ -483,12 +483,12 @@
                                 </div> <!-- end of a main panel -->
                             </div> <!-- end of image-gui-->
                             <!--- TAB 1.5 Magnifier ------------------>
-                            <div class="tab-pane" id="magnifier" style="height:100%;">
-                                <div class="panel panel-default" style="height:100%;">
+                            <div class="tab-pane" id="magnifier" style="min-height:100%;">
+                                <div class="panel panel-default" style="min-height:100%;">
                                     <div class="panel-body">
                                         <div id="ISS_magnifier" class="magnifier">
                                         </div>
-                                        <h3>Markers in Magnifier</h4>
+                                        <h4>Markers in Magnifier</h4>
                                         <div class="row extended-height">
                                             <table class="table table-striped" style="word-break: break-all;">
                                                 <thead>
@@ -502,10 +502,10 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <h3>Settings</h3>
+                                        <h4>Settings</h4>
                                         <div class="magnifier__setting">
                                             <fieldset id="magnifier__hpf-settings">
-                                                <legend><h4>10 x High Powered Field Settings</h4></legend>
+                                                <legend><h5>10 x High Powered Field Settings</h5></legend>
                                                 <label>
                                                     <input type="checkbox" id="magnifier__10hpf-grid">
                                                     Show grid
@@ -528,13 +528,15 @@
                                                     Ocular Field Number in millimeters
                                                 </label>
                                             </fieldset>
+                                        </div>
+                                        <div class="magnifier__setting">
                                             <label>
                                                 <input type="checkbox" id="magnifier__show-in-viewer">
                                                 Show magnifier in viewer
                                             </label>
                                         </div>
                                         <div class="magnifier__setting">
-                                            <h4>Magnifier shape</h4>
+                                            <h5>Magnifier shape</h5>
                                             <label>
                                                 <input type="radio" name="magnifier__shape" id="magnifier__square" checked>
                                                 Square
@@ -558,7 +560,7 @@
                 </div> <!-- end of lateral panel -->
             </div>
         </div><!-- end of single row -->
-    </div><!-- end of container-fuild-->
+    </div><!-- end of container-fluid-->
 </body>
 
 <script>

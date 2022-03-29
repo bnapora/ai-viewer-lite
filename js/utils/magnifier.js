@@ -968,6 +968,11 @@
                         },
                         0
                     );
+                } else {
+                    delete self.visibleMarkers[k];
+                    document.getElementById(
+                        "metrics__row--" + k
+                    ).style.display = "none";
                 }
             });
             Object.keys(this.visibleMarkers).forEach(function (k) {
@@ -975,6 +980,9 @@
                     "metrics__count--" + k
                 );
                 countElement.innerText = self.visibleMarkers[k];
+                document.getElementById(
+                        "metrics__row--" + k
+                    ).style.display = "table-row";
             });
         }
     }
