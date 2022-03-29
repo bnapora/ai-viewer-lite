@@ -969,8 +969,9 @@
                         0
                     );
                 } else {
+                    delete self.visibleMarkers[k];
                     document.getElementById(
-                        "metrics__count--" + k
+                        "metrics__row--" + k
                     ).style.display = "none";
                 }
             });
@@ -978,8 +979,10 @@
                 const countElement = document.getElementById(
                     "metrics__count--" + k
                 );
-                countElement.style.display = "block";
                 countElement.innerText = self.visibleMarkers[k];
+                document.getElementById(
+                        "metrics__row--" + k
+                    ).style.display = "table-row";
             });
         }
     }

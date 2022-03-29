@@ -86,8 +86,10 @@ markerUtils.drawd3rect = function (x, y, size, color, barcode) {
  * */
 markerUtils.removeMarkerByBarcode = function (barcode, viewer) {
     console.log("trying to delete markers " + ".Gr" + viewer + barcode);
-    overlayUtils._d3nodes["Gr" + viewer + barcode].remove();
-    overlayUtils._d3nodes["Gr" + viewer + barcode] = null;
+    if(overlayUtils._d3nodes["Gr" + viewer + barcode]) {
+        overlayUtils._d3nodes["Gr" + viewer + barcode].remove();
+        overlayUtils._d3nodes["Gr" + viewer + barcode] = null;
+    }
 }
 
 markerUtils.drawCPdata= function(options, viewer){
@@ -392,6 +394,7 @@ markerUtils.markerBoxToggle = function (barcodeBox) {
         markerUtils.removeMarkerByBarcode(value, op + '_magnifier_main');
         markerUtils.removeMarkerByBarcode(value, op + '_magnifier_inline');
     }
+    tmapp[op + '_magnifier'].showVisibleMarkerCounts();
 }
 
 /** 
@@ -557,7 +560,10 @@ markerUtils.markerUIAll = function (options) {
 }
 
 markerUtils.metricsUI = function(barObject) {
-    var row = HTMLElementUtils.createElement({ type: "tr" });
+    var row = HTMLElementUtils.createElement({
+        type: "tr",
+        id: "metrics__row--" + barObject.key
+    });
     var name = HTMLElementUtils.createElement({
         type: "td",
         innerText: barObject.values[0].gene_name,
