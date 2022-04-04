@@ -167,8 +167,11 @@
                 this.initializeHpf();
             }
 
+            const self = this;
             if (this.hpfGrid) {
-                this.showHpfGrid();
+                this.mainViewer.world.addOnceHandler("add-item", function(event) {
+                    self.showHpfGrid();
+                })
             }
 
             // Move and resize handlers
@@ -183,7 +186,6 @@
             });
 
             // OSD event handlers for the magnifiers and main viewers
-            const self = this;
             this.mainViewer.addHandler("zoom", function (event) {
                 self.mainViewerZoom(event.refPoint);
             });
@@ -426,8 +428,6 @@
                 this.updateDisplayRegionFromBounds(bounds);
                 this.inlineViewer.viewport.fitBounds(bounds);
             }
-            overlayUtils.modifyDisplayIfAny(this.mnameMain);
-            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.recordPreviousDisplayRegionPosition();
         }
 
