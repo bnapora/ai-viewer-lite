@@ -159,19 +159,27 @@
                 $.addClass(this.displayRegion, "round");
             }
 
+            const self = this;
             if (this.hpf) {
                 document.getElementById(ratioId).setAttribute("disabled", true);
                 document
                     .getElementById(checkboxId)
                     .setAttribute("disabled", true);
-                this.initializeHpf();
+                this.mainViewer.world.addOnceHandler(
+                    "add-item",
+                    function (event) {
+                        self.initializeHpf();
+                    }
+                );
             }
 
-            const self = this;
             if (this.hpfGrid) {
-                this.mainViewer.world.addOnceHandler("add-item", function(event) {
-                    self.showHpfGrid();
-                })
+                this.mainViewer.world.addOnceHandler(
+                    "add-item",
+                    function (event) {
+                        self.showHpfGrid();
+                    }
+                );
             }
 
             // Move and resize handlers
@@ -227,10 +235,9 @@
             this.viewer.addHandler("animation-finish", function () {
                 self.showVisibleMarkerCounts();
 
-                if(self.inlineViewer && self.showInViewer) {
+                if (self.inlineViewer && self.showInViewer) {
                     overlayUtils.modifyDisplayIfAny(self.mnameInline);
-
-                } else if(self.viewer) {
+                } else if (self.viewer) {
                     overlayUtils.modifyDisplayIfAny(self.mnameMain);
                 }
             });
@@ -389,6 +396,7 @@
 
             this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
             this.updateCenterMarkerStyle(bounds.getCenter());
+            this.recordPreviousDisplayRegionPosition();
         }
 
         clickToZoom(event) {
@@ -655,6 +663,11 @@
         }
 
         fitHpfBounds() {
+            // We need to have an image in the viewer in order to calculate
+            // an HPF region size for it.
+            if (this.mainViewer.world.getItemCount() == 0) {
+                return;
+            }
             // where is the viewport on the actual image right now?
             const bounds = this.mainViewer.world
                 .getItemAt(0)
@@ -734,10 +747,16 @@
         }
 
         destroyHpfGrid() {
+            this.recordPreviousDisplayRegionPosition();
             d3.select(".grid").remove();
         }
 
         showHpfGrid() {
+            // We need to have an image in the viewer in order to calculate
+            // an HPF region size for it.
+            if (this.mainViewer.world.getItemCount() == 0) {
+                return;
+            }
             this.hpfGridOverlay = d3
                 .select(this.mainViewer.svgOverlay().node())
                 .append("g")
@@ -746,10 +765,12 @@
                 this.storeHpfSideLength();
             }
 
+            const strokeWidth = 0.001;
+
             let data = new Array();
 
-            let xpos = 0.001;
-            let ypos = 0.001;
+            let xpos = 0;
+            let ypos = 0;
 
             let rectBounds = this.mainViewer.world
                 .getItemAt(0)
@@ -773,7 +794,7 @@
                         bounds: rectBounds.clone(),
                     });
                 }
-                xpos = 0.001;
+                xpos = 0;
                 row++;
             }
 
@@ -791,7 +812,6 @@
                 .style("fill-opacity", 0.0);
 
             const self = this;
-            const strokeWidth = 0.001;
             const squares = gridRow
                 .selectAll(".square")
                 .data(function (d) {
@@ -801,19 +821,19 @@
                 .append("rect")
                 .attr("class", "square")
                 .attr("x", function (d) {
-                    return d.bounds.x;
+                    return d.bounds.x + strokeWidth;
                 })
                 .attr("y", function (d) {
-                    return d.bounds.y;
+                    return d.bounds.y + strokeWidth;
                 })
                 .attr("width", function (d) {
-                    return d.bounds.width;
+                    return d.bounds.width + strokeWidth;
                 })
                 .attr("height", function (d) {
-                    return d.bounds.height;
+                    return d.bounds.height + strokeWidth;
                 })
                 .style("fill-opacity", 0.0)
-                .style("stroke", "#222")
+                .style("stroke", "#ccc")
                 .style("stroke-width", strokeWidth);
 
             squares.nodes().forEach(function (node) {
@@ -823,19 +843,18 @@
                         event.preventDefaultAction = true;
 
                         const d = d3.select(event.originalTarget).data()[0];
-                        const topleft = d.bounds.getTopLeft();
 
                         const bounds = new $.Rect(
-                            topleft.x - strokeWidth,
-                            topleft.y - strokeWidth,
-                            d.bounds.width - strokeWidth * 2,
-                            d.bounds.height - strokeWidth * 2
+                            d.bounds.x - strokeWidth,
+                            d.bounds.y - strokeWidth,
+                            d.bounds.width - strokeWidth,
+                            d.bounds.height - strokeWidth
                         );
                         self.viewer.viewport.fitBounds(bounds);
-                        self.updateDisplayRegionFromBounds(bounds);
-                        self.inlineViewer.viewport.fitBounds(bounds);
 
-                        self.recordPreviousDisplayRegionPosition();
+                        const viewer_bounds = self.viewer.viewport.getBounds();
+                        self.inlineViewer.viewport.fitBounds(viewer_bounds);
+                        self.updateDisplayRegionFromBounds(viewer_bounds);
                     }
                 });
             });
@@ -980,9 +999,8 @@
                     "metrics__count--" + k
                 );
                 countElement.innerText = self.visibleMarkers[k];
-                document.getElementById(
-                        "metrics__row--" + k
-                    ).style.display = "table-row";
+                document.getElementById("metrics__row--" + k).style.display =
+                    "table-row";
             });
         }
     }
