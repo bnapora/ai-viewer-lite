@@ -224,6 +224,13 @@
 
             this.viewer.addHandler("animation-finish", function () {
                 self.showVisibleMarkerCounts();
+
+                if(self.inlineViewer && self.showInViewer) {
+                    overlayUtils.modifyDisplayIfAny(self.mnameInline);
+
+                } else if(self.viewer) {
+                    overlayUtils.modifyDisplayIfAny(self.mnameMain);
+                }
             });
 
             // Event handlers for magnifier controls
@@ -450,8 +457,6 @@
             );
             const bounds = this.inlineViewer.viewport.getBounds();
             this.viewer.viewport.fitBounds(bounds, true);
-            overlayUtils.modifyDisplayIfAny(this.mnameMain);
-            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.updateCenterMarkerStyle(bounds.getCenter());
             this.recordPreviousDisplayRegionPosition();
         }
@@ -521,8 +526,6 @@
             this.viewer.viewport.fitBounds(
                 this.inlineViewer.viewport.getBounds()
             );
-            overlayUtils.modifyDisplayIfAny(this.mnameMain);
-            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.updateCenterMarkerStyle(newBounds.getTopLeft());
         }
 
@@ -534,8 +537,6 @@
             if (this.hpf) {
                 this.fitHpfBounds();
             }
-            overlayUtils.modifyDisplayIfAny(this.mnameMain);
-            overlayUtils.modifyDisplayIfAny(this.mnameInline);
             this.recordPreviousDisplayRegionPosition();
         }
 
@@ -833,7 +834,6 @@
                         self.viewer.viewport.fitBounds(bounds);
                         self.updateDisplayRegionFromBounds(bounds);
                         self.inlineViewer.viewport.fitBounds(bounds);
-                        overlayUtils.modifyDisplayIfAny(self.mnameMain);
 
                         self.recordPreviousDisplayRegionPosition();
                     }
