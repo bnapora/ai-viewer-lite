@@ -832,7 +832,7 @@
                 .attr("height", function (d) {
                     return d.bounds.height + strokeWidth;
                 })
-                .style("fill-opacity", 0.0)
+                .style("fill-opacity", 0.3)
                 .style("stroke", "#ccc")
                 .style("stroke-width", strokeWidth);
 
@@ -841,8 +841,9 @@
                     // we want to catch clicks, not drags
                     if (event.quick) {
                         event.preventDefaultAction = true;
-
-                        const d = d3.select(event.originalTarget).data()[0];
+                        const target = d3.select(event.originalTarget);
+                        target.style("fill-opacity", 0.0);
+                        const d = target.data()[0];
 
                         const bounds = new $.Rect(
                             d.bounds.x - strokeWidth,
