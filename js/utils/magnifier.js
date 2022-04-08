@@ -600,8 +600,8 @@
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
                     bounds = this.viewer.viewport.getBounds();
                     this.updateDisplayRegionFromBounds(bounds);
-                    this.updateCenterMarkerStyle(bounds.getCenter());
                 }
+                this.updateCenterMarkerStyle(bounds.getCenter());
             }
         }
 
