@@ -212,16 +212,10 @@
 
             this.mainViewer.addHandler("resize", function () {
                 self.update();
-                if (self.hpf) {
-                    self.fitHpfBounds();
-                }
             });
 
             this.mainViewer.world.addHandler("update-viewport", function () {
                 self.update();
-                if (self.hpf) {
-                    self.fitHpfBounds();
-                }
             });
 
             this.mainViewer.addHandler("canvas-click", function (event) {
@@ -396,7 +390,6 @@
 
             this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
             this.updateCenterMarkerStyle(bounds.getCenter());
-            this.recordPreviousDisplayRegionPosition();
         }
 
         clickToZoom(event) {
@@ -604,7 +597,6 @@
                     // Event handing for when the inline magnifier is active
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
-                    this.updateCenterMarkerStyle(bounds.getCenter());
                 } else if (this.hpf) {
                     this.fitHpfBounds();
                 } else {
@@ -612,6 +604,7 @@
                     bounds = this.viewer.viewport.getBounds();
                     this.updateDisplayRegionFromBounds(bounds);
                 }
+                this.updateCenterMarkerStyle(bounds.getCenter());
             }
         }
 
@@ -852,6 +845,8 @@
                             d.bounds.height - strokeWidth
                         );
                         self.viewer.viewport.fitBounds(bounds);
+
+                        self.recordPreviousDisplayRegionPosition();
 
                         const viewer_bounds = self.viewer.viewport.getBounds();
                         self.inlineViewer.viewport.fitBounds(viewer_bounds);
