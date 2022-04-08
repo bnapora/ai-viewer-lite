@@ -212,16 +212,10 @@
 
             this.mainViewer.addHandler("resize", function () {
                 self.update();
-                if (self.hpf) {
-                    self.fitHpfBounds();
-                }
             });
 
             this.mainViewer.world.addHandler("update-viewport", function () {
                 self.update();
-                if (self.hpf) {
-                    self.fitHpfBounds();
-                }
             });
 
             this.mainViewer.addHandler("canvas-click", function (event) {
@@ -396,15 +390,9 @@
 
             this.updateDisplayRegionStyle(topleft.y, topleft.x, width, height);
             this.updateCenterMarkerStyle(bounds.getCenter());
-            this.recordPreviousDisplayRegionPosition();
         }
 
         clickToZoom(event) {
-            if (this.hpfGrid) {
-                // We should let the grid event handlers snap the magnifier
-                // to a grid square instead.
-                return;
-            }
             // Center the magnifiers on a click target, to make
             // it easy to look at annotated cells.
             const target =
@@ -595,8 +583,10 @@
                 const zoomTarget =
                     this.mainViewer.viewport.getZoom() * this.ratio;
 
-                this.viewer.viewport.zoomTo(zoomTarget);
-                this.inlineViewer.viewport.zoomTo(zoomTarget);
+                if (!this.hpf && !this.hpfGrid) {
+                    this.viewer.viewport.zoomTo(zoomTarget);
+                    this.inlineViewer.viewport.zoomTo(zoomTarget);
+                }
 
                 let bounds;
 
@@ -604,7 +594,6 @@
                     // Event handing for when the inline magnifier is active
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
-                    this.updateCenterMarkerStyle(bounds.getCenter());
                 } else if (this.hpf) {
                     this.fitHpfBounds();
                 } else {
@@ -612,6 +601,7 @@
                     bounds = this.viewer.viewport.getBounds();
                     this.updateDisplayRegionFromBounds(bounds);
                 }
+                this.updateCenterMarkerStyle(bounds.getCenter());
             }
         }
 
@@ -838,8 +828,9 @@
 
             squares.nodes().forEach(function (node) {
                 self.mainViewer.svgOverlay().onClick(node, function (event) {
-                    // we want to catch clicks, not drags
-                    if (event.quick) {
+                    // we want to catch clicks, not drags. We also want people to be
+                    // able to zoom normally if the shift key is down.
+                    if (event.quick && !event.shift) {
                         event.preventDefaultAction = true;
                         const target = d3.select(event.originalTarget);
                         target.style("fill-opacity", 0.0);
@@ -856,6 +847,9 @@
                         const viewer_bounds = self.viewer.viewport.getBounds();
                         self.inlineViewer.viewport.fitBounds(viewer_bounds);
                         self.updateDisplayRegionFromBounds(viewer_bounds);
+                        self.recordPreviousDisplayRegionPosition();
+                    } else if(event.shift) {
+                        self.clickToZoom(event);
                     }
                 });
             });
