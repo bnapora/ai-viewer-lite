@@ -102,8 +102,8 @@
                     <div class="row row-fullheight" style="padding-bottom: 0px;">
                         <!-- Level 0 tabs -->
                         <ul class="nav nav-tabs L0-tabs">
-                            <li> <a href="#markers-iss-gui" data-toggle="tab" aria-expanded="true"
-                                    class="active main-child">Annotations</a></li>
+                            <li> <a href="#markers-iss-gui" data-toggle="tab" aria-expanded="false"
+                                    >Annotations</a></li>
                             <!-- <li> <a href="#markers-cp-gui" data-toggle="tab"
                                     aria-expanded="false">Cell morphology</a></li> -->
                             <li> <a href="#markers-regions-gui" data-toggle="tab"
@@ -111,7 +111,7 @@
                             <li> <a href="#image-gui" data-toggle="tab"
                                     aria-expanded="false">Image layers</a></li>
                             <li>
-                                <a href="#magnifier" data-toggle="tab" aria-expanded="false">
+                                <a href="#magnifier" data-toggle="tab" aria-expanded="true" class="active main-child">
                                     Magnifier
                                 </a>
                             </li>
@@ -120,7 +120,7 @@
 
                         <div id="TM-tabs" class="tab-content extended-height" style="min-height: 100%; overflow: scroll;">
                             <!-- TAB 1.1 ISS data  -------------------------------------------------------------------------------- -->
-                            <div class="tab-pane active" id="markers-iss-gui" style="height:100%;">
+                            <div class="tab-pane" id="markers-iss-gui" style="height:100%;">
                                 <div class="panel panel-default" style="height:100%;">
                                     <div class="panel-body row-fullheight">
                                         <!-- 1.1 Row download -->
@@ -483,7 +483,7 @@
                                 </div> <!-- end of a main panel -->
                             </div> <!-- end of image-gui-->
                             <!--- TAB 1.5 Magnifier ------------------>
-                            <div class="tab-pane" id="magnifier" style="min-height:100%;">
+                            <div class="tab-pane active" id="magnifier" style="min-height:100%;">
                                 <div class="panel panel-default" style="min-height:100%;">
                                     <div class="panel-body">
                                         <div id="ISS_magnifier" class="magnifier">
