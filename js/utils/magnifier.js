@@ -293,6 +293,15 @@
                         self.showHpfGrid();
                     }
                 });
+            document
+                .getElementById("magnifier__10hpf-ocularmag")
+                .addEventListener("change", function () {
+                    self.initializeHpf();
+                    if (self.hpfGrid) {
+                        self.destroyHpfGrid();
+                        self.showHpfGrid();
+                    }
+                });
 
             document
                 .getElementById(hpf_gridId)
@@ -595,6 +604,7 @@
                     bounds = this.inlineViewer.viewport.getBounds();
                     this.viewer.viewport.fitBounds(bounds);
                 } else if (this.hpf) {
+                    bounds = this.inlineViewer.viewport.getBounds();
                     this.fitHpfBounds();
                 } else {
                     // inline / overlay viewer is invisibly pinned to the sidebar viewer
@@ -677,27 +687,38 @@
         }
 
         storeHpfSideLength() {
-            // The formula I need to use here is that the region visible in the magnifier
-            // has this many pixels per side at its maximum zoom level:
-            // sqrt(HPF field area / mppX * mppY)
-            // HPF field area is the area, in square microns, of a standard 10HPF field of view.
-            // We are assuming a square viewer for now and equal horizontal and vertical
+            // Created by Melinda Minch (03/22)
+            // The formula I need to use here is that the region visible in the magnifier has this many pixels per side at its maximum zoom level:
+            // sqrt(HPF field area / mpp * mpp)
+            // HPF field area is the area, in square microns, of a standard 10HPF field of view.We are assuming a square viewer for now and equal horizontal and vertical
             // microns per pixel.
-            const mppX = document.getElementById(mppId).value;
-            // this field number is in millimeters in the UI; convert to microns, but
-            // divide by 2, because we need a radius to calculate area, since number is commmonly
-            // used in the sciences to represent the diameter of a round ocular field.
-            const field =
-                document.getElementById(hpf_fieldId).value * (1000 / 2);
-            const mag = document.getElementById(hpf_magFactorId).value;
+            // Modified by Bnapora(08/25/22)
+            const mpp = document.getElementById(mppId).value;
+            const mag_occular = document.getElementById("magnifier__10hpf-ocularmag").value;
+        
+            // this field number is in millimeters in the UI; convert to microns to get diameter,
+            const field = document.getElementById(hpf_fieldId).value * (1000);
+            // Manually entered objective magnification (eg 20X, 40X, 60X, etc)
+            const mag_objective = document.getElementById(hpf_magFactorId).value; //TODO Add calculation of actual magnification based on MPP (https://www.microscopesinternational.com/blog/20180420-magnification_vs_resolution.aspx)
+            
+            // Calculated Objective Mag based on MPP
+            const mag_obj_calc = Number.parseFloat(1/mpp*10).toFixed(1)
 
-            const hpfAreaRadius = field / mag;
-            // To simulate a 10 HPF field of view, multiply the area covered by 10.
-            const hpfArea = Math.PI * (hpfAreaRadius * hpfAreaRadius) * mag;
+            // divide diameter by 2, because we need a radius to calculate area, since number is commmonly
+            // used in the science to represent the diameter of a round ocular field.
+            // https://journals.sagepub.com/doi/full/10.1177/0300985815593349
+            const hpfDiameter = 2200 // units are pixels (550 microns / 0.25 mpp)
+            const hpfMPP = 0.25
+            const hpfMPPFactor = mpp/hpfMPP
+            const hpfOcularFactor = field/(hpfDiameter*10)
 
-            // Now, take the area of a round ocular field, and make it a square one, so we are comparing
-            // apples to apples.
-            this.hpfSideLength = Math.sqrt(hpfArea / (mppX * mppX));
+            // Calculate hpfSideLength from hpfAreaRadius(microns)
+            // Convert microns to pixels and multiply by Ocular Mag
+            this.hpfSideLength = (hpfDiameter*hpfMPPFactor*hpfOcularFactor)*mag_occular;
+
+            document.getElementById("magnifier__10hpf-dimensions").value = Number.parseFloat(this.hpfSideLength/4/1000).toFixed(2)
+            document.getElementById(hpf_magFactorId).value = mag_obj_calc
+            tmapp.mpp = document.getElementById("magnifier__10hpf-mpp").value
         }
 
         initializeHpf() {

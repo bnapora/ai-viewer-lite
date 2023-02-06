@@ -23,7 +23,8 @@
     <script src="js/caman.min.js"></script>
     <script src="js/openseadragon-filtering.js"></script>
     <script src="js/openseadragon-svg-overlay.js"></script>
-    <script src="js/openseadragon-scalebar.js"></script>
+    <!--script src="js/openseadragon-scalebar.js"></!--script-->
+    <script src="js/openseadragon-scalebar_cat.js"></script>
     <script src="js/openseadragonselection.js"></script>
     <script src="js/openseadragon-annotations.js"></script>
     <script src="js/openseadragon-annotorious.min.js"></script>
@@ -137,7 +138,7 @@
                                                 <div id="ISS_input_csv" style="margin-bottom: 5px;">
                                                     <label id="label_ISS_csv" for="ISS_csv">Import Annotations from CSV:</label>
                                                     <input class="form-control-file form-control form-control-sm" type="file" id="ISS_csv" name="ISS_csv"
-                                                        accept=".csv,.tsv,.txt">
+                                                        accept=".csv,.tsv,.txt" value="CCMCT_1018715d369dd0df2fc0_ExactAnno_TMapp.csv">
                                                     <script type="text/javascript">
                                                         d3.select("#ISS_csv")
                                                             .on("change", function () {
@@ -504,32 +505,6 @@
                                         </div>
                                         <h4>Settings</h4>
                                         <div class="magnifier__setting">
-                                            <fieldset id="magnifier__hpf-settings">
-                                                <legend><h5>10 x High Powered Field Settings</h5></legend>
-                                                <label>
-                                                    <input type="checkbox" id="magnifier__10hpf-grid">
-                                                    Show grid
-                                                </label>
-                                                </label>
-                                                <label>
-                                                    <input type="checkbox" id="magnifier__10hpf">
-                                                    Pin magnifier area to the area of 10 High Powered Fields
-                                                </label>
-                                                <label>
-                                                    <input type="number" id="magnifier__10hpf-mpp" value="0.235">
-                                                    Base image microns per pixel
-                                                </label>
-                                                <label>
-                                                    <input type="number" id="magnifier__10hpf-magnification" value="40">
-                                                    Base Image Magnification Factor
-                                                </label>
-                                                <label>
-                                                    <input type="number" id="magnifier__10hpf-field-number" value="22">
-                                                    Ocular Field Number in millimeters
-                                                </label>
-                                            </fieldset>
-                                        </div>
-                                        <div class="magnifier__setting">
                                             <label>
                                                 <input type="checkbox" id="magnifier__show-in-viewer">
                                                 Show magnifier in viewer
@@ -552,6 +527,45 @@
                                                 <input type="range" min="2" max="20" value="8" step="1" id="magnifier__ratio">
                                             </label>
                                         </div>
+                                        <div class="magnifier__setting">
+                                            <fieldset id="magnifier__hpf-settings">
+                                                <legend><h5>High Powered Field Settings</h5></legend>
+                                                <label>
+                                                    <input type="checkbox" id="magnifier__10hpf-grid">
+                                                    Show grid
+                                                </label><br>
+                                                <label>
+                                                    <input type="checkbox" id="magnifier__10hpf">
+                                                    Pin magnifier to area of HPF
+                                                </label>
+                                                <label>
+                                                    <input type="number" id="magnifier__10hpf-mpp" value="0.235">
+                                                    Image microns per pixel (mpp)
+                                                </label>
+
+                                                <label>
+                                                    <input type="number" id="magnifier__10hpf-magnification" value="42.6" disabled>
+                                                    Objective Mag (X)
+                                                </label>
+                                                <label>
+                                                    <input type="number" id="magnifier__10hpf-ocularmag" value="10">
+                                                    Ocular Mag (X)
+                                                </label>
+                                                <label>
+                                                    <input type="number" id="magnifier__10hpf-field-number" value="22">
+                                                    Ocular Field Number(FN) (mm)
+                                                </label>
+
+                                                <label>
+                                                    <input type="number" id="magnifier__10hpf-dimensions" value="5.17" disabled>
+                                                    Mag HPF - W/H (mm)
+                                                </label>
+                                                <label>
+                                                    HPF Standard: FN 22/40X = 550µm * (1/0.25mpp)
+                                                </label>
+                                            </fieldset>
+                                        </div>
+                                        
                                     </div>
                                 </div> <!-- end of a main panel -->
                             </div> <!-- end of image-gui-->
@@ -576,13 +590,33 @@
         tmapp.registerActions();
         tmapp.init();
     });
-
+    $(document).ready(function () {
+        dataUtils.readCSV("./CCMCT_1018715d369dd0df2fc0_ExactAnno_TMapp.csv")
+    });
+    
 </script>
 <script>
     $("#menu-toggle").click(function (e) {
         e.preventDefault();
         $("#wrapper").toggleClass("toggled");
     });
+
+    // Add workflow functions to afterPageLoadAction()
+    function afterPageLoadAction() {
+        dataUtils.processISSRawData()
+    }
+    // Routine to delay page for WSI loading;
+    if (document.readyState == 'complete') {
+        pauseforPageLoad();
+    } else {
+        document.onreadystatechange = function () {
+            if (document.readyState === "complete") {
+                setTimeout(function() {
+                    afterPageLoadAction();
+                }, 100);  // Set Timeout value
+            }
+        }
+    }
 </script>
 
 </html>

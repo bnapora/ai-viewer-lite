@@ -62,3 +62,13 @@ To run a debugging session in Visual Studio Code, the following .vscode/launch.j
 1. Start the local server as described in the "Running lite-server" section above
 1. Use the Visual Studio Code Run & Debug pane to select a launch configuration
 1. Start a debugging session (F5)
+
+## Notes for Deployment to Docker (10/11/22)
+- use express instead of lite-server
+- use package.json (configured to launch app.js)
+
+### Build Command
+docker build . -t gestaltmldev.azurecr.io/ai-viewer-lite
+
+docker run -p 5003:5003 --name="ai-viewer-lite" --restart always gestaltmldev.azurecr.io/ai-viewer-lite
+

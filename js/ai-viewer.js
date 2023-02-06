@@ -13,7 +13,7 @@
     _url_suffix: "",
     _scrollDelay: 900,
     fixed_file: "",
-    mpp:0,
+    mpp:0.235,
     slideFilename:"Main",
     exact_image_id: "1",
     tileproviderURL: "http://127.0.0.1:8000",
@@ -178,17 +178,18 @@ tmapp.init = function () {
         tmapp[vname].addControl(elt,{anchor: OpenSeadragon.ControlAnchor.TOP_RIGHT});
         elt.style.display="None";
     }
-
+ 
     if (tmapp.mpp != 0) {
         tmapp[vname].scalebar({
-            pixelsPerMeter: tmapp.mpp ? (1e6 / tmapp.mpp) : 0,
+            pixelsPerMeter: tmapp.mpp ? (1e6 / tmapp.mpp) : 1,
             xOffset: 200,
             yOffset: 10,
             barThickness: 3,
             color: '#555555',
             fontColor: '#333333',
             backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.METRIC_LENGTH
+            // sizeAndTextRenderer: OpenSeadragon.ScalebarSizeAndTextRenderer.METRIC_LENGTH,
+            location: OpenSeadragon.ScalebarLocation.TOP_Center
         });
     }
 

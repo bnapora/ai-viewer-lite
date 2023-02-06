@@ -184,10 +184,6 @@ dataUtils.showMenuCSV = function(){
             node.appendChild(option);
         });
     });
-    //set default value of Code & Name & Key (Requires csv or json to have Code & Name column in column 1 & 2)
-    ISSBarcodeInput.selectedIndex = 1;
-    ISSNanmeInput.selectedIndex = 2;
-    ISSKey.selectedIndex = 1;
 
     var panel = document.getElementById(op + "_csv_headers");
     panel.style = "";
@@ -200,6 +196,14 @@ dataUtils.showMenuCSV = function(){
     if (csvheaders.includes(dataUtils._expectedCSV["Y_col"])) ISSY.value = dataUtils._expectedCSV["Y_col"];
     if (csvheaders.includes(dataUtils._expectedCSV["color"])) ISSColor.value = dataUtils._expectedCSV["color"];
     if (dataUtils._expectedCSV["key"]) ISSKey.value = dataUtils._expectedCSV["key"];
+
+    //set default value of Code & Name & Key (Requires csv or json to have Code & Name column in column 1 & 2)
+    if (ISSNanmeInput.value == '') {
+        ISSBarcodeInput.selectedIndex = 2;
+        ISSNanmeInput.selectedIndex = 3;
+        ISSKey.selectedIndex = 1;
+    }
+
 
 }
 

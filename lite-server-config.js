@@ -1,5 +1,5 @@
 module.exports = {
-    port: 3000,
+    port: 3003,
     files: ['./**/*.{html,css,js}'],
     server: {
         baseDir: './',
